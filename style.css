@@ -1,14 +1,14 @@
 @charset "UTF-8";
 
 body{
-    background-color: skyblue;
+    background-color: rgb(170, 200, 200);
     font-family: 'Times New Roman', Times, serif;
     font-size: 16px;
 }
 
 h1{
     color: black;
-    background-color: skyblue;
+    background-color: rgb(170, 200, 200);
 }
 
 h2{
