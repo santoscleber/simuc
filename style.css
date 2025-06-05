@@ -3,12 +3,12 @@
 body{
     background-color: beige;
     font-family: 'Times New Roman', Times, serif;
-    font-size: 10px;
+    font-size: 40px;
 }
 
 h1{
     color: black;
-    background-color: beige;
+    background-color: blueviolet;
 }
 
 h2{
