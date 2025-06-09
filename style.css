@@ -22,6 +22,7 @@ p{
 
 div{
     display: inline-block;
+    font-size: 20px;
     background-color: rgb(204, 217, 246);
     border: 1px solid black;
     text-align: center;
