@@ -21,27 +21,27 @@ p{
 }
 
 .container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 10px;
+    display: flex;      /* Alinha os itens em linha */
+    flex-wrap: wrap;    /* Permite quebra de linha, se necessário */
+    gap: 10px;          /* Espaçamento entre os blocos */
+    padding: 10px;      /* Espaço interno do container */
 }
 
 .caixa {
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: center;                            /* Centraliza verticalmente */
+    justify-content: center;                        /* Centraliza horizontalmente */
     font-size: 20px;
     background-color: rgb(204, 217, 246);
     border: 1px solid black;
     height: 45px;
     width: 200px;
     text-align: center;
-    border-radius: 5px;
-    cursor: pointer;
+    border-radius: 5px;                             /* Borda arredondada opcional */
+    cursor: pointer;                                /* Indica que pode ser clicado */
     transition: background-color 0.3s;
 }
 
 .caixa:hover {
-    background-color: rgb(180, 200, 240);
+    background-color: rgb(180, 200, 240);        /* Efeito hover */
 }
