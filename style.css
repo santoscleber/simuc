@@ -22,6 +22,10 @@ p{
     text-align: justify;
 }
 
+a:visited{
+    text-decoration: none;
+}
+
 .container {
     margin-left: -10px;
     display: flex;      /* Alinha os itens em linha */
@@ -43,7 +47,6 @@ p{
     border-radius: 5px;                             /* Borda arredondada opcional */
     cursor: pointer;                                /* Indica que pode ser clicado */
     transition: background-color 0.3s;
-    text-decoration: none;
 }
 
 .caixa:hover {
