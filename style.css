@@ -28,3 +28,7 @@ div{
     height: 20px;
     width: 200px;
 }
+
+div:hover{
+    background-color: brown;
+}
