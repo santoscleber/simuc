@@ -27,7 +27,7 @@ div > p{
 }
 
 div:hover > p{
-    display: block;
+    display: inline-block;
 }
 
 .container {
