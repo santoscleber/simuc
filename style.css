@@ -22,7 +22,7 @@ p{
 }
 
 .container {
-    margin-left: 50px;
+    margin-left: 1px;
     display: flex;      /* Alinha os itens em linha */
     flex-wrap: wrap;    /* Permite quebra de linha, se necessário */
     gap: 10px;          /* Espaçamento entre os blocos */
