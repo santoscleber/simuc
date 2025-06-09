@@ -21,7 +21,7 @@ p{
 }
 
 div{
-    display: block;
+    display: inline;
     background-color: rgb(0, 217, 246);
     border: 1px solid black;
     text-align: center;
