@@ -22,6 +22,7 @@ p{
 }
 
 .container {
+    margin-left: 0px;
     display: flex;      /* Alinha os itens em linha */
     flex-wrap: wrap;    /* Permite quebra de linha, se necessário */
     gap: 10px;          /* Espaçamento entre os blocos */
@@ -29,7 +30,6 @@ p{
 }
 
 .caixa {
-    margin-left: 0px;
     display: flex;
     align-items: center;                            /* Centraliza verticalmente */
     justify-content: center;                        /* Centraliza horizontalmente */
