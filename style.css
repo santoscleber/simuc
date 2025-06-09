@@ -22,6 +22,14 @@ p{
     text-align: justify;
 }
 
+div > p{
+    display: none;
+}
+
+div:hover > p{
+    display: block;
+}
+
 .container {
     margin-left: -10px;
     display: flex;      /* Alinha os itens em linha */
@@ -47,21 +55,4 @@ p{
 
 .caixa:hover {
     background-color: rgb(180, 200, 240);        /* Efeito hover */
-}
-
-.hover-box {
-    display: inline-block; /* Garante que o conteúdo fique em bloco */
-    padding: 10px;
-    background-color: #e0e0ff;
-    border: 1px solid #000;
-    cursor: pointer;
-}
-
-.hover-box > p {
-    display: none;         /* Oculta inicialmente */
-    margin-top: 10px;      /* Espaço entre o texto principal e o oculto */
-}
-
-.hover-box:hover > p {
-    display: block;        /* Mostra embaixo */
 }
