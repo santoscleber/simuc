@@ -27,8 +27,7 @@ div > p{
 }
 
 div:hover > p{
-    display: inline-block;
-    display: block;
+    display: inline-table;
 }
 
 .container {
