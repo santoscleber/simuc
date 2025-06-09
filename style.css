@@ -25,7 +25,6 @@ p{
     flex-wrap: wrap;
     gap: 10px;
     padding: 10px;
-    background-color: #991c1c;
 }
 
 .caixa {
@@ -38,7 +37,6 @@ p{
     height: 45px;
     width: 200px;
     text-align: center;
-    border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s;
 }
