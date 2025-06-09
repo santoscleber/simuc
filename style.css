@@ -22,6 +22,10 @@ p{
     text-align: justify;
 }
 
+div > p{
+    display: none;
+}
+
 .container {
     margin-left: -10px;
     display: flex;      /* Alinha os itens em linha */
