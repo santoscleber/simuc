@@ -27,6 +27,10 @@ a{
     text-decoration: none;  /* Remove hiperlink */
 }
 
+a:hover{
+    text-decoration: underline;
+}
+
 .container {
     margin-left: -10px;
     display: flex;      /* Alinha os itens em linha */
