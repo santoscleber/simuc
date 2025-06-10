@@ -35,7 +35,7 @@ a:hover{
     margin-left: -10px;
     display: flex;      /* Alinha os itens em linha */
     flex-wrap: wrap;    /* Permite quebra de linha, se necessário */
-    gap: 28.5px;          /* Espaçamento entre os blocos */
+    gap: 28.4px;          /* Espaçamento entre os blocos */
     padding: 10px;      /* Espaço interno do container */
 }
 
