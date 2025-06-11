@@ -14,6 +14,10 @@ body{
     --preto1: rgb(34, 35, 36); --preto2: rgb(101, 101, 101); --preto3: rgb(136, 135, 135); --preto4: rgb(171, 169, 165);    
 }
 
+main{
+    background-color: aquamarine;
+}
+
 
 h1{
     color: black;
