@@ -1,7 +1,7 @@
 @charset "UTF-8";
 
 body{
-    background-color: rgb(204, 217, 246);
+    background-color: rgb(128, 194, 218);
     font-family: 'Courier New', Courier, monospace;
     font-style: normal;
     font-size: 16px;
@@ -9,6 +9,19 @@ body{
     margin-right: 40px;
 }
 
+/*
+Identidade Visual do CENSIPAM
+
+Verde
+RGB: 35,103, 59; RGB: 65, 150, 85; RGB: 66, 147, 73; RGB: 60, 147, 52
+
+Azul
+RGB: 37, 74, 145; RGB: 40, 118, 164; RGB:57, 163, 185; RGB: 128, 194, 218
+
+Preto
+RGB: 34, 35, 36; RGB: 101, 101, 101; RGB: 136, 135, 135; RGB: 171, 169, 165
+
+*/
 h1{
     color: black;
     background-color: rgb(204, 217, 246);
@@ -44,7 +57,7 @@ a:hover{
     align-items: center;                            /* Centraliza verticalmente */
     justify-content: center;                        /* Centraliza horizontalmente */
     font-size: 20px;
-    background-color: rgb(204, 217, 246);
+    background-color: rgb(128, 194, 218);
     border: 1px solid rgb(0, 0, 0);
     height: 45px;
     width: 200px;
@@ -55,5 +68,5 @@ a:hover{
 }
 
 .caixa:hover {
-    background-color: rgb(180, 200, 240);        /* Efeito hover */
+    background-color: rgb(128, 194, 218);        /* Efeito hover */
 }
