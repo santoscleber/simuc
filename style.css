@@ -1,30 +1,23 @@
 @charset "UTF-8";
 
 body{
-    background-color: rgb(128, 194, 218);
+    background-color: --azul4;
     font-family: 'Courier New', Courier, monospace;
     font-style: normal;
     font-size: 16px;
     margin-left: 40px;
     margin-right: 40px;
 }
+:root{
+    --verde1: rgb(35, 103, 59); --verde2: rgb(65, 150, 85); --verde3: rgb(66, 147, 73); --verde4: rgb(60, 147, 52);
+    --azul1: rgb(37, 74, 145); --azul2: rgb(40, 118, 164); --azul3: rgb(57, 163, 185); --azul4: rgb(128, 194, 218);
+    --preto1: rgb(34, 35, 36); --preto2: rgb(101, 101, 101); --preto3: rgb(136, 135, 135); --preto4: rgb(171, 169, 165);    
+}
 
-/*
-Identidade Visual do CENSIPAM
 
-Verde
-RGB: 35,103, 59; RGB: 65, 150, 85; RGB: 66, 147, 73; RGB: 60, 147, 52
-
-Azul
-RGB: 37, 74, 145; RGB: 40, 118, 164; RGB:57, 163, 185; RGB: 128, 194, 218
-
-Preto
-RGB: 34, 35, 36; RGB: 101, 101, 101; RGB: 136, 135, 135; RGB: 171, 169, 165
-
-*/
 h1{
     color: black;
-    background-color: rgb(128, 194, 218);
+    background-color: rgb();
 }
 
 h2{
