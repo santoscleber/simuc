@@ -63,3 +63,7 @@ a:hover{
 .caixa:hover {
     background-color: var(--azul4);        /* Efeito hover */
 }
+
+footer{
+    background-color: var(--verde1);
+}
