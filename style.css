@@ -8,6 +8,7 @@ body{
     /*margin-left: 40px;
     margin-right: 40px;*/
     width: 1000px;
+    margin: auto;
 }
 :root{
     --verde1: rgb(35, 103, 59); --verde2: rgb(65, 150, 85); --verde3: rgb(66, 147, 73); --verde4: rgb(60, 147, 52);
