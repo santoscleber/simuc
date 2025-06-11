@@ -5,8 +5,8 @@ body{
     font-family: 'Courier New', Courier, monospace;
     font-style: normal;
     font-size: 16px;
-    /*margin-left: 40px;
-    margin-right: 40px;*/
+    margin-left: 10px;
+    margin-right: 10px;
     min-width: 320px;          /* Largura da área */
     max-width: 1000px;         /* Largura da área */
     margin: auto;
