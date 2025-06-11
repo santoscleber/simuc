@@ -50,7 +50,7 @@ a:hover{
     align-items: center;                            /* Centraliza verticalmente */
     justify-content: center;                        /* Centraliza horizontalmente */
     font-size: 20px;
-    background-color: rgb(128, 194, 218);
+    background-color: var(--azul4);
     border: 1px solid rgb(0, 0, 0);
     height: 45px;
     width: 200px;
@@ -61,5 +61,5 @@ a:hover{
 }
 
 .caixa:hover {
-    background-color: rgb(128, 194, 218);        /* Efeito hover */
+    background-color: var(--azul4);        /* Efeito hover */
 }
