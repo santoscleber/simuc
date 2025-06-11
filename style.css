@@ -40,7 +40,6 @@ a:hover{
 }
 
 .container {
-    margin-bottom: 10px;
     display: flex;          /* Alinha os itens em linha */
     flex-wrap: wrap;        /* Permite quebra de linha, se necessário */
     justify-content: space-between;            /* Espaçamento entre os blocos */
@@ -49,6 +48,7 @@ a:hover{
 
 .caixa {
     display: flex;
+    margin-bottom: 10px;
     align-items: center;                            /* Centraliza verticalmente */
     justify-content: center;                        /* Centraliza horizontalmente */
     font-size: 20px;
