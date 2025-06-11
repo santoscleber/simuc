@@ -40,6 +40,7 @@ a:hover{
 }
 
 .container {
+    margin-bottom: 10px;
     display: flex;          /* Alinha os itens em linha */
     flex-wrap: wrap;        /* Permite quebra de linha, se necessário */
     justify-content: space-between;            /* Espaçamento entre os blocos */
