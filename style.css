@@ -8,13 +8,17 @@ body{
     /*margin-left: 40px;
     margin-right: 40px;*/
     min-width: 320px;          /* Largura da área */
-    max-width: 1000px;
+    max-width: 1000px;         /* Largura da área */
     margin: auto;
 }
 :root{
     --verde1: rgb(35, 103, 59); --verde2: rgb(65, 150, 85); --verde3: rgb(66, 147, 73); --verde4: rgb(60, 147, 52);
     --azul1: rgb(37, 74, 145); --azul2: rgb(40, 118, 164); --azul3: rgb(57, 163, 185); --azul4: rgb(128, 194, 218);
     --preto1: rgb(34, 35, 36); --preto2: rgb(101, 101, 101); --preto3: rgb(136, 135, 135); --preto4: rgb(171, 169, 165);    
+}
+
+img{
+    width: 100%; /* Imagem se ajusta ao tamanho da tela */
 }
 
 h1{
