@@ -75,13 +75,12 @@ footer{
     background-color: var(--verde1);
 }
 
+/* Submenu oculto inicialmente *//* Submenu oculto inicialmente *//* Submenu oculto inicialmente *//* Submenu oculto inicialmente *//* Submenu oculto inicialmente */
 /* Estilo do dropdown */
 .dropdown {
     position: relative;
     display: inline-block;
 }
-
-/* Submenu oculto inicialmente *//* Submenu oculto inicialmente *//* Submenu oculto inicialmente *//* Submenu oculto inicialmente *//* Submenu oculto inicialmente */
 
 /* Submenu oculto inicialmente */
 .submenu {
@@ -108,6 +107,7 @@ footer{
     color: rgb(0, 0, 0);
     text-decoration: none;
     display: block;
+    text-decoration: underline; /* sublinhado ao passar o mouse */
 }
 
 .submenu ol:hover {
