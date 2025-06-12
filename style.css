@@ -74,39 +74,3 @@ a:hover{
 footer{
     background-color: var(--verde1);
 }
-
-
-
-/* Sub-Menus */
-.dropdown {
-    position: relative;
-}
-
-.submenu {
-    display: none;
-    position: absolute;
-    top: 45px; /* igual à altura da caixa */
-    left: 0;
-    background-color: var(--azul4);
-    width: 150px;
-    z-index: 10;
-    flex-direction: column;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-.submenu a {
-    padding: 10px;
-    display: block;
-    color: white;
-    text-decoration: none;
-    font-size: 14px;
-    text-align: left;
-}
-
-.submenu a:hover {
-    background-color: var(--azul3); /* ajuste conforme seu tema */
-}
-
-.dropdown:hover .submenu {
-    display: flex;
-}
