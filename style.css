@@ -47,7 +47,7 @@ a:hover{
 
 nav > a{
     color: var(--verde4);
-    padding: 10;
+    padding: 10px;
     text-decoration: none;
 }
 
