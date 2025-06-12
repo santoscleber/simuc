@@ -48,7 +48,7 @@ a:hover{
     display: flex;                            /* Alinha os itens em linha */
     flex-wrap: wrap;                          /* Permite quebra de linha, se necessário */
     justify-content: space-between;           /* Espaçamento entre os blocos */
-    padding: 0px;                            /* Espaço interno do container */
+    padding: 0px;                             /* Espaço interno do container */
 }
 
 .caixa {
