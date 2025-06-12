@@ -61,7 +61,7 @@ a:hover{
     background-color: var(--azul4);
     /*border: 1px solid rgb(0, 0, 0);*/
     height: 45px;
-    width: 200px;
+    width: 150px;
     text-align: center;
     border-radius: 0px;                             /* Borda arredondada opcional */
     cursor: pointer;                                /* Indica que pode ser clicado */
