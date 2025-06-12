@@ -51,6 +51,21 @@ a:hover{
     padding: 0px;                             /* Espaço interno do container */
 }
 
+.caixa {
+    display: flex;
+    margin-bottom: 0px;
+    align-items: center;                            /* Centraliza verticalmente */
+    justify-content: center;                        /* Centraliza horizontalmente */
+    font-size: 16px;
+    background-color: var(--azul4);
+    /*border: 1px solid rgb(0, 0, 0);*/
+    height: 45px;
+    width: 150px;
+    text-align: center;
+    border-radius: 0px;                             /* Borda arredondada opcional */
+    cursor: pointer;                                /* Indica que pode ser clicado */
+    transition: background-color 0.3s;
+}
 
 .caixa:hover {
     background-color: var(--azul3);        /* Efeito hover */
