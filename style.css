@@ -45,14 +45,6 @@ a:hover{
     text-decoration: underline;
 }
 
-nav > a{
-    color: var(--verde4);
-    padding: 10px;
-    text-decoration: none;
-}
-
-
-
 .container {
     display: flex;                            /* Alinha os itens em linha */
     flex-wrap: wrap;                          /* Permite quebra de linha, se necessário */
@@ -67,11 +59,11 @@ nav > a{
     justify-content: center;                        /* Centraliza horizontalmente */
     font-size: 20px;
     background-color: var(--azul4);
-    border: 1px solid rgb(0, 0, 0);
+    /*border: 1px solid rgb(0, 0, 0);*/
     height: 45px;
     width: 200px;
     text-align: center;
-    border-radius: 5px;                             /* Borda arredondada opcional */
+    border-radius: 0px;                             /* Borda arredondada opcional */
     cursor: pointer;                                /* Indica que pode ser clicado */
     transition: background-color 0.3s;
 }
