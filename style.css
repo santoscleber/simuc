@@ -54,7 +54,7 @@ a:hover{
 
 .caixa {
     display: flex;
-    margin-bottom: 10px;
+    margin-bottom: 0px;
     align-items: center;                            /* Centraliza verticalmente */
     justify-content: center;                        /* Centraliza horizontalmente */
     font-size: 16px;
