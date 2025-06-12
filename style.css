@@ -45,6 +45,14 @@ a:hover{
     text-decoration: underline;
 }
 
+nav > a{
+    color: var(--preto1);
+    padding: 10;
+    text-decoration: none;
+}
+
+
+
 .container {
     display: flex;                            /* Alinha os itens em linha */
     flex-wrap: wrap;                          /* Permite quebra de linha, se necessário */
