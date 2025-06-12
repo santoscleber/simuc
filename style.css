@@ -74,3 +74,44 @@ a:hover{
 footer{
     background-color: var(--verde1);
 }
+
+/* Estilo do dropdown */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+/* Submenu oculto inicialmente */
+.submenu {
+    display: none;
+    position: absolute;
+    top: 100%; /* Abaixo da caixa principal */
+    left: 0;
+    background-color: var(--azul4);
+    padding: 0;
+    z-index: 1000;
+    width: 150px;
+}
+
+/* Estilo dos itens do submenu */
+.submenu ol {
+    margin: 0;
+    padding: 10px;
+    list-style: none;
+    text-align: left;
+}
+
+.submenu ol a {
+    color: white;
+    text-decoration: none;
+    display: block;
+}
+
+.submenu ol:hover {
+    background-color: var(--azul3); /* Cor ao passar o mouse */
+}
+
+/* Mostra submenu ao passar o mouse */
+.dropdown:hover .submenu {
+    display: block;
+}
