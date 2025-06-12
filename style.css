@@ -88,11 +88,13 @@ footer{
     display: none;
     position: absolute;
     top: 100%; /* Abaixo da caixa principal */
-    left: 0;
+    left: 50%;
+    transform: translateX(-50%); /* Centraliza horizontalmente */
     background-color: var(--azul4);
     padding: 0;
     z-index: 1000;
-    width: 150px;
+    width: 180px;
+    text-align: center; /* Centraliza o texto */
 }
 
 /* Estilo dos itens do submenu */
