@@ -77,36 +77,35 @@
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
   const map = L.map('map', {
-    zoomControl: false // Desativa o zoom padrão para reposicionar
+    zoomControl: false
   }).setView([-5, -60], 4.5);
 
-  // Reposiciona os botões de zoom no canto inferior direito
   L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-  // Escala no canto inferior direito
   L.control.scale({ position: 'bottomright', metric: true, imperial: false }).addTo(map);
 
-  // Base de mapa
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  // GeoJSON
   fetch('../principal/base_cartografica/capitais_amazonia.geojson')
     .then(res => res.json())
     .then(data => {
       L.geoJSON(data, {
         onEachFeature: function (feature, layer) {
           const nome = feature.properties.NM_MUN || "Capital";
+          const nomeLower = nome.toLowerCase();
 
-          if (nome.toLowerCase() === "belém" || nome.toLowerCase() === "belem") {
-            layer.bindPopup(`
-              <strong>${nome}</strong><br>
-              <a href="../principal/imagens/listras_belem.png" target="_blank">Stripes Warming</a>
-            `);
-          } else {
-            layer.bindPopup(`<strong>${nome}</strong>`);
+          let popupContent = `<strong>${nome}</strong>`;
+
+          if (nomeLower === "belém" || nomeLower === "belem") {
+            popupContent += `<br><a href="../principal/imagens/listras_belem.png" target="_blank">Stripes Warming - Belém</a>`;
+          } else if (nomeLower === "macapá" || nomeLower === "macapa") {
+            popupContent += `<br><a href="../principal/imagens/listras_macapa.png" target="_blank">Stripes Warming - Macapá</a>`;
+          } else if (nomeLower === "manaus") {
+            popupContent += `<br><a href="../principal/imagens/listras_manaus.png" target="_blank">Stripes Warming - Manaus</a>`;
           }
+
+          layer.bindPopup(popupContent);
         },
         pointToLayer: function (feature, latlng) {
           return L.circleMarker(latlng, {
