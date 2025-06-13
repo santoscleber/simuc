@@ -3,31 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <title>Mapa com OpenLayers</title>
-
-  <!-- CSS do OpenLayers -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css" />
-
   <style>
-    body, html { margin: 0; padding: 0; }
-    #map { width: 100%; height: 100vh; }
+    html, body {
+      margin: 0;
+      padding: 0;
+    }
+    #map {
+      width: 100%;
+      height: 100vh;
+    }
   </style>
 </head>
 <body>
 
   <div id="map"></div>
 
-  <!-- JS do OpenLayers -->
   <script src="https://cdn.jsdelivr.net/npm/ol@latest/ol.js"></script>
   <script>
     const map = new ol.Map({
-      target: 'map', // div onde o mapa será carregado
+      target: 'map',
       layers: [
         new ol.layer.Tile({
-          source: new ol.source.OSM() // Fonte: OpenStreetMap
+          source: new ol.source.OSM()
         })
       ],
       view: new ol.View({
-        center: ol.proj.fromLonLat([-47.9292, -15.7801]), // Brasília (long, lat)
+        center: ol.proj.fromLonLat([-47.9292, -15.7801]), // Brasília
         zoom: 5
       })
     });
