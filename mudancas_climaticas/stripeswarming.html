@@ -74,16 +74,16 @@
     zoomControl: false
   }).setView([-5, -60], 4.5);
 
-  // Adiciona o controle de zoom no canto inferior direito
-  L.control.zoom({
-    position: 'bottomright'
-  }).addTo(map);
-
   // Adiciona a escala no canto inferior direito
   L.control.scale({
     position: 'bottomright',
     metric: true,
     imperial: false
+  }).addTo(map);
+
+  // Adiciona o controle de zoom no canto inferior direito
+  L.control.zoom({
+    position: 'bottomright'
   }).addTo(map);
 
   // Camada base
