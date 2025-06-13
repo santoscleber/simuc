@@ -52,6 +52,30 @@
       font-size: 16px;
       color: #000000;
     }
+
+    .leaflet-bottom.leaflet-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 5px;
+    }
+
+    /* Estilo de barra de escala inspirada na imagem */
+    .leaflet-control-scale-line {
+      background: repeating-linear-gradient(
+        to right,
+        #000000 0,
+        #000000 25%,
+        #ffffff 25%,
+        #ffffff 50%
+      );
+      border: 1px solid #000;
+      color: #000;
+      font-weight: bold;
+      text-align: center;
+      height: 20px;
+      line-height: 20px;
+    }
   </style>
 </head>
 <body>
@@ -69,36 +93,37 @@
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-  // Cria o mapa SEM o controle de zoom padrão
   const map = L.map('map', {
-    zoomControl: false
+    zoomControl: false // Desativa o zoom padrão para reposicionar
   }).setView([-5, -60], 4.5);
 
-  // Adiciona a escala no canto inferior direito
-  L.control.scale({
-    position: 'bottomright',
-    metric: true,
-    imperial: false
-  }).addTo(map);
+  // Reposiciona os botões de zoom no canto inferior direito
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-  // Adiciona o controle de zoom no canto inferior direito
-  L.control.zoom({
-    position: 'bottomright'
-  }).addTo(map);
+  // Escala no canto inferior direito
+  L.control.scale({ position: 'bottomright', metric: true, imperial: false }).addTo(map);
 
-  // Camada base
+  // Base de mapa
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  // Adiciona os pontos do GeoJSON
+  // GeoJSON
   fetch('../principal/base_cartografica/capitais_amazonia.geojson')
     .then(res => res.json())
     .then(data => {
       L.geoJSON(data, {
         onEachFeature: function (feature, layer) {
           const nome = feature.properties.NM_MUN || "Capital";
-          layer.bindPopup(`<strong>${nome}</strong>`);
+
+          if (nome.toLowerCase() === "belém" || nome.toLowerCase() === "belem") {
+            layer.bindPopup(`
+              <strong>${nome}</strong><br>
+              <a href="../principal/imagens/MannKendall_Temperatura_mensal.png" target="_blank">Abrir imagem</a>
+            `);
+          } else {
+            layer.bindPopup(`<strong>${nome}</strong>`);
+          }
         },
         pointToLayer: function (feature, latlng) {
           return L.circleMarker(latlng, {
