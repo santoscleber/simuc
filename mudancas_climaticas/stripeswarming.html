@@ -1,13 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <title>Mapa Interativo - Cidades</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    #map { height: 100vh; width: 100%; }
+  </style>
 </head>
 <body>
-    <p>
-        Olá Mundo!
-    </p>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+  const map = L.map('map').setView([-15.78, -47.93], 5); // Centro do Brasil
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  // Carregar pontos (GeoJSON com cidades)
+  fetch('cidades.geojson')
+    .then(res => res.json())
+    .then(data => {
+      L.geoJSON(data, {
+        onEachFeature: function (feature, layer) {
+          // Supondo que o GeoJSON tenha campo "cidade" e "url_dados"
+          const nome = feature.properties.cidade;
+          const link = feature.properties.url_dados;
+
+          layer.bindPopup(`
+            <strong>${nome}</strong><br>
+            <a href="${link}" download target="_blank">📥 Baixar dados</a>
+          `);
+        }
+      }).addTo(map);
+    });
+</script>
+
 </body>
 </html>
