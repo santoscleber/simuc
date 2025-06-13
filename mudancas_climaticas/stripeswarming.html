@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Stripes Warming</title>
+  <title>Capitais da Amazônia</title>
   <link rel="shortcut icon" href="../principal/imagens/logo.ico" type="image/x-icon">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
@@ -15,22 +15,18 @@
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-  // Inicializa o mapa centrado na região amazônica
   const map = L.map('map').setView([-5, -60], 4.5);
 
-  // Adiciona a camada base (OpenStreetMap)
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  // Carrega o GeoJSON com as capitais da Amazônia
   fetch('capitais_amazonia.geojson')
     .then(res => res.json())
     .then(data => {
       L.geoJSON(data, {
         onEachFeature: function (feature, layer) {
-          const props = feature.properties;
-          const nome = props.nome || props.cidade || "Capital";
+          const nome = feature.properties.NM_MUN || "Capital";
           layer.bindPopup(`<strong>${nome}</strong>`);
         },
         pointToLayer: function (feature, latlng) {
