@@ -22,14 +22,14 @@
   }).addTo(map);
 
   // Carregar pontos (GeoJSON com cidades)
-  fetch('cidades.geojson')
+  fetch('../principal/base_cartografica/capitais_amazonia.json')
     .then(res => res.json())
     .then(data => {
       L.geoJSON(data, {
         onEachFeature: function (feature, layer) {
           // Supondo que o GeoJSON tenha campo "cidade" e "url_dados"
-          const nome = feature.properties.cidade;
-          const link = feature.properties.url_dados;
+          const nome = feature.properties.cidade || feature.properties.nome || "Capital";
+          const link = feature.properties.url_dados || "#";
 
           layer.bindPopup(`
             <strong>${nome}</strong><br>
