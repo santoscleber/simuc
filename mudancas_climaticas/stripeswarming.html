@@ -69,12 +69,29 @@
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-  const map = L.map('map').setView([-5, -60], 4.5);
+  // Cria o mapa SEM o controle de zoom padrão
+  const map = L.map('map', {
+    zoomControl: false
+  }).setView([-5, -60], 4.5);
 
+  // Adiciona o controle de zoom no canto inferior direito
+  L.control.zoom({
+    position: 'bottomright'
+  }).addTo(map);
+
+  // Adiciona a escala no canto inferior direito
+  L.control.scale({
+    position: 'bottomright',
+    metric: true,
+    imperial: false
+  }).addTo(map);
+
+  // Camada base
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
+  // Adiciona os pontos do GeoJSON
   fetch('../principal/base_cartografica/capitais_amazonia.geojson')
     .then(res => res.json())
     .then(data => {
