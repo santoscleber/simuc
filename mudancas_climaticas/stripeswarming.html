@@ -15,26 +15,33 @@
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-  const map = L.map('map').setView([-14, -57], 4.5);
+  // Inicializa o mapa centrado na região amazônica
+  const map = L.map('map').setView([-5, -60], 4.5);
 
+  // Adiciona a camada base (OpenStreetMap)
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  // Carregar pontos (GeoJSON com cidades)
-  fetch('../principal/base_cartografica/capitais_amazonia.json')
+  // Carrega o GeoJSON com as capitais da Amazônia
+  fetch('capitais_amazonia.geojson')
     .then(res => res.json())
     .then(data => {
       L.geoJSON(data, {
         onEachFeature: function (feature, layer) {
-          // Supondo que o GeoJSON tenha campo "cidade" e "url_dados"
-          const nome = feature.properties.cidade || feature.properties.nome || "Capital";
-          const link = feature.properties.url_dados || "#";
-
-          layer.bindPopup(`
-            <strong>${nome}</strong><br>
-            <a href="${link}" download target="_blank">📥 Baixar dados</a>
-          `);
+          const props = feature.properties;
+          const nome = props.nome || props.cidade || "Capital";
+          layer.bindPopup(`<strong>${nome}</strong>`);
+        },
+        pointToLayer: function (feature, latlng) {
+          return L.circleMarker(latlng, {
+            radius: 6,
+            fillColor: "#008000",
+            color: "#000",
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+          });
         }
       }).addTo(map);
     });
