@@ -53,23 +53,42 @@
       color: #000000;
     }
 
-    /* Estilizando a barra de escala */
-    .leaflet-control-scale {
-      background: rgba(255, 255, 255, 0.85);
-      border: 2px solid #444;
-      border-radius: 8px;
-      padding: 4px 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-      font-family: 'Arial', sans-serif;
+    /* Estilo da barra de escala personalizada */
+    .custom-scale {
+      position: absolute;
+      bottom: 20px;
+      right: 10px;
+      font-family: Arial, sans-serif;
       font-size: 12px;
-      font-weight: bold;
-      color: #000;
+      text-align: center;
+      z-index: 1000;
     }
 
-.leaflet-control-scale-line {
-  border-top: 2px solid #000;
-}
+    .scale-bar {
+      display: flex;
+      height: 20px;
+      width: 200px;
+      border: 1px solid #000;
+    }
 
+    .scale-segment {
+      flex: 1;
+      height: 100%;
+    }
+
+    .scale-segment:nth-child(odd) {
+      background-color: #000;
+    }
+
+    .scale-segment:nth-child(even) {
+      background-color: #fff;
+    }
+
+    .scale-labels {
+      display: flex;
+      justify-content: space-between;
+      padding-top: 2px;
+    }
   </style>
 </head>
 <body>
@@ -85,31 +104,37 @@
   </div>
 </div>
 
+<!-- Barra de escala estilo zebra -->
+<div class="custom-scale">
+  <div class="scale-bar">
+    <div class="scale-segment"></div>
+    <div class="scale-segment"></div>
+    <div class="scale-segment"></div>
+    <div class="scale-segment"></div>
+  </div>
+  <div class="scale-labels">
+    <span>0</span>
+    <span>50</span>
+    <span>100</span>
+    <span>150</span>
+  </div>
+</div>
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-  // Cria o mapa SEM o controle de zoom padrão
   const map = L.map('map', {
-    zoomControl: false
+    zoomControl: false // Desativa o controle padrão (superior esquerdo)
   }).setView([-5, -60], 4.5);
 
-  // Adiciona a escala no canto inferior direito
-  L.control.scale({
-    position: 'bottomright',
-    metric: true,
-    imperial: false
-  }).addTo(map);
-
   // Adiciona o controle de zoom no canto inferior direito
-  L.control.zoom({
-    position: 'bottomright'
-  }).addTo(map);
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
 
   // Camada base
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  // Adiciona os pontos do GeoJSON
+  // Carrega GeoJSON
   fetch('../principal/base_cartografica/capitais_amazonia.geojson')
     .then(res => res.json())
     .then(data => {
