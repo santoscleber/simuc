@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Anomalia de Temperatura - Belém</title>
-  <link rel="shortcut icon" href="../principal/imagens/logo.ico" type="image/x-icon">
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
@@ -11,7 +10,6 @@
   <div id="chart" style="width: 100%; height: 600px;"></div>
 
   <script>
-    // Função para gerar a cor de cada barra com base na anomalia
     function getColor(value, min, max) {
       const colors = [
         '#08306b', '#08519c', '#2171b5', '#4292c6',
@@ -41,13 +39,17 @@
         const minVal = Math.min(...anomalies);
         const maxVal = Math.max(...anomalies);
         const colors = anomalies.map(a => getColor(a, minVal, maxVal));
+        const hoverText = years.map((year, i) =>
+          `Ano: ${year}<br>Anomalia: ${anomalies[i].toFixed(2)} °C`
+        );
 
         const trace = {
           x: years,
           y: Array(years.length).fill(1),
           type: 'bar',
           marker: { color: colors },
-          hoverinfo: 'x+y'
+          text: hoverText,
+          hoverinfo: 'text'
         };
 
         const layout = {
