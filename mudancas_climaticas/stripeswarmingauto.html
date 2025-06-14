@@ -83,7 +83,7 @@
         Plotly.newPlot('chart', [trace], layout);
 
         // LEGEND: heatmap de uma linha com título acima e valores abaixo
-        const colorbarValues = Array.from({length: 200}, (_, i) =>
+        const colorbarValues = Array.from({length: 300}, (_, i) =>
           minVal + i * (maxVal - minVal) / 299
         );
 
@@ -104,7 +104,7 @@
 
         const layoutColorbar = {
           margin: { t: 40, b: 50, l: 40, r: 40 },
-          height: 200, // dobrado em relação ao original
+          height: 130, // altura reduzida para barra ficar proporcional
           autosize: true,
           xaxis: { visible: false },
           yaxis: { visible: false },
