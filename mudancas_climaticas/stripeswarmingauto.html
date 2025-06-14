@@ -5,33 +5,13 @@
   <title>Anomalia de Temperatura - Belém</title>
   <link rel="shortcut icon" href="../principal/imagens/logo.ico" type="image/x-icon">
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-  <style>
-    #logo1, #logo2 {
-      position: absolute;
-      z-index: 10;
-    }
-    #logo1 {
-      left: 30px;
-      top: 30px;
-      width: 120px;
-    }
-    #logo2 {
-      right: 30px;
-      top: 30px;
-      width: 250px;
-    }
-  </style>
 </head>
 <body>
-  <h2>Mudança na temperatura do ar em Belém - PA (1970 - 2024)</h2>
+  <h2 style="text-align: center;">Mudança na temperatura do ar em Belém - PA (1970 - 2024)</h2>
   <div id="chart" style="width: 100%; height: 600px;"></div>
 
-  <!-- Logomarcas -->
-  <img id="logo1" src="Logo_Censipam_Pos.png" alt="Censipam">
-  <img id="logo2" src="Logo_Era5.png" alt="ERA5">
-
   <script>
-    // Função para converter um valor numérico em cor usando uma escala
+    // Função para gerar a cor de cada barra com base na anomalia
     function getColor(value, min, max) {
       const colors = [
         '#08306b', '#08519c', '#2171b5', '#4292c6',
@@ -39,35 +19,34 @@
         '#fee0d2', '#fcbba1', '#fc9272', '#fb6a4a',
         '#ef3b2c', '#cb181d', '#a50f15', '#67000d'
       ];
-      const index = Math.floor((value - min) / (max - min) * (colors.length - 1));
-      return colors[Math.max(0, Math.min(colors.length - 1, index))];
+      const idx = Math.floor((value - min) / (max - min) * (colors.length - 1));
+      return colors[Math.max(0, Math.min(colors.length - 1, idx))];
     }
 
     fetch("ERA5_temperature_2m_annual_belem.csv")
       .then(response => response.text())
       .then(csv => {
-        const rows = csv.split("\n").slice(1);
+        const rows = csv.trim().split("\n").slice(1);
         const years = [];
         const anomalies = [];
-        for (let row of rows) {
-          const [time, anomaly] = row.split(",");
-          if (time && anomaly) {
-            years.push(parseInt(time));
+
+        for (const row of rows) {
+          const [year, anomaly] = row.split(",");
+          if (year && anomaly) {
+            years.push(parseInt(year));
             anomalies.push(parseFloat(anomaly));
           }
         }
 
-        const minAnomaly = Math.min(...anomalies);
-        const maxAnomaly = Math.max(...anomalies);
-        const colors = anomalies.map(val => getColor(val, minAnomaly, maxAnomaly));
+        const minVal = Math.min(...anomalies);
+        const maxVal = Math.max(...anomalies);
+        const colors = anomalies.map(a => getColor(a, minVal, maxVal));
 
         const trace = {
           x: years,
           y: Array(years.length).fill(1),
           type: 'bar',
-          marker: {
-            color: colors
-          },
+          marker: { color: colors },
           hoverinfo: 'x+y'
         };
 
@@ -82,16 +61,16 @@
             range: [0, 1]
           },
           showlegend: false,
-          margin: { l: 40, r: 80, t: 40, b: 100 },
+          margin: { l: 40, r: 60, t: 20, b: 100 },
           annotations: [{
             xref: 'paper',
             yref: 'paper',
             x: 0,
-            y: -0.3,
+            y: -0.25,
             showarrow: false,
+            align: 'left',
             text: "Elaborado por: Cleber Assis dos Santos<br>Média da temperatura do ar entre os anos de 1971 e 2000 (26.4°C)",
-            font: { size: 10, italic: true },
-            align: 'left'
+            font: { size: 10, color: 'gray' }
           }],
           plot_bgcolor: 'white',
           paper_bgcolor: 'white'
