@@ -8,7 +8,7 @@
 <body>
   <h2 style="text-align: center;">Mudança na temperatura do ar em Belém - PA (1970 - 2024)</h2>
   <div id="chart" style="width: 100%; height: 600px;"></div>
-  <div id="colorbar" style="width: 100%; height: 120px; margin-top: -30px;"></div>
+  <div id="colorbar" style="width: 100%; height: 150px; margin-top: -30px;"></div>
 
   <script>
     function getColor(value, min, max) {
@@ -70,7 +70,7 @@
             xref: 'paper',
             yref: 'paper',
             x: 0,
-            y: -0.25,
+            y: -0.22,
             showarrow: false,
             align: 'left',
             text: "Elaborado por: Cleber Assis dos Santos<br>Média da temperatura do ar entre os anos de 1971 e 2000 (26.4°C)",
@@ -82,10 +82,11 @@
 
         Plotly.newPlot('chart', [trace], layout);
 
-        // LEGEND: heatmap de uma linha
+        // LEGEND: heatmap de uma linha com título acima e valores abaixo
         const colorbarValues = Array.from({length: 300}, (_, i) =>
           minVal + i * (maxVal - minVal) / 299
         );
+
         const heatmapTrace = {
           z: [colorbarValues],
           type: 'heatmap',
@@ -97,59 +98,61 @@
             [0.8, '#ef3b2c'], [0.866, '#cb181d'], [0.933, '#a50f15'],
             [1.0, '#67000d']
           ],
-          showscale: false
+          showscale: false,
+          hoverinfo: 'none'
         };
 
         const layoutColorbar = {
-          margin: { t: 0, b: 0, l: 60, r: 60 },
+          margin: { t: 40, b: 50, l: 50, r: 50 },
+          height: 100,
+          width: 600,
           xaxis: { visible: false },
           yaxis: { visible: false },
-          height: 60,
           annotations: [
             {
+              text: 'Anomalia da Temperatura (°C)',
               xref: 'paper',
               yref: 'paper',
               x: 0.5,
-              y: 1.3,
-              text: 'Anomalia da Temperatura (°C)',
+              y: 1.2,
               showarrow: false,
-              font: { size: 13 },
+              font: { size: 14 },
               xanchor: 'center'
             },
             {
+              text: '-1.5°C',
               xref: 'paper',
               yref: 'paper',
               x: 0,
-              y: -0.3,
-              text: '-1.5°C',
+              y: -0.2,
               showarrow: false,
-              font: { size: 11 },
+              font: { size: 12 },
               xanchor: 'center'
             },
             {
+              text: '0°C',
               xref: 'paper',
               yref: 'paper',
               x: 0.5,
-              y: -0.3,
-              text: '0°C',
+              y: -0.2,
               showarrow: false,
-              font: { size: 11 },
+              font: { size: 12 },
               xanchor: 'center'
             },
             {
+              text: '+1.5°C',
               xref: 'paper',
               yref: 'paper',
               x: 1,
-              y: -0.3,
-              text: '+1.5°C',
+              y: -0.2,
               showarrow: false,
-              font: { size: 11 },
+              font: { size: 12 },
               xanchor: 'center'
             }
           ]
         };
 
-        Plotly.newPlot('colorbar', [heatmapTrace], layoutColorbar, {displayModeBar: false});
+        Plotly.newPlot('colorbar', [heatmapTrace], layoutColorbar, { displayModeBar: false });
       });
   </script>
 </body>
