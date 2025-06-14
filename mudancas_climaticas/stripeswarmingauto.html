@@ -8,6 +8,7 @@
 <body>
   <h2 style="text-align: center;">Mudança na temperatura do ar em Belém - PA (1970 - 2024)</h2>
   <div id="chart" style="width: 100%; height: 600px;"></div>
+  <div id="colorbar" style="width: 100%; height: 100px; margin-top: -30px;"></div>
 
   <script>
     function getColor(value, min, max) {
@@ -36,8 +37,8 @@
           }
         }
 
-        const minVal = Math.min(...anomalies);
-        const maxVal = Math.max(...anomalies);
+        const minVal = -1.5;  // fixo para barra de cores
+        const maxVal = 1.5;
         const colors = anomalies.map(a => getColor(a, minVal, maxVal));
         const hoverText = years.map((year, i) =>
           `Ano: ${year}<br>Anomalia: ${anomalies[i].toFixed(2)} °C`
@@ -62,7 +63,7 @@
             visible: false,
             range: [0, 1]
           },
-          bargap: 0,  // <- Remove o espaço entre barras
+          bargap: 0,
           showlegend: false,
           margin: { l: 40, r: 60, t: 20, b: 100 },
           annotations: [{
@@ -80,6 +81,44 @@
         };
 
         Plotly.newPlot('chart', [trace], layout);
+
+        // Gráfico da barra de cores horizontal (heatmap de uma linha)
+        const colorbarValues = Array.from({length: 300}, (_, i) =>
+          minVal + i * (maxVal - minVal) / 299
+        );
+        const heatmapTrace = {
+          z: [colorbarValues],
+          type: 'heatmap',
+          colorscale: [
+            [0.0, '#08306b'], [0.066, '#08519c'], [0.133, '#2171b5'],
+            [0.2, '#4292c6'], [0.266, '#6baed6'], [0.333, '#9ecae1'],
+            [0.4, '#c6dbef'], [0.466, '#deebf7'], [0.533, '#fee0d2'],
+            [0.6, '#fcbba1'], [0.666, '#fc9272'], [0.733, '#fb6a4a'],
+            [0.8, '#ef3b2c'], [0.866, '#cb181d'], [0.933, '#a50f15'],
+            [1.0, '#67000d']
+          ],
+          showscale: true,
+          colorbar: {
+            orientation: 'h',
+            thickness: 20,
+            tickvals: [-1.5, -1, -0.5, 0, 0.5, 1, 1.5],
+            ticktext: ['-1.5°C', '-1°C', '-0.5°C', '0°C', '0.5°C', '1°C', '1.5°C'],
+            title: {
+              text: 'Anomalia da Temperatura (°C)',
+              side: 'top',
+              font: { size: 12 }
+            }
+          }
+        };
+
+        const layoutColorbar = {
+          margin: { t: 40, b: 0, l: 50, r: 50 },
+          xaxis: { visible: false },
+          yaxis: { visible: false },
+          height: 100
+        };
+
+        Plotly.newPlot('colorbar', [heatmapTrace], layoutColorbar, {displayModeBar: false});
       });
   </script>
 </body>
