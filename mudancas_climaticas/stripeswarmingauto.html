@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Anomalia de Temperatura - Belém</title>
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
@@ -103,9 +103,9 @@
         };
 
         const layoutColorbar = {
-          margin: { t: 40, b: 50, l: 50, r: 50 },
+          margin: { t: 40, b: 50, l: 40, r: 40 },
           height: 100,
-          width: 600,
+          autosize: true,
           xaxis: { visible: false },
           yaxis: { visible: false },
           annotations: [
@@ -152,7 +152,10 @@
           ]
         };
 
-        Plotly.newPlot('colorbar', [heatmapTrace], layoutColorbar, { displayModeBar: false });
+        Plotly.newPlot('colorbar', [heatmapTrace], layoutColorbar, {
+          displayModeBar: false,
+          responsive: true
+        });
       });
   </script>
 </body>
