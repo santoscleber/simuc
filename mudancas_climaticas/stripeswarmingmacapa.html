@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Stripes Warming Unificado</title>
+  <link rel="shortcut icon" href="../principal/imagens/logo.ico" type="image/x-icon">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+  <h2 style="text-align: center;">Mudança na temperatura do ar em Belém - PA (1970 - 2024)</h2>
+  <div id="chart"></div>
+
+  <script>
+    function getColor(value, min, max) {
+      const colors = [
+        '#08306b', '#08519c', '#2171b5', '#4292c6',
+        '#6baed6', '#9ecae1', '#c6dbef', '#deebf7',
+        '#fee0d2', '#fcbba1', '#fc9272', '#fb6a4a',
+        '#ef3b2c', '#cb181d', '#a50f15', '#67000d'
+      ];
+      const idx = Math.floor((value - min) / (max - min) * (colors.length - 1));
+      return colors[Math.max(0, Math.min(colors.length - 1, idx))];
+    }
+
+    fetch("../principal/base_de_dados/ERA5_temperature_2m_annual_macapa.csv")
+      .then(response => response.text())
+      .then(csv => {
+        const rows = csv.trim().split("\n").slice(1);
+        const years = [], anomalies = [];
+        for (const row of rows) {
+          const [year, anomaly] = row.split(",");
+          if (year && anomaly) {
+            years.push(parseInt(year));
+            anomalies.push(parseFloat(anomaly));
+          }
+        }
+
+        const minVal = -1.5, maxVal = 1.5;
+        const colors = anomalies.map(a => getColor(a, minVal, maxVal));
+        const hoverText = years.map((year, i) =>
+          `Ano: ${year}<br>Anomalia: ${anomalies[i].toFixed(2)} °C`
+        );
+
+        // Heatmap
+        const colorbarValues = Array.from({ length: 300 }, (_, i) =>
+          minVal + i * (maxVal - minVal) / 299
+        );
+        const start = years[0] - 0.5;
+        const end = years[years.length - 1] + 0.5;
+        const barX = Array.from({ length: 300 }, (_, i) =>
+          start + i * (end - start) / 299
+        );
+
+        const traceStripes = {
+          x: years,
+          y: Array(years.length).fill(5),
+          type: 'bar',
+          marker: { color: colors },
+          text: hoverText,
+          hoverinfo: 'text',
+          xaxis: 'x',
+          yaxis: 'y1'
+        };
+
+        const traceColorbar = {
+          z: [colorbarValues],
+          x: barX,
+          type: 'heatmap',
+          colorscale: [
+            [0.0, '#08306b'], [0.066, '#08519c'], [0.133, '#2171b5'],
+            [0.2, '#4292c6'], [0.266, '#6baed6'], [0.333, '#9ecae1'],
+            [0.4, '#c6dbef'], [0.466, '#deebf7'], [0.533, '#fee0d2'],
+            [0.6, '#fcbba1'], [0.666, '#fc9272'], [0.733, '#fb6a4a'],
+            [0.8, '#ef3b2c'], [0.866, '#cb181d'], [0.933, '#a50f15'],
+            [1.0, '#67000d']
+          ],
+          showscale: false,
+          hoverinfo: 'none',
+          xaxis: 'x',
+          yaxis: 'y2'
+        };
+
+        const layout = {
+          height: 700,
+          margin: { l: 40, r: 60, t: 0, b: 80 },
+          bargap: 0,  // 🔧 REMOVE ESPAÇO ENTRE BARRAS
+          xaxis: {
+            title: 'Ano',
+            tickvals: years.filter(y => y % 10 === 0),
+            anchor: 'y1'
+          },
+          yaxis: {
+            domain: [0.3, 1],
+            showticklabels: false
+          },
+          yaxis2: {
+            domain: [0.06, 0.13],  // Barra de anomalia no eixo Y
+            ticks: '',              // Remove os traços
+            showticklabels: false
+          },
+          annotations: [
+            {
+              text: 'Anomalia da Temperatura (°C)',
+              xref: 'paper',
+              yref: 'paper',
+              x: 0.5,
+              y: 0.13,
+              showarrow: false,
+              font: { size: 14 },
+              xanchor: 'center'
+            },
+            {
+              text: '-1.5°C',
+              xref: 'paper',
+              yref: 'paper',
+              x: 0,
+              y: 0.03,
+              showarrow: false,
+              font: { size: 12 },
+              xanchor: 'left'
+            },
+            {
+              text: '0°C',
+              xref: 'paper',
+              yref: 'paper',
+              x: 0.5,
+              y: 0.03,
+              showarrow: false,
+              font: { size: 12 },
+              xanchor: 'center'
+            },
+            {
+              text: '+1.5°C',
+              xref: 'paper',
+              yref: 'paper',
+              x: 1,
+              y: 0.03,
+              showarrow: false,
+              font: { size: 12 },
+              xanchor: 'right'
+            },
+            {
+              xref: 'paper',
+              yref: 'paper',
+              x: 0.001,
+              y: 0.3,
+              showarrow: false,
+              align: 'left',
+              text: "Elaborado por: Cleber Assis dos Santos<br>Média da temperatura do ar entre 1971 e 2000",
+              font: { size: 10, color: 'gray' }
+            }
+          ],
+          plot_bgcolor: 'white',
+          paper_bgcolor: 'white'
+        };
+
+        Plotly.newPlot('chart', [traceStripes, traceColorbar], layout);
+      });
+  </script>
+</body>
+</html>
