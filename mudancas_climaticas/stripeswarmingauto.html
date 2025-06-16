@@ -83,15 +83,18 @@
 
         Plotly.newPlot('chart', [trace], layout);
 
-        // LEGEND
-        const colorbarValues = Array.from({ length: 300 }, (_, i) =>
-          minVal + i * (maxVal - minVal) / 299
+        // LEGEND - barra com duas linhas idênticas para evitar colapso visual
+        const colorbarValues = Array.from({ length: years.length }, (_, i) =>
+          minVal + i * (maxVal - minVal) / (years.length - 1)
         );
+        const z = [colorbarValues, colorbarValues];
 
         const heatmapTrace = {
-          z: [colorbarValues],
+          z: z,
           x: years,
           type: 'heatmap',
+          xgap: 0,
+          ygap: 0,
           colorscale: [
             [0.0, '#08306b'], [0.066, '#08519c'], [0.133, '#2171b5'],
             [0.2, '#4292c6'], [0.266, '#6baed6'], [0.333, '#9ecae1'],
@@ -108,15 +111,22 @@
           margin: { t: 40, b: 50, l: 40, r: 40 },
           height: 130,
           autosize: true,
-          xaxis: { visible: false },
-          yaxis: { visible: false },
+          xaxis: {
+            type: 'category',
+            tickvals: years,
+            range: [years[0] - 0.5, years[years.length - 1] + 0.5],
+            visible: false
+          },
+          yaxis: {
+            visible: false
+          },
           annotations: [
             {
               text: 'Anomalia da Temperatura (°C)',
               xref: 'paper',
               yref: 'paper',
               x: 0.5,
-              y: 1.5,  // Título mais acima
+              y: 1.5,
               showarrow: false,
               font: { size: 14 },
               xanchor: 'center'
@@ -126,7 +136,7 @@
               xref: 'paper',
               yref: 'paper',
               x: 0,
-              y: -0.4,  // Valor mais abaixo
+              y: -0.4,
               showarrow: false,
               font: { size: 12 },
               xanchor: 'center'
