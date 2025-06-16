@@ -41,11 +41,10 @@
           `Ano: ${year}<br>Anomalia: ${anomalies[i].toFixed(2)} °C`
         );
 
-        // Geração do heatmap 1D (linha de cores)
+        // Heatmap
         const colorbarValues = Array.from({ length: 300 }, (_, i) =>
           minVal + i * (maxVal - minVal) / 299
         );
-
         const start = years[0] - 0.5;
         const end = years[years.length - 1] + 0.5;
         const barX = Array.from({ length: 300 }, (_, i) =>
@@ -60,7 +59,7 @@
           text: hoverText,
           hoverinfo: 'text',
           xaxis: 'x',
-          yaxis: 'y1',
+          yaxis: 'y1'
         };
 
         const traceColorbar = {
@@ -84,6 +83,7 @@
         const layout = {
           height: 700,
           margin: { l: 40, r: 60, t: 40, b: 80 },
+          bargap: 0,  // 🔧 REMOVE ESPAÇO ENTRE BARRAS
           xaxis: {
             title: 'Ano',
             tickvals: years.filter(y => y % 10 === 0),
