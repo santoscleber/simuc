@@ -1,0 +1,41 @@
+<!-- ===================== mapa.html ===================== -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Capitais da Amazônia</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    #map {
+      height: 100vh;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script>
+    const map = L.map('map').setView([-2.5, -55], 5.2);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    const capitais = [
+      { nome: "Belém", cidade: "belem", lat: -1.455, lon: -48.502 },
+      { nome: "Macapá", cidade: "macapa", lat: 0.034, lon: -51.069 },
+      { nome: "Manaus", cidade: "manaus", lat: -3.118, lon: -60.021 },
+      { nome: "Palmas", cidade: "palmas", lat: -10.184, lon: -48.333 }
+    ];
+
+    capitais.forEach(capital => {
+      const marker = L.marker([capital.lat, capital.lon]).addTo(map);
+      marker.bindPopup(
+        `<b>${capital.nome}</b><br><a href="grafico_stripes.html?cidade=${capital.cidade}" target="_blank">Ver gráfico</a>`
+      );
+    });
+  </script>
+</body>
+</html>
