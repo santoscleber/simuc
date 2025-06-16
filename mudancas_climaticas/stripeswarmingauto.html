@@ -108,12 +108,7 @@
           margin: { t: 40, b: 50, l: 40, r: 40 },
           height: 130,
           autosize: true,
-          xaxis: {
-            range: [years[0], years[years.length - 1]], // Define o range inicial do eixo X
-            showgrid: false,
-            zeroline: false,
-            visible: false
-          },
+          xaxis: { visible: false },
           yaxis: { visible: false },
           annotations: [
             {
@@ -128,19 +123,19 @@
             },
             {
               text: '-1.5°C',
-              xref: 'x',
+              xref: 'paper',
               yref: 'paper',
-              x: years[0],
+              x: 0,
               y: -0.4,  // Valor mais abaixo
               showarrow: false,
               font: { size: 12 },
-              xanchor: 'left'
+              xanchor: 'center'
             },
             {
               text: '0°C',
-              xref: 'x',
+              xref: 'paper',
               yref: 'paper',
-              x: years[Math.floor(years.length / 2)],
+              x: 0.5,
               y: -0.4,
               showarrow: false,
               font: { size: 12 },
@@ -148,13 +143,13 @@
             },
             {
               text: '+1.5°C',
-              xref: 'x',
+              xref: 'paper',
               yref: 'paper',
-              x: years[years.length - 1],
+              x: 1,
               y: -0.4,
               showarrow: false,
               font: { size: 12 },
-              xanchor: 'right'
+              xanchor: 'center'
             }
           ]
         };
@@ -162,15 +157,6 @@
         Plotly.newPlot('colorbar', [heatmapTrace], layoutColorbar, {
           displayModeBar: false,
           responsive: true
-        });
-
-        // Sincronizar o zoom e o pan
-        document.getElementById('chart').on('plotly_relayout', function(eventdata) {
-          if (eventdata['xaxis.range[0]'] !== undefined && eventdata['xaxis.range[1]'] !== undefined) {
-            Plotly.relayout('colorbar', {
-              'xaxis.range': [eventdata['xaxis.range[0]'], eventdata['xaxis.range[1]']]
-            });
-          }
         });
       });
   </script>
