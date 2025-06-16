@@ -9,7 +9,7 @@
 <body>
   <h2 style="text-align: center;">Mudança na temperatura do ar em Belém - PA (1970 - 2024)</h2>
   <div id="chart" style="width: 100%; height: 600px;"></div>
-  <div id="colorbar" style="width: 100%; height: 200px; margin-top: -30px;"></div>
+  <div id="colorbar" style="width: 100%; height: 100px; margin-top: -30px;"></div>
 
   <script>
     function getColor(value, min, max) {
@@ -83,14 +83,13 @@
 
         Plotly.newPlot('chart', [trace], layout);
 
-        // LEGEND
-        const colorbarValues = Array.from({ length: 300 }, (_, i) =>
-          minVal + i * (maxVal - minVal) / 299
-        );
+        // COLORBAR COM TAMANHO FIXO
+        const colorbarValues = [Array.from({ length: years.length }, (_, i) => minVal + (maxVal - minVal) * i / (years.length - 1))];
 
         const heatmapTrace = {
-          z: [colorbarValues],
+          z: colorbarValues,
           x: years,
+          y: [0],
           type: 'heatmap',
           colorscale: [
             [0.0, '#08306b'], [0.066, '#08519c'], [0.133, '#2171b5'],
@@ -101,22 +100,32 @@
             [1.0, '#67000d']
           ],
           showscale: false,
-          hoverinfo: 'none'
+          hoverinfo: 'none',
+          zmin: minVal,
+          zmax: maxVal
         };
 
         const layoutColorbar = {
-          margin: { t: 40, b: 50, l: 40, r: 40 },
-          height: 130,
-          autosize: true,
-          xaxis: { visible: false },
-          yaxis: { visible: false },
+          margin: { t: 10, b: 30, l: 40, r: 40 },
+          height: 80,
+          xaxis: {
+            range: [Math.min(...years), Math.max(...years)],
+            visible: false,
+            fixedrange: true
+          },
+          yaxis: {
+            visible: false,
+            fixedrange: true
+          },
+          plot_bgcolor: 'white',
+          paper_bgcolor: 'white',
           annotations: [
             {
               text: 'Anomalia da Temperatura (°C)',
               xref: 'paper',
               yref: 'paper',
               x: 0.5,
-              y: 1.5,  // Título mais acima
+              y: 1.8,
               showarrow: false,
               font: { size: 14 },
               xanchor: 'center'
@@ -126,7 +135,7 @@
               xref: 'paper',
               yref: 'paper',
               x: 0,
-              y: -0.4,  // Valor mais abaixo
+              y: -0.5,
               showarrow: false,
               font: { size: 12 },
               xanchor: 'center'
@@ -136,7 +145,7 @@
               xref: 'paper',
               yref: 'paper',
               x: 0.5,
-              y: -0.4,
+              y: -0.5,
               showarrow: false,
               font: { size: 12 },
               xanchor: 'center'
@@ -146,7 +155,7 @@
               xref: 'paper',
               yref: 'paper',
               x: 1,
-              y: -0.4,
+              y: -0.5,
               showarrow: false,
               font: { size: 12 },
               xanchor: 'center'
@@ -156,6 +165,7 @@
 
         Plotly.newPlot('colorbar', [heatmapTrace], layoutColorbar, {
           displayModeBar: false,
+          staticPlot: true, // impede qualquer interação
           responsive: true
         });
       });
