@@ -2,12 +2,12 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Stripes Warming Cuiabá</title>
+  <title>Stripes Warming Manaus</title>
   <link rel="shortcut icon" href="../principal/imagens/logo.ico" type="image/x-icon">
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
-  <h2 style="text-align: center;">Mudança na temperatura do ar em Cuiabá - MT (1970 - 2024)</h2>
+  <h2 style="text-align: center;">Mudança na temperatura do ar em Manaus - AM (1970 - 2024)</h2>
   <div id="chart"></div>
 
   <script>
@@ -22,7 +22,7 @@
       return colors[Math.max(0, Math.min(colors.length - 1, idx))];
     }
 
-    fetch("../principal/base_de_dados/ERA5_temperature_2m_annual_cuiaba.csv")
+    fetch("../principal/base_de_dados/ERA5_temperature_2m_annual_manaus.csv")
       .then(response => response.text())
       .then(csv => {
         const rows = csv.trim().split("\n").slice(1);
@@ -35,7 +35,7 @@
           }
         }
 
-        const minVal = -1, maxVal = 2;
+        const minVal = -1, maxVal = 1.5;
         const colors = anomalies.map(a => getColor(a, minVal, maxVal));
         const hoverText = years.map((year, i) =>
           `Ano: ${year}<br>Anomalia: ${anomalies[i].toFixed(2)} °C`
@@ -130,7 +130,7 @@
               xanchor: 'center'
             },
             {
-              text: '+2°C',
+              text: '+1.5°C',
               xref: 'paper',
               yref: 'paper',
               x: 1,
