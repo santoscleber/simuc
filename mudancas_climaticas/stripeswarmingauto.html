@@ -108,15 +108,22 @@
           margin: { t: 40, b: 50, l: 40, r: 40 },
           height: 130,
           autosize: true,
-          xaxis: { visible: false },
-          yaxis: { visible: false },
+          xaxis: {
+            type: 'category',
+            tickvals: years,
+            range: [years[0] - 0.5, years[years.length - 1] + 0.5],
+            visible: false
+          },
+          yaxis: {
+            visible: false
+          },
           annotations: [
             {
               text: 'Anomalia da Temperatura (°C)',
               xref: 'paper',
               yref: 'paper',
               x: 0.5,
-              y: 1.5,  // Título mais acima
+              y: 1.5,
               showarrow: false,
               font: { size: 14 },
               xanchor: 'center'
@@ -126,7 +133,7 @@
               xref: 'paper',
               yref: 'paper',
               x: 0,
-              y: -0.4,  // Valor mais abaixo
+              y: -0.4,
               showarrow: false,
               font: { size: 12 },
               xanchor: 'center'
