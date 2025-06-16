@@ -5,19 +5,11 @@
   <title>Stripes Warming</title>
   <link rel="shortcut icon" href="../principal/imagens/logo.ico" type="image/x-icon">
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-  <style>
-    #chart, #colorbar {
-      width: 100%;
-      max-width: 100%;
-    }
-  </style>
 </head>
 <body>
   <h2 style="text-align: center;">Mudança na temperatura do ar em Belém - PA (1970 - 2024)</h2>
-  <div id="chart" style="height: 600px;"></div>
-  <div id="colorbar-container" style="display: flex; justify-content: center;">
-    <div id="colorbar" style="height: 200px; margin-top: -30px;"></div>
-  </div>
+  <div id="chart" style="width: 100%; height: 600px;"></div>
+  <div id="colorbar" style="width: 100%; height: 200px; margin-top: -30px;"></div>
 
   <script>
     function getColor(value, min, max) {
@@ -89,95 +81,84 @@
           paper_bgcolor: 'white'
         };
 
-        Plotly.newPlot('chart', [trace], layout).then(() => {
-          const chartDiv = document.getElementById('chart');
-          const chartWidth = chartDiv.getBoundingClientRect().width;
+        Plotly.newPlot('chart', [trace], layout);
 
-          const colorbarValues = Array.from({ length: 300 }, (_, i) =>
-            minVal + i * (maxVal - minVal) / 299
-          );
+        // LEGEND
+        const colorbarValues = Array.from({ length: 300 }, (_, i) =>
+          minVal + i * (maxVal - minVal) / 299
+        );
 
-          const start = years[0] - 0.5;
-          const end = years[years.length - 1] + 0.5;
-          const barX = Array.from({ length: 300 }, (_, i) =>
-            start + i * (end - start) / 299
-          );
+        const heatmapTrace = {
+          z: [colorbarValues],
+          x: years,
+          type: 'heatmap',
+          colorscale: [
+            [0.0, '#08306b'], [0.066, '#08519c'], [0.133, '#2171b5'],
+            [0.2, '#4292c6'], [0.266, '#6baed6'], [0.333, '#9ecae1'],
+            [0.4, '#c6dbef'], [0.466, '#deebf7'], [0.533, '#fee0d2'],
+            [0.6, '#fcbba1'], [0.666, '#fc9272'], [0.733, '#fb6a4a'],
+            [0.8, '#ef3b2c'], [0.866, '#cb181d'], [0.933, '#a50f15'],
+            [1.0, '#67000d']
+          ],
+          showscale: false,
+          hoverinfo: 'none'
+        };
 
-          const heatmapTrace = {
-            z: [colorbarValues],
-            x: barX,
-            type: 'heatmap',
-            colorscale: [
-              [0.0, '#08306b'], [0.066, '#08519c'], [0.133, '#2171b5'],
-              [0.2, '#4292c6'], [0.266, '#6baed6'], [0.333, '#9ecae1'],
-              [0.4, '#c6dbef'], [0.466, '#deebf7'], [0.533, '#fee0d2'],
-              [0.6, '#fcbba1'], [0.666, '#fc9272'], [0.733, '#fb6a4a'],
-              [0.8, '#ef3b2c'], [0.866, '#cb181d'], [0.933, '#a50f15'],
-              [1.0, '#67000d']
-            ],
-            showscale: false,
-            hoverinfo: 'none'
-          };
-
-          const layoutColorbar = {
-            margin: { t: 40, b: 50, l: 40, r: 40 },
-            height: 130,
-            autosize: true,
-            xaxis: {
-              range: [start, end],
-              visible: false
+        const layoutColorbar = {
+          margin: { t: 40, b: 50, l: 40, r: 40 },
+          height: 130,
+          autosize: true,
+          xaxis: { visible: false },
+          yaxis: { visible: false },
+          annotations: [
+            {
+              text: 'Anomalia da Temperatura (°C)',
+              xref: 'paper',
+              yref: 'paper',
+              x: 0.5,
+              y: 1.5,
+              showarrow: false,
+              font: { size: 14 },
+              xanchor: 'center'
             },
-            yaxis: { visible: false },
-            width: chartWidth, // 💡 força o mesmo tamanho do gráfico principal
-            annotations: [
-              {
-                text: 'Anomalia da Temperatura (°C)',
-                xref: 'paper',
-                yref: 'paper',
-                x: 0.5,
-                y: 1.5,
-                showarrow: false,
-                font: { size: 14 },
-                xanchor: 'center'
-              },
-              {
-                text: '-1.5°C',
-                xref: 'paper',
-                yref: 'paper',
-                x: 0,
-                y: -0.4,
-                showarrow: false,
-                font: { size: 12 },
-                xanchor: 'center'
-              },
-              {
-                text: '0°C',
-                xref: 'paper',
-                yref: 'paper',
-                x: 0.5,
-                y: -0.4,
-                showarrow: false,
-                font: { size: 12 },
-                xanchor: 'center'
-              },
-              {
-                text: '+1.5°C',
-                xref: 'paper',
-                yref: 'paper',
-                x: 1,
-                y: -0.4,
-                showarrow: false,
-                font: { size: 12 },
-                xanchor: 'center'
-              }
-            ]
-          };
+            {
+              text: '-1.5°C',
+              xref: 'paper',
+              yref: 'paper',
+              x: 0,
+              y: -0.4,
+              showarrow: false,
+              font: { size: 12 },
+              xanchor: 'center'
+            },
+            {
+              text: '0°C',
+              xref: 'paper',
+              yref: 'paper',
+              x: 0.5,
+              y: -0.4,
+              showarrow: false,
+              font: { size: 12 },
+              xanchor: 'center'
+            },
+            {
+              text: '+1.5°C',
+              xref: 'paper',
+              yref: 'paper',
+              x: 1,
+              y: -0.4,
+              showarrow: false,
+              font: { size: 12 },
+              xanchor: 'center'
+            }
+          ]
+        };
 
-          Plotly.newPlot('colorbar', [heatmapTrace], layoutColorbar, {
-            displayModeBar: false,
-            responsive: true
-          });
+        Plotly.newPlot('colorbar', [heatmapTrace], layoutColorbar, {
+          displayModeBar: false,
+          responsive: true
         });
+
       });
   </script>
 </body>
