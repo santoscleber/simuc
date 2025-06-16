@@ -9,7 +9,7 @@
 <body>
   <h2 style="text-align: center;">Mudança na temperatura do ar em Belém - PA (1970 - 2024)</h2>
   <div id="chart" style="width: 100%; height: 600px;"></div>
-  <div id="colorbar" style="width: auto; height: 200px; margin-top: -30px;"></div>
+  <div id="colorbar" style="width: 100%; height: 230px; margin: auto; margin-top: -30px;"></div>
 
   <script>
     function getColor(value, min, max) {
@@ -67,18 +67,9 @@
           bargap: 0,
           showlegend: false,
           margin: { l: 40, r: 60, t: 20, b: 100 },
-          annotations: [{
-            xref: 'paper',
-            yref: 'paper',
-            x: 0,
-            y: -0.22,
-            showarrow: false,
-            align: 'left',
-            text: "Elaborado por: Cleber Assis dos Santos<br>Média da temperatura do ar entre os anos de 1971 e 2000 (26.4°C)",
-            font: { size: 10, color: 'gray' }
-          }],
           plot_bgcolor: 'white',
           paper_bgcolor: 'white'
+          // <-- Anotação removida daqui
         };
 
         Plotly.newPlot('chart', [trace], layout);
@@ -89,7 +80,7 @@
         );
 
         const heatmapTrace = {
-          z: [colorbarValues],
+          z: [colorbarValues, colorbarValues], // barra mais espessa
           type: 'heatmap',
           colorscale: [
             [0.0, '#08306b'], [0.066, '#08519c'], [0.133, '#2171b5'],
@@ -105,7 +96,7 @@
 
         const layoutColorbar = {
           margin: { t: 40, b: 50, l: 40, r: 40 },
-          height: 130,
+          height: 200,
           autosize: true,
           xaxis: { visible: false },
           yaxis: { visible: false },
@@ -115,7 +106,7 @@
               xref: 'paper',
               yref: 'paper',
               x: 0.5,
-              y: 1.5,  // Título mais acima
+              y: 1.5,
               showarrow: false,
               font: { size: 14 },
               xanchor: 'center'
@@ -125,7 +116,7 @@
               xref: 'paper',
               yref: 'paper',
               x: 0,
-              y: -0.4,  // Valor mais abaixo
+              y: -0.4,
               showarrow: false,
               font: { size: 12 },
               xanchor: 'center'
@@ -148,6 +139,16 @@
               y: -0.4,
               showarrow: false,
               font: { size: 12 },
+              xanchor: 'center'
+            },
+            {
+              text: "Elaborado por: Cleber Assis dos Santos<br>Média da temperatura do ar entre os anos de 1971 e 2000 (26.4°C)",
+              xref: 'paper',
+              yref: 'paper',
+              x: 0.5,
+              y: -0.9,
+              showarrow: false,
+              font: { size: 10, color: 'gray' },
               xanchor: 'center'
             }
           ]
