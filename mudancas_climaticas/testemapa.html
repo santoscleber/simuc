@@ -33,7 +33,7 @@
     capitais.forEach(capital => {
       const marker = L.marker([capital.lat, capital.lon]).addTo(map);
       marker.bindPopup(
-        `<b>${capital.nome}</b><br><a href="grafico_stripes.html?cidade=${capital.cidade}" target="_blank">Ver gráfico</a>`
+        `<b>${capital.nome}</b><br><a href="stripeswarmingauto.html?cidade=${capital.cidade}" target="_blank">Ver gráfico</a>`
       );
     });
   </script>
