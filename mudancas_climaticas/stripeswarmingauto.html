@@ -23,7 +23,7 @@
       return colors[Math.max(0, Math.min(colors.length - 1, idx))];
     }
 
-    fetch("ERA5_temperature_2m_annual_belem.csv")
+    fetch("../principal/base_de_dados/ERA5_temperature_2m_annual_belem.csv")
       .then(response => response.text())
       .then(csv => {
         const rows = csv.trim().split("\n").slice(1);
