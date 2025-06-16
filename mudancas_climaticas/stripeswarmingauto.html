@@ -83,7 +83,7 @@
 
         Plotly.newPlot('chart', [trace], layout);
 
-        // LEGEND
+        // LEGEND / COLORBAR
         const colorbarValues = Array.from({ length: 300 }, (_, i) =>
           minVal + i * (maxVal - minVal) / 299
         );
@@ -108,7 +108,11 @@
           margin: { t: 40, b: 50, l: 40, r: 40 },
           height: 130,
           autosize: true,
-          xaxis: { visible: false },
+          xaxis: {
+            range: [Math.min(...years), Math.max(...years)],
+            visible: false,
+            fixedrange: true
+          },
           yaxis: { visible: false },
           annotations: [
             {
@@ -116,7 +120,7 @@
               xref: 'paper',
               yref: 'paper',
               x: 0.5,
-              y: 1.5,  // Título mais acima
+              y: 1.5,
               showarrow: false,
               font: { size: 14 },
               xanchor: 'center'
@@ -126,7 +130,7 @@
               xref: 'paper',
               yref: 'paper',
               x: 0,
-              y: -0.4,  // Valor mais abaixo
+              y: -0.4,
               showarrow: false,
               font: { size: 12 },
               xanchor: 'center'
