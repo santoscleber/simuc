@@ -35,7 +35,7 @@
           }
         }
 
-        const minVal = -1.5, maxVal = 1.5;
+        const minVal = -1, maxVal = 1.5;
         const colors = anomalies.map(a => getColor(a, minVal, maxVal));
         const hoverText = years.map((year, i) =>
           `Ano: ${year}<br>Anomalia: ${anomalies[i].toFixed(2)} °C`
