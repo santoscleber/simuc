@@ -108,8 +108,17 @@
           margin: { t: 40, b: 50, l: 40, r: 40 },
           height: 130,
           autosize: true,
-          xaxis: { visible: false },
-          yaxis: { visible: false },
+          xaxis: {
+            range: [Math.min(...years), Math.max(...years)],
+            tickvals: years.filter(y => y % 10 === 0),
+            tickangle: 0,
+            showgrid: false,
+            zeroline: false,
+            fixedrange: true
+          },
+          yaxis: {
+            visible: false
+          },
           annotations: [
             {
               text: 'Anomalia da Temperatura (°C)',
