@@ -88,9 +88,16 @@
           minVal + i * (maxVal - minVal) / 299
         );
 
+        // 🔧 Ajuste aqui: x com início e fim estendido para alinhar perfeitamente com barras
+        const start = years[0] - 0.5;
+        const end = years[years.length - 1] + 0.5;
+        const barX = Array.from({ length: 300 }, (_, i) =>
+          start + i * (end - start) / 299
+        );
+
         const heatmapTrace = {
           z: [colorbarValues],
-          x: years,
+          x: barX,
           type: 'heatmap',
           colorscale: [
             [0.0, '#08306b'], [0.066, '#08519c'], [0.133, '#2171b5'],
@@ -108,7 +115,10 @@
           margin: { t: 40, b: 50, l: 40, r: 40 },
           height: 130,
           autosize: true,
-          xaxis: { visible: false },
+          xaxis: {
+            range: [start, end], // 🔧 Garante alinhamento exato com gráfico principal
+            visible: false
+          },
           yaxis: { visible: false },
           annotations: [
             {
@@ -116,7 +126,7 @@
               xref: 'paper',
               yref: 'paper',
               x: 0.5,
-              y: 1.5,  // Título mais acima
+              y: 1.5,
               showarrow: false,
               font: { size: 14 },
               xanchor: 'center'
@@ -126,7 +136,7 @@
               xref: 'paper',
               yref: 'paper',
               x: 0,
-              y: -0.4,  // Valor mais abaixo
+              y: -0.4,
               showarrow: false,
               font: { size: 12 },
               xanchor: 'center'
