@@ -13,12 +13,32 @@
     canvas {
       background-color: black;
       border: 1px solid #ccc;
+      margin-top: 10px;
     }
+    .controls {
+      margin-top: 15px;
+    }
+    .controls button {
+      font-size: 16px;
+      padding: 6px 14px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .play { background-color: #4CAF50; color: white; }
+    .pause { background-color: #f44336; color: white; }
   </style>
 </head>
 <body>
   <h2>Espiral Climática</h2>
+
   <canvas id="canvas" width="800" height="800"></canvas>
+
+  <div class="controls">
+    <button class="play" onclick="play()">Play</button>
+    <button class="pause" onclick="pause()">Pause</button>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
   <script>
@@ -29,7 +49,13 @@
     const centerY = canvas.height / 2;
     const rFactor = r / 3.6;
 
-    // Carrega o CSV automaticamente
+    let anomalies = [];
+    let dates = [];
+    let frame = 0;
+    let animationId;
+    let isPaused = false;
+
+    // Função para carregar o CSV automaticamente
     fetch("HadCRUT.5.0.2.0.analysis.summary_series.global.monthly.csv")
       .then(response => {
         if (!response.ok) throw new Error("Erro ao carregar o CSV.");
@@ -41,7 +67,9 @@
           dynamicTyping: true,
           skipEmptyLines: true,
           complete: function(results) {
-            drawSpiral(results.data);
+            anomalies = results.data.map(row => row["Anomaly (deg C)"]);
+            dates = results.data.map(row => row["Time"]);
+            animate(); // inicia automaticamente
           }
         });
       })
@@ -57,62 +85,69 @@
       };
     }
 
-    function drawSpiral(data) {
-      const anomalies = data.map(row => row["Anomaly (deg C)"]);
-      const dates = data.map(row => row["Time"]);
-      let frame = 0;
+    function drawFrame(f) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "black";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      function animate() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Fundo preto e círculos de referência
-        ctx.fillStyle = "black";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = "gray";
-        for (let val = 1.0; val <= 5.0; val++) {
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, val * rFactor, 0, 2 * Math.PI);
-          ctx.stroke();
-        }
-
-        // Espiral
-        for (let i = 1; i < frame; i++) {
-          const angle1 = (2 * Math.PI / 12) * (i % 12);
-          const angle2 = (2 * Math.PI / 12) * ((i + 1) % 12);
-          const radius1 = (anomalies[i] + 3) * rFactor;
-          const radius2 = (anomalies[i + 1] + 3) * rFactor;
-
-          const p1 = polarToCartesian(angle1, radius1);
-          const p2 = polarToCartesian(angle2, radius2);
-
-          const temp = anomalies[i];
-          const color = temp < 0
-            ? `rgba(0,0,255,${Math.min(1, Math.abs(temp)/3.6)})`
-            : `rgba(255,0,0,${Math.min(1, temp/3.6)})`;
-
-          ctx.strokeStyle = color;
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(p1.x, p1.y);
-          ctx.lineTo(p2.x, p2.y);
-          ctx.stroke();
-        }
-
-        // Texto do ano
-        if (dates[frame]) {
-          const year = dates[frame].split("-")[0];
-          ctx.fillStyle = "white";
-          ctx.font = "28px sans-serif";
-          ctx.fillText(year, centerX - 30, centerY + 10);
-        }
-
-        if (frame < anomalies.length - 1) {
-          frame++;
-          requestAnimationFrame(animate);
-        }
+      ctx.strokeStyle = "gray";
+      for (let val = 1.0; val <= 5.0; val++) {
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, val * rFactor, 0, 2 * Math.PI);
+        ctx.stroke();
       }
 
-      animate();
+      for (let i = 1; i < f; i++) {
+        const angle1 = (2 * Math.PI / 12) * (i % 12);
+        const angle2 = (2 * Math.PI / 12) * ((i + 1) % 12);
+        const radius1 = (anomalies[i] + 3) * rFactor;
+        const radius2 = (anomalies[i + 1] + 3) * rFactor;
+
+        const p1 = polarToCartesian(angle1, radius1);
+        const p2 = polarToCartesian(angle2, radius2);
+
+        const temp = anomalies[i];
+        const color = temp < 0
+          ? `rgba(0,0,255,${Math.min(1, Math.abs(temp)/3.6)})`
+          : `rgba(255,0,0,${Math.min(1, temp/3.6)})`;
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.stroke();
+      }
+
+      // Texto do ano
+      if (dates[f]) {
+        const year = dates[f].split("-")[0];
+        ctx.fillStyle = "white";
+        ctx.font = "28px sans-serif";
+        ctx.fillText(year, centerX - 30, centerY + 10);
+      }
+    }
+
+    function animate() {
+      if (!isPaused) {
+        drawFrame(frame);
+        frame++;
+        if (frame >= anomalies.length - 1) {
+          frame = 0; // reinicia
+        }
+      }
+      animationId = requestAnimationFrame(animate);
+    }
+
+    function pause() {
+      isPaused = true;
+    }
+
+    function play() {
+      if (isPaused) {
+        isPaused = false;
+        animate();
+      }
     }
   </script>
 </body>
