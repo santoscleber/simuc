@@ -35,7 +35,7 @@
           }
         }
 
-        const minVal = -1, maxVal = 1.5;
+        const minVal = -1, maxVal = 2;
         const colors = anomalies.map(a => getColor(a, minVal, maxVal));
         const hoverText = years.map((year, i) =>
           `Ano: ${year}<br>Anomalia: ${anomalies[i].toFixed(2)} °C`
@@ -130,7 +130,7 @@
               xanchor: 'center'
             },
             {
-              text: '+1.5°C',
+              text: '+2°C',
               xref: 'paper',
               yref: 'paper',
               x: 1,
