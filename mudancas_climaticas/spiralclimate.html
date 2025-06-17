@@ -94,7 +94,6 @@
 
       // Círculos concêntricos
       ctx.strokeStyle = "gray";
-      ctx.fillStyle = "white";
       ctx.font = "14px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -107,15 +106,16 @@
         ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
         ctx.stroke();
 
-        // Coordenadas para o texto no ângulo de 360°
-        const angle = 0; // ângulo zero = direita
-        const pos = polarToCartesian(angle, radius + 10);
+        // Posição no topo (12h)
+        const angle = -Math.PI / 2;
+        const pos = polarToCartesian(angle, radius);
 
-        // Rotaciona texto na vertical
+        // Texto rotacionado para vertical para cima
         ctx.save();
         ctx.translate(pos.x, pos.y);
-        ctx.rotate(Math.PI / 2);  // 90 graus para texto vertical
-        ctx.fillText(`${val.toFixed(1)}°C`, 0, 0);
+        ctx.rotate(0); // Sem rotação, mas alinhado verticalmente
+        ctx.fillStyle = "white";
+        ctx.fillText(`${val.toFixed(1)}°C`, 0, -10);
         ctx.restore();
       }
 
