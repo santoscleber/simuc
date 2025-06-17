@@ -67,7 +67,7 @@
     let baseDelay = 100; // valor padrão
     const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-    fetch("HadCRUT.5.0.2.0.analysis.summary_series.global.monthly.csv")
+    fetch("../principal/base_de_dados/ERA5_temperature_2m_monthly_belem.csv")
       .then(response => response.text())
       .then(csvText => {
         Papa.parse(csvText, {
