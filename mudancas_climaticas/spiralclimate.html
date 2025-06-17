@@ -123,7 +123,7 @@
       ctx.font = "22px sans-serif";
       for (let m = 0; m < 12; m++) {
         const angle = (2 * Math.PI / 12) * m - Math.PI / 2;
-        const pos = polarToCartesian(angle, r + 125);        //Afasta os meses do centro
+        const pos = polarToCartesian(angle, r + 128);        //Afasta os meses do centro
           ctx.save();
           ctx.translate(pos.x, pos.y);
           ctx.rotate(angle + Math.PI / 2); // gira o texto para ficar perpendicular ao raio
