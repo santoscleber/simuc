@@ -18,9 +18,10 @@
     .controls {
       margin-top: 15px;
     }
-    .controls button {
+    .controls button,
+    .controls select {
       font-size: 16px;
-      padding: 6px 14px;
+      padding: 6px 12px;
       margin: 5px;
       border: none;
       border-radius: 5px;
@@ -28,6 +29,7 @@
     }
     .play { background-color: #4CAF50; color: white; }
     .pause { background-color: #f44336; color: white; }
+    .speed { background-color: #008CBA; color: white; }
   </style>
 </head>
 <body>
@@ -38,6 +40,11 @@
   <div class="controls">
     <button class="play" onclick="play()">Play</button>
     <button class="pause" onclick="pause()">Pause</button>
+    <select class="speed" onchange="setSpeed(this.value)">
+      <option value="200">Lenta</option>
+      <option value="100" selected>Média</option>
+      <option value="30">Rápida</option>
+    </select>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
@@ -57,14 +64,11 @@
     let minAnomaly = Infinity;
     let maxAnomaly = -Infinity;
 
-    const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
-                    "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    let baseDelay = 100; // valor padrão
+    const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-    fetch("../principal/base_de_dados/ERA5_temperature_2m_monthly_belem.csv")
-      .then(response => {
-        if (!response.ok) throw new Error("Erro ao carregar o CSV.");
-        return response.text();
-      })
+    fetch("HadCRUT.5.0.2.0.analysis.summary_series.global.monthly.csv")
+      .then(response => response.text())
       .then(csvText => {
         Papa.parse(csvText, {
           header: true,
@@ -82,11 +86,11 @@
             animate();
           }
         });
-      })
-      .catch(error => {
-        console.error("Erro:", error);
-        alert("Não foi possível carregar o arquivo CSV.");
       });
+
+    function setSpeed(value) {
+      baseDelay = parseInt(value);
+    }
 
     function lerpColorRGB(c1, c2, t) {
       const r = c1[0] + (c2[0] - c1[0]) * t;
@@ -100,13 +104,9 @@
     const zeroColor = [255, 255, 255];
 
     function getColorFromAnomaly(value) {
-      if (value < 0) {
-        const t = Math.min(1, Math.abs(value) / Math.max(Math.abs(minAnomaly), 1));
-        return lerpColorRGB(zeroColor, coldColor, t);
-      } else {
-        const t = Math.min(1, Math.abs(value) / Math.max(Math.abs(maxAnomaly), 1));
-        return lerpColorRGB(zeroColor, warmColor, t);
-      }
+      const range = value < 0 ? Math.abs(minAnomaly) : Math.abs(maxAnomaly);
+      const t = Math.min(1, Math.abs(value) / range);
+      return lerpColorRGB(zeroColor, value < 0 ? coldColor : warmColor, t);
     }
 
     function polarToCartesian(angle, radius) {
@@ -137,14 +137,12 @@
 
         const angle = -Math.PI / 2;
         const pos = polarToCartesian(angle, radius);
-
         ctx.save();
         ctx.translate(pos.x, pos.y);
         const label = `${val % 1 === 0 ? val : val.toFixed(1)}°C`;
         const padding = 4;
         const textWidth = ctx.measureText(label).width;
         const textHeight = 16;
-
         ctx.fillStyle = "black";
         ctx.fillRect(-textWidth / 2 - padding, -textHeight / 2 - padding, textWidth + padding * 2, textHeight + padding * 2);
         ctx.fillStyle = "white";
@@ -209,16 +207,12 @@
         drawFrame(frame);
         frame++;
 
-        if (frame >= anomalies.length - 1) {
-          frame = 0;
-        }
+        if (frame >= anomalies.length - 1) frame = 0;
 
         const isLastYear = frame >= anomalies.length - 13;
-        const delay = isLastYear ? 200 : 30;
+        const delay = isLastYear ? baseDelay * 3 : baseDelay;
 
-        setTimeout(() => {
-          requestAnimationFrame(animate);
-        }, delay);
+        setTimeout(() => requestAnimationFrame(animate), delay);
       } else {
         requestAnimationFrame(animate);
       }
