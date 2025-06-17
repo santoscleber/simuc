@@ -18,8 +18,6 @@
 </head>
 <body>
   <h2>Espiral Climática</h2>
-  <p>Escolha o arquivo <strong>HadCRUT.5.0.2.0.analysis.summary_series.global.monthly.csv</strong></p>
-  <input type="file" id="fileInput" accept=".csv" />
   <canvas id="canvas" width="800" height="800"></canvas>
 
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
@@ -31,17 +29,26 @@
     const centerY = canvas.height / 2;
     const rFactor = r / 3.6;
 
-    document.getElementById('fileInput').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      Papa.parse(file, {
-        header: true,
-        dynamicTyping: true,
-        skipEmptyLines: true,
-        complete: function(results) {
-          drawSpiral(results.data);
-        }
+    // Carrega o CSV automaticamente
+    fetch("HadCRUT.5.0.2.0.analysis.summary_series.global.monthly.csv")
+      .then(response => {
+        if (!response.ok) throw new Error("Erro ao carregar o CSV.");
+        return response.text();
+      })
+      .then(csvText => {
+        Papa.parse(csvText, {
+          header: true,
+          dynamicTyping: true,
+          skipEmptyLines: true,
+          complete: function(results) {
+            drawSpiral(results.data);
+          }
+        });
+      })
+      .catch(error => {
+        console.error("Erro:", error);
+        alert("Não foi possível carregar o arquivo CSV.");
       });
-    });
 
     function polarToCartesian(angle, radius) {
       return {
