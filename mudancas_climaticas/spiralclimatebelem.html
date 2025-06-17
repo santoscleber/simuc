@@ -18,7 +18,8 @@
     .controls {
       margin-top: 15px;
     }
-    .controls button {
+    .controls button,
+    .controls input[type="range"] {
       font-size: 16px;
       padding: 6px 14px;
       margin: 5px;
@@ -28,6 +29,9 @@
     }
     .play { background-color: #4CAF50; color: white; }
     .pause { background-color: #f44336; color: white; }
+    .speed-container {
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -37,6 +41,11 @@
 
   <div class="controls">
     <button id="toggleButton" class="pause" onclick="togglePlayPause()">Pause</button>
+  </div>
+
+  <div class="speed-container">
+    <label for="speedRange">Velocidade: <span id="speedValue">1.0x</span></label><br />
+    <input type="range" id="speedRange" min="0.1" max="3" step="0.1" value="1" oninput="updateSpeed(this.value)">
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
@@ -52,12 +61,15 @@
     let anomalies = [];
     let dates = [];
     let frame = 0;
-    let isPaused = false; // <- animação inicia automaticamente
+    let isPaused = false;
     let minAnomaly = Infinity;
     let maxAnomaly = -Infinity;
 
-    const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
-                    "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    let speed = 1.0;
+    let lastTime = 0;
+    let interval = 1000 / 30;
+
+    const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
     fetch("../principal/base_de_dados/ERA5_temperature_2m_monthly_belem.csv")
       .then(response => {
@@ -78,7 +90,7 @@
                 maxAnomaly = Math.max(maxAnomaly, val);
               }
             });
-            animate(); // <- inicia animação ao carregar
+            animate();
           }
         });
       })
@@ -202,11 +214,16 @@
       }
     }
 
-    function animate() {
-      if (!isPaused) {
+    function animate(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const elapsed = timestamp - lastTime;
+      const delay = interval / speed;
+
+      if (!isPaused && elapsed > delay) {
         drawFrame(frame);
         frame++;
         if (frame >= anomalies.length - 1) frame = 0;
+        lastTime = timestamp;
       }
       requestAnimationFrame(animate);
     }
@@ -214,13 +231,13 @@
     function togglePlayPause() {
       isPaused = !isPaused;
       const button = document.getElementById("toggleButton");
-      if (isPaused) {
-        button.textContent = "Play";
-        button.className = "play";
-      } else {
-        button.textContent = "Pause";
-        button.className = "pause";
-      }
+      button.textContent = isPaused ? "Play" : "Pause";
+      button.className = isPaused ? "play" : "pause";
+    }
+
+    function updateSpeed(value) {
+      speed = parseFloat(value);
+      document.getElementById("speedValue").textContent = `${speed.toFixed(1)}x`;
     }
   </script>
 </body>
