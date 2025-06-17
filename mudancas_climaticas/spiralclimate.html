@@ -92,13 +92,13 @@
       ctx.fillStyle = "black";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Círculos concêntricos
+      // Círculos concêntricos (a partir de 2.0°C)
       ctx.strokeStyle = "gray";
       ctx.font = "14px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
 
-      for (let val = 1.0; val <= 5.0; val++) {
+      for (let val = 2.0; val <= 5.0; val++) {
         let radius = val * rFactor;
 
         // Desenha círculo
@@ -110,10 +110,9 @@
         const angle = -Math.PI / 2;
         const pos = polarToCartesian(angle, radius);
 
-        // Texto rotacionado para vertical para cima
         ctx.save();
         ctx.translate(pos.x, pos.y);
-        ctx.rotate(0); // Sem rotação, mas alinhado verticalmente
+        ctx.rotate(0);
         ctx.fillStyle = "white";
         ctx.fillText(`${val.toFixed(1)}°C`, 0, -10);
         ctx.restore();
