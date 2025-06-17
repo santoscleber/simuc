@@ -150,10 +150,11 @@
         const p1 = polarToCartesian(angle1, radius1);
         const p2 = polarToCartesian(angle2, radius2);
 
-        const temp = anomalies[i];
-        const color = temp < 0
-          ? `rgba(0,0,255,${Math.min(1, Math.abs(temp) / 3.0)})`
-          : `rgba(255,0,0,${Math.min(1, temp / 3.0)})`;
+const temp = anomalies[i];
+const alpha = 0.85 + 0.15 * Math.min(1, Math.abs(temp) / 3.0); // mínimo 0.85, máximo 1.0
+const color = temp < 0
+  ? `rgba(0, 0, 255, ${alpha})`
+  : `rgba(255, 0, 0, ${alpha})`;
 
         // Aplica sombra para efeito 3D
         ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
