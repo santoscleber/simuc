@@ -28,6 +28,7 @@
     }
     .toggle { background-color: #2196F3; color: white; }
     .reset { background-color: #9C27B0; color: white; }
+    .record { background-color: #E91E63; color: white; }
     .speed-control {
       margin-top: 10px;
       font-size: 16px;
@@ -42,6 +43,7 @@
   <div class="controls">
     <button id="toggleBtn" class="toggle" onclick="togglePlayPause()">Pause</button>
     <button class="reset" onclick="reset()">Reset</button>
+    <button id="recordBtn" class="record" onclick="toggleRecording()">Gravar</button>
   </div>
 
   <div class="speed-control">
@@ -70,6 +72,11 @@
 
     const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
                     "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+    // Gravação
+    let mediaRecorder;
+    let recordedChunks = [];
+    const recordBtn = document.getElementById("recordBtn");
 
     fetch("../principal/base_de_dados/ERA5_temperature_2m_monthly_belem.csv")
       .then(response => response.text())
@@ -230,6 +237,57 @@
     function updateSpeed(val) {
       speed = parseFloat(val);
       document.getElementById("speedValue").textContent = `${speed.toFixed(1)}x`;
+    }
+
+    // Função para iniciar/parar gravação
+    function toggleRecording() {
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+        recordBtn.textContent = "Gravar";
+        recordBtn.style.backgroundColor = "#E91E63";
+      } else {
+        startRecording();
+      }
+    }
+
+    function startRecording() {
+      recordedChunks = [];
+      // Captura o stream do canvas
+      const stream = canvas.captureStream(60); // 60 fps, ajustável
+      mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+
+      mediaRecorder.ondataavailable = function(e) {
+        if (e.data.size > 0) {
+          recordedChunks.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = function() {
+        const blob = new Blob(recordedChunks, { type: "video/webm" });
+        const url = URL.createObjectURL(blob);
+
+        // Criar link para download
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = url;
+        a.download = "espiral_climatica.webm";
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
+
+        // Se quiser pode exibir o vídeo na tela:
+        // const video = document.createElement("video");
+        // video.src = url;
+        // video.controls = true;
+        // document.body.appendChild(video);
+      };
+
+      mediaRecorder.start();
+      recordBtn.textContent = "Parar Gravação";
+      recordBtn.style.backgroundColor = "#4CAF50";
     }
   </script>
 </body>
