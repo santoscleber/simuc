@@ -61,7 +61,7 @@
                     "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
     // Carregue seu CSV aqui, por exemplo:
-    fetch("HadCRUT.5.0.2.0.analysis.summary_series.global.monthly.csv")
+    fetch("../principal/base_de_dados/ERA5_temperature_2m_monthly_belem.csv")
       .then(response => {
         if (!response.ok) throw new Error("Erro ao carregar o CSV.");
         return response.text();
