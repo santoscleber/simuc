@@ -99,7 +99,7 @@
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
 
-      for (let val = -1.0; val <= 2.0; val++) {
+      for (let val = -1; val <= 2; val++) {
         const radius = (val + offset) * rFactor;
         ctx.beginPath();
         ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
