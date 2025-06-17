@@ -92,23 +92,26 @@
       ctx.fillStyle = "black";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Círculos concêntricos e valores verticais de temperatura
+      // Círculos concêntricos e valores verticais à direita
       ctx.strokeStyle = "gray";
       ctx.fillStyle = "white";
       ctx.font = "14px sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "bottom";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+
       for (let val = 1.0; val <= 5.0; val++) {
         let radius = val * rFactor;
+
+        // Círculo
         ctx.beginPath();
         ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
         ctx.stroke();
 
-        // Temperatura posicionada verticalmente à direita da espiral
-        ctx.fillText(`${val.toFixed(1)}°C`, centerX + radius, centerY - radius - 10);
+        // Texto ao lado direito, alinhado verticalmente com o círculo
+        ctx.fillText(`${val.toFixed(1)}°C`, centerX + radius + 10, centerY);
       }
 
-      // Nomes dos meses
+      // Nomes dos meses ao redor do círculo
       ctx.fillStyle = "white";
       ctx.font = "16px sans-serif";
       ctx.textAlign = "center";
@@ -119,7 +122,7 @@
         ctx.fillText(months[m], pos.x, pos.y);
       }
 
-      // Linhas de anomalia coloridas
+      // Linhas da espiral (anomalias)
       for (let i = 1; i < f; i++) {
         const angle1 = (2 * Math.PI / 12) * (i % 12) - Math.PI / 2;
         const angle2 = (2 * Math.PI / 12) * ((i + 1) % 12) - Math.PI / 2;
@@ -143,7 +146,7 @@
         ctx.stroke();
       }
 
-      // Texto do ano
+      // Texto do ano no centro
       if (dates[f]) {
         const year = dates[f].split("-")[0];
         ctx.fillStyle = "white";
