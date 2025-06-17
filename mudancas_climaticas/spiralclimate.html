@@ -92,18 +92,20 @@
       ctx.fillStyle = "black";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Círculos concêntricos e rótulos de temperatura
+      // Círculos concêntricos e valores verticais de temperatura
       ctx.strokeStyle = "gray";
       ctx.fillStyle = "white";
       ctx.font = "14px sans-serif";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "middle";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
       for (let val = 1.0; val <= 5.0; val++) {
         let radius = val * rFactor;
         ctx.beginPath();
         ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
         ctx.stroke();
-        ctx.fillText(`${val.toFixed(1)}°C`, centerX + radius + 5, centerY);
+
+        // Temperatura posicionada verticalmente à direita da espiral
+        ctx.fillText(`${val.toFixed(1)}°C`, centerX + radius, centerY - radius - 10);
       }
 
       // Nomes dos meses
@@ -146,6 +148,8 @@
         const year = dates[f].split("-")[0];
         ctx.fillStyle = "white";
         ctx.font = "28px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
         ctx.fillText(year, centerX, centerY);
       }
     }
