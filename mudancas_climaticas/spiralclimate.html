@@ -54,18 +54,11 @@
     let dates = [];
     let frame = 0;
     let isPaused = false;
+    let minAnomaly = Infinity;
+    let maxAnomaly = -Infinity;
 
     const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
                     "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-
-    // Função para interpolar entre azul e vermelho
-    function getBlueRedColor(value, min, max) {
-      const t = Math.max(0, Math.min(1, (value - min) / (max - min))); // Normaliza entre 0 e 1
-      const r = Math.round(255 * t);         // de 0 a 255
-      const g = 0;                            // sem verde
-      const b = Math.round(255 * (1 - t));    // de 255 a 0
-      return `rgb(${r},${g},${b})`;
-    }
 
     fetch("HadCRUT.5.0.2.0.analysis.summary_series.global.monthly.csv")
       .then(response => {
@@ -80,8 +73,12 @@
           complete: function(results) {
             anomalies = results.data.map(row => row["Anomaly (deg C)"]);
             dates = results.data.map(row => row["Time"]);
-            minAnomaly = Math.min(...anomalies.filter(Number.isFinite));
-            maxAnomaly = Math.max(...anomalies.filter(Number.isFinite));
+            anomalies.forEach(val => {
+              if (typeof val === "number") {
+                minAnomaly = Math.min(minAnomaly, val);
+                maxAnomaly = Math.max(maxAnomaly, val);
+              }
+            });
             animate();
           }
         });
@@ -91,14 +88,18 @@
         alert("Não foi possível carregar o arquivo CSV.");
       });
 
-    let minAnomaly = -1.0;
-    let maxAnomaly = 2.0;
-
     function polarToCartesian(angle, radius) {
       return {
         x: centerX + radius * Math.cos(angle),
         y: centerY + radius * Math.sin(angle)
       };
+    }
+
+    // Escala de azul escuro até vermelho escuro, sem roxo
+    function getBlueToRedColor(value, min, max) {
+      const t = Math.max(0, Math.min(1, (value - min) / (max - min)));
+      const hue = (1 - t) * 240; // de 240 (azul) até 0 (vermelho)
+      return `hsl(${hue}, 100%, 50%)`;
     }
 
     function drawFrame(f) {
@@ -140,7 +141,7 @@
         ctx.restore();
       }
 
-      // Meses ao redor
+      // Meses ao redor do círculo
       ctx.fillStyle = "white";
       ctx.font = "22px sans-serif";
       for (let m = 0; m < 12; m++) {
@@ -153,7 +154,7 @@
         ctx.restore();
       }
 
-      // Espiral com degradê azul → vermelho
+      // Desenha espiral com cor coolwarm e sombra leve
       for (let i = 1; i < f; i++) {
         const angle1 = (2 * Math.PI / 12) * (i % 12) - Math.PI / 2;
         const angle2 = (2 * Math.PI / 12) * ((i + 1) % 12) - Math.PI / 2;
@@ -165,13 +166,13 @@
         const p2 = polarToCartesian(angle2, radius2);
 
         const temp = anomalies[i];
-        const color = getBlueRedColor(temp, minAnomaly, maxAnomaly);
+        const color = getBlueToRedColor(temp, minAnomaly, maxAnomaly);
 
-        // Sombra para efeito 3D
-        ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
-        ctx.shadowBlur = 6;
-        ctx.shadowOffsetX = 3;
-        ctx.shadowOffsetY = 3;
+        // Sombra 3D leve
+        ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
+        ctx.shadowBlur = 5;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
 
         ctx.strokeStyle = color;
         ctx.lineWidth = 4;
@@ -180,6 +181,7 @@
         ctx.lineTo(p2.x, p2.y);
         ctx.stroke();
 
+        // Limpa sombra
         ctx.shadowColor = "transparent";
         ctx.shadowBlur = 0;
         ctx.shadowOffsetX = 0;
