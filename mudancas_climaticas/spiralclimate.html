@@ -52,6 +52,7 @@
     let anomalies = [];
     let dates = [];
     let frame = 0;
+    let animationId;
     let isPaused = false;
 
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -67,7 +68,7 @@
           header: true,
           dynamicTyping: true,
           skipEmptyLines: true,
-          complete: results => {
+          complete: function(results) {
             anomalies = results.data.map(row => row["Anomaly (deg C)"]);
             dates = results.data.map(row => row["Time"]);
             animate();
@@ -91,31 +92,33 @@
       ctx.fillStyle = "black";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Círculos concêntricos (-1°C a 2°C)
+      // Círculos concêntricos (de -1°C a 2°C)
       ctx.strokeStyle = "gray";
       ctx.font = "14px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
 
-      for (let val = -1; val <= 2; val++) {
+      for (let val = 2; val <= 5; val++) {
         let radius = val * rFactor;
 
+        // Desenha círculo
         ctx.beginPath();
         ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
         ctx.stroke();
 
-        const angle = -Math.PI / 2; // topo (12h)
+        // Posição no topo (12h)
+        const angle = -Math.PI / 2;
         const pos = polarToCartesian(angle, radius);
 
         ctx.save();
         ctx.translate(pos.x, pos.y);
         ctx.rotate(0);
         ctx.fillStyle = "white";
-        ctx.fillText(`${val}°C`, 0, -10);
+        ctx.fillText(`${val.toFixed(1)}°C`, 0, -10);
         ctx.restore();
       }
 
-      // Meses ao redor do círculo
+      // Nomes dos meses ao redor do círculo
       ctx.fillStyle = "white";
       ctx.font = "16px sans-serif";
       ctx.textAlign = "center";
@@ -127,7 +130,7 @@
       }
 
       // Linhas da espiral (anomalias)
-      for (let i = 1; i < f && i < anomalies.length - 1; i++) {
+      for (let i = 1; i < f; i++) {
         const angle1 = (2 * Math.PI / 12) * (i % 12) - Math.PI / 2;
         const angle2 = (2 * Math.PI / 12) * ((i + 1) % 12) - Math.PI / 2;
 
@@ -150,7 +153,7 @@
         ctx.stroke();
       }
 
-      // Ano no centro
+      // Texto do ano no centro
       if (dates[f]) {
         const year = dates[f].split("-")[0];
         ctx.fillStyle = "white";
@@ -165,9 +168,11 @@
       if (!isPaused) {
         drawFrame(frame);
         frame++;
-        if (frame >= anomalies.length - 1) frame = 0;
+        if (frame >= anomalies.length - 1) {
+          frame = 0;
+        }
       }
-      requestAnimationFrame(animate);
+      animationId = requestAnimationFrame(animate);
     }
 
     function pause() {
