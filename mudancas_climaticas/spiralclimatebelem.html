@@ -18,18 +18,16 @@
     .controls {
       margin-top: 15px;
     }
-    .controls button,
-    .controls select {
+    .controls button {
       font-size: 16px;
-      padding: 6px 12px;
+      padding: 6px 14px;
       margin: 5px;
       border: none;
       border-radius: 5px;
       cursor: pointer;
     }
     .play { background-color: #4CAF50; color: white; }
-    .reset { background-color: #f44336; color: white; }
-    .speed { background-color: #008CBA; color: white; }
+    .pause { background-color: #f44336; color: white; }
   </style>
 </head>
 <body>
@@ -38,13 +36,8 @@
   <canvas id="canvas" width="800" height="800"></canvas>
 
   <div class="controls">
-    <button id="toggleButton" class="play" onclick="togglePlayPause()">Play</button>
-    <button class="reset" onclick="reset()">Reset</button>
-    <select class="speed" onchange="setSpeed(this.value)">
-      <option value="200">Lenta</option>
-      <option value="100" selected>Média</option>
-      <option value="30">Rápida</option>
-    </select>
+    <button class="play" onclick="play()">Play</button>
+    <button class="pause" onclick="pause()">Pause</button>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
@@ -60,15 +53,19 @@
     let anomalies = [];
     let dates = [];
     let frame = 0;
-    let isPaused = true;
+    let isPaused = false;
     let minAnomaly = Infinity;
     let maxAnomaly = -Infinity;
-    let baseDelay = 100;
 
-    const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
+                    "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-    fetch("../principal/base_de_dados/ERA5_temperature_2m_monthly_belem.csv")
-      .then(response => response.text())
+    // Carregue seu CSV aqui, por exemplo:
+    fetch("HadCRUT.5.0.2.0.analysis.summary_series.global.monthly.csv")
+      .then(response => {
+        if (!response.ok) throw new Error("Erro ao carregar o CSV.");
+        return response.text();
+      })
       .then(csvText => {
         Papa.parse(csvText, {
           header: true,
@@ -83,15 +80,16 @@
                 maxAnomaly = Math.max(maxAnomaly, val);
               }
             });
-            drawFrame(0); // inicia parado em janeiro
+            animate();
           }
         });
+      })
+      .catch(error => {
+        console.error("Erro:", error);
+        alert("Não foi possível carregar o arquivo CSV.");
       });
 
-    function setSpeed(value) {
-      baseDelay = parseInt(value);
-    }
-
+    // Função para interpolar cor RGB linear entre dois arrays RGB
     function lerpColorRGB(c1, c2, t) {
       const r = c1[0] + (c2[0] - c1[0]) * t;
       const g = c1[1] + (c2[1] - c1[1]) * t;
@@ -99,14 +97,24 @@
       return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
     }
 
-    const coldColor = [0, 0, 255];
-    const warmColor = [255, 0, 0];
-    const zeroColor = [255, 255, 255];
+    // Cores base conforme seu código p5.js
+    const coldColor = [0, 0, 255];   // azul puro
+    const warmColor = [255, 0, 0];   // vermelho puro
+    const zeroColor = [255, 255, 255]; // branco
 
+    // Função que retorna a cor interpolada, igual ao seu código p5.js:
+    // Para valores negativos: branco → azul
+    // Para valores positivos: branco → vermelho
     function getColorFromAnomaly(value) {
-      const range = value < 0 ? Math.abs(minAnomaly) : Math.abs(maxAnomaly);
-      const t = Math.min(1, Math.abs(value) / range);
-      return lerpColorRGB(zeroColor, value < 0 ? coldColor : warmColor, t);
+      if (value < 0) {
+        // Mapear valor negativo de 0 até -maxNegativo para 0..1
+        const t = Math.min(1, Math.abs(value) / Math.max(Math.abs(minAnomaly), 1));
+        return lerpColorRGB(zeroColor, coldColor, t);
+      } else {
+        // Mapear valor positivo de 0 até maxPositivo para 0..1
+        const t = Math.min(1, Math.abs(value) / Math.max(Math.abs(maxAnomaly), 1));
+        return lerpColorRGB(zeroColor, warmColor, t);
+      }
     }
 
     function polarToCartesian(angle, radius) {
@@ -123,6 +131,7 @@
       ctx.arc(centerX, centerY, r + 120, 0, 2 * Math.PI);
       ctx.fill();
 
+      // Círculos concêntricos
       ctx.strokeStyle = "gray";
       ctx.font = "14px sans-serif";
       ctx.textAlign = "center";
@@ -137,12 +146,16 @@
 
         const angle = -Math.PI / 2;
         const pos = polarToCartesian(angle, radius);
+
         ctx.save();
         ctx.translate(pos.x, pos.y);
+        ctx.rotate(0);
         const label = `${val % 1 === 0 ? val : val.toFixed(1)}°C`;
+
         const padding = 4;
         const textWidth = ctx.measureText(label).width;
         const textHeight = 16;
+
         ctx.fillStyle = "black";
         ctx.fillRect(-textWidth / 2 - padding, -textHeight / 2 - padding, textWidth + padding * 2, textHeight + padding * 2);
         ctx.fillStyle = "white";
@@ -150,6 +163,7 @@
         ctx.restore();
       }
 
+      // Meses ao redor do círculo
       ctx.fillStyle = "white";
       ctx.font = "22px sans-serif";
       for (let m = 0; m < 12; m++) {
@@ -162,18 +176,21 @@
         ctx.restore();
       }
 
+      // Desenha espiral com cor azul-branco-vermelho e sombra leve
       for (let i = 1; i < f; i++) {
-        const angle1 = (2 * Math.PI / 12) * ((i - 1) % 12) - Math.PI / 2;
-        const angle2 = (2 * Math.PI / 12) * (i % 12) - Math.PI / 2;
+        const angle1 = (2 * Math.PI / 12) * (i % 12) - Math.PI / 2;
+        const angle2 = (2 * Math.PI / 12) * ((i + 1) % 12) - Math.PI / 2;
 
-        const radius1 = (anomalies[i - 1] + offset) * rFactor;
-        const radius2 = (anomalies[i] + offset) * rFactor;
+        const radius1 = (anomalies[i] + offset) * rFactor;
+        const radius2 = (anomalies[i + 1] + offset) * rFactor;
 
         const p1 = polarToCartesian(angle1, radius1);
         const p2 = polarToCartesian(angle2, radius2);
 
-        const color = getColorFromAnomaly(anomalies[i]);
+        const temp = anomalies[i];
+        const color = getColorFromAnomaly(temp);
 
+        // Sombra 3D leve
         ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
         ctx.shadowBlur = 5;
         ctx.shadowOffsetX = 2;
@@ -186,12 +203,14 @@
         ctx.lineTo(p2.x, p2.y);
         ctx.stroke();
 
+        // Limpa sombra
         ctx.shadowColor = "transparent";
         ctx.shadowBlur = 0;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
       }
 
+      // Ano no centro
       if (dates[f]) {
         const year = dates[f].split("-")[0];
         ctx.fillStyle = "white";
@@ -206,30 +225,13 @@
       if (!isPaused) {
         drawFrame(frame);
         frame++;
-
         if (frame >= anomalies.length - 1) frame = 0;
-
-        const isLastYear = frame >= anomalies.length - 13;
-        const delay = isLastYear ? baseDelay * 3 : baseDelay;
-
-        setTimeout(() => requestAnimationFrame(animate), delay);
       }
+      requestAnimationFrame(animate);
     }
 
-    const toggleButton = document.getElementById('toggleButton');
-
-    function togglePlayPause() {
-      isPaused = !isPaused;
-      toggleButton.textContent = isPaused ? "Play" : "Pause";
-      if (!isPaused) animate();
-    }
-
-    function reset() {
-      frame = 0;
-      drawFrame(frame);
-      isPaused = true;
-      toggleButton.textContent = "Play";
-    }
+    function pause() { isPaused = true; }
+    function play() { if (isPaused) { isPaused = false; animate(); } }
   </script>
 </body>
 </html>
