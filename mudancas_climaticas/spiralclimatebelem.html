@@ -17,6 +17,11 @@
     }
     .controls {
       margin-top: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
     }
     .controls button {
       font-size: 16px;
@@ -29,9 +34,16 @@
     .toggle { background-color: #2196F3; color: white; }
     .reset { background-color: #9C27B0; color: white; }
     .record { background-color: #E91E63; color: white; }
+
     .speed-control {
-      margin-top: 10px;
       font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+    }
+    .speed-control input[type="range"] {
+      vertical-align: middle;
     }
   </style>
 </head>
@@ -42,14 +54,15 @@
 
   <div class="controls">
     <button id="toggleBtn" class="toggle" onclick="togglePlayPause()">Pause</button>
-    <button class="reset" onclick="reset()">Reset</button>
-    <button id="recordBtn" class="record" onclick="startRecording()">Gravar Vídeo</button>
-  </div>
 
-  <div class="speed-control">
-    Velocidade:
-    <input type="range" id="speedRange" min="0.1" max="3" step="0.1" value="1" oninput="updateSpeed(this.value)">
-    <span id="speedValue">1.0x</span>
+    <div class="speed-control">
+      <label for="speedRange">Velocidade:</label>
+      <input type="range" id="speedRange" min="0.1" max="3" step="0.1" value="1" oninput="updateSpeed(this.value)">
+      <span id="speedValue">1.0x</span>
+    </div>
+
+    <button class="reset" onclick="reset()">Reset</button>
+    <button id="recordBtn" class="record" onclick="startRecording()">Baixar Vídeo</button>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
@@ -219,17 +232,14 @@
       if (!isPaused) {
         drawFrame(Math.floor(frame));
         if (isRecording) {
-          // Captura o frame para o vídeo
-          canvas.captureStream().getTracks().forEach(track => {
-            // nada aqui, pois gravação é tratada via mediaRecorder
-          });
+          // gravação tratada pelo MediaRecorder automaticamente
         }
         frame += speed;
         if (frame >= anomalies.length) {
           if (isRecording) {
             stopRecording();
             frame = 0;
-            isPaused = true; // pausa animação após gravação
+            isPaused = true;
             document.getElementById("toggleBtn").textContent = "Play";
           } else {
             frame = 0;
@@ -254,7 +264,7 @@
     }
 
     function startRecording() {
-      if (isRecording) return; // evita múltiplas gravações simultâneas
+      if (isRecording) return;
       isRecording = true;
       frame = 0;
       isPaused = false;
@@ -262,7 +272,7 @@
 
       recordedChunks = [];
 
-      const stream = canvas.captureStream(30); // 30 fps
+      const stream = canvas.captureStream(30);
       mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm" });
 
       mediaRecorder.ondataavailable = function(e) {
@@ -277,7 +287,7 @@
         const a = document.createElement("a");
         a.style.display = "none";
         a.href = url;
-        a.download = "espiral_climatica.webm"; // formato webm
+        a.download = "espiral_climatica.webm";
         document.body.appendChild(a);
         a.click();
         URL.revokeObjectURL(url);
