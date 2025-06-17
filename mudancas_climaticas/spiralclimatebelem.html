@@ -43,7 +43,7 @@
   <div class="controls">
     <button id="toggleBtn" class="toggle" onclick="togglePlayPause()">Pause</button>
     <button class="reset" onclick="reset()">Reset</button>
-    <button id="recordBtn" class="record" onclick="toggleRecording()">Gravar</button>
+    <button id="recordBtn" class="record" onclick="startRecording()">Gravar Vídeo</button>
   </div>
 
   <div class="speed-control">
@@ -73,10 +73,9 @@
     const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
                     "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-    // Gravação
     let mediaRecorder;
     let recordedChunks = [];
-    const recordBtn = document.getElementById("recordBtn");
+    let isRecording = false;
 
     fetch("../principal/base_de_dados/ERA5_temperature_2m_monthly_belem.csv")
       .then(response => response.text())
@@ -219,8 +218,23 @@
     function animate() {
       if (!isPaused) {
         drawFrame(Math.floor(frame));
+        if (isRecording) {
+          // Captura o frame para o vídeo
+          canvas.captureStream().getTracks().forEach(track => {
+            // nada aqui, pois gravação é tratada via mediaRecorder
+          });
+        }
         frame += speed;
-        if (frame >= anomalies.length) frame = 0;
+        if (frame >= anomalies.length) {
+          if (isRecording) {
+            stopRecording();
+            frame = 0;
+            isPaused = true; // pausa animação após gravação
+            document.getElementById("toggleBtn").textContent = "Play";
+          } else {
+            frame = 0;
+          }
+        }
       }
       requestAnimationFrame(animate);
     }
@@ -239,21 +253,16 @@
       document.getElementById("speedValue").textContent = `${speed.toFixed(1)}x`;
     }
 
-    // Função para iniciar/parar gravação
-    function toggleRecording() {
-      if (mediaRecorder && mediaRecorder.state === "recording") {
-        mediaRecorder.stop();
-        recordBtn.textContent = "Gravar";
-        recordBtn.style.backgroundColor = "#E91E63";
-      } else {
-        startRecording();
-      }
-    }
-
     function startRecording() {
+      if (isRecording) return; // evita múltiplas gravações simultâneas
+      isRecording = true;
+      frame = 0;
+      isPaused = false;
+      document.getElementById("toggleBtn").textContent = "Pause";
+
       recordedChunks = [];
-      // Captura o stream do canvas
-      const stream = canvas.captureStream(60); // 60 fps, ajustável
+
+      const stream = canvas.captureStream(30); // 30 fps
       mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm" });
 
       mediaRecorder.ondataavailable = function(e) {
@@ -265,29 +274,23 @@
       mediaRecorder.onstop = function() {
         const blob = new Blob(recordedChunks, { type: "video/webm" });
         const url = URL.createObjectURL(blob);
-
-        // Criar link para download
         const a = document.createElement("a");
         a.style.display = "none";
         a.href = url;
-        a.download = "espiral_climatica.webm";
+        a.download = "espiral_climatica.webm"; // formato webm
         document.body.appendChild(a);
         a.click();
-        setTimeout(() => {
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }, 100);
-
-        // Se quiser pode exibir o vídeo na tela:
-        // const video = document.createElement("video");
-        // video.src = url;
-        // video.controls = true;
-        // document.body.appendChild(video);
+        URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        isRecording = false;
       };
 
       mediaRecorder.start();
-      recordBtn.textContent = "Parar Gravação";
-      recordBtn.style.backgroundColor = "#4CAF50";
+    }
+
+    function stopRecording() {
+      if (!isRecording) return;
+      mediaRecorder.stop();
     }
   </script>
 </body>
