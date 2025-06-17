@@ -98,23 +98,21 @@
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
 
-      for (let val = 2; val <= 5; val++) {
-        let radius = val * rFactor;
+      for (let val = -1; val <= 2; val++) {
+        let radius = Math.abs(val * rFactor);
 
-        // Desenha círculo
         ctx.beginPath();
         ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
         ctx.stroke();
 
-        // Posição no topo (12h)
-        const angle = -Math.PI / 2;
+        const angle = -Math.PI / 2; // topo
         const pos = polarToCartesian(angle, radius);
 
         ctx.save();
         ctx.translate(pos.x, pos.y);
         ctx.rotate(0);
         ctx.fillStyle = "white";
-        ctx.fillText(`${val.toFixed(1)}°C`, 0, -10);
+        ctx.fillText(`${val}°C`, 0, -10);
         ctx.restore();
       }
 
