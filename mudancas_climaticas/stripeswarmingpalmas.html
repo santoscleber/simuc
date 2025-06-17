@@ -11,17 +11,15 @@
   <div id="chart"></div>
 
   <script>
-    // 🔵🔴 NOVA função: azul para valores negativos, vermelho para positivos
-    function getColor(value) {
-      const blues = ['#08306b', '#08519c', '#2171b5', '#4292c6', '#6baed6', '#9ecae1', '#c6dbef', '#deebf7'];
-      const reds  = ['#fee0d2', '#fcbba1', '#fc9272', '#fb6a4a', '#ef3b2c', '#cb181d', '#a50f15', '#67000d'];
-      if (value < 0) {
-        const index = Math.floor(Math.min(Math.abs(value) / 1 * blues.length, blues.length - 1));
-        return blues[index];
-      } else {
-        const index = Math.floor(Math.min(value / 2 * reds.length, reds.length - 1));
-        return reds[index];
-      }
+    function getColor(value, min, max) {
+      const colors = [
+        '#08306b', '#08519c', '#2171b5', '#4292c6',
+        '#6baed6', '#9ecae1', '#c6dbef', '#deebf7',
+        '#fee0d2', '#fcbba1', '#fc9272', '#fb6a4a',
+        '#ef3b2c', '#cb181d', '#a50f15', '#67000d'
+      ];
+      const idx = Math.floor((value - min) / (max - min) * (colors.length - 1));
+      return colors[Math.max(0, Math.min(colors.length - 1, idx))];
     }
 
     fetch("../principal/base_de_dados/ERA5_temperature_2m_annual_palmas.csv")
@@ -38,7 +36,7 @@
         }
 
         const minVal = -1, maxVal = 2;
-        const colors = anomalies.map(a => getColor(a));
+        const colors = anomalies.map(a => getColor(a, minVal, maxVal));
         const hoverText = years.map((year, i) =>
           `Ano: ${year}<br>Anomalia: ${anomalies[i].toFixed(2)} °C`
         );
@@ -68,11 +66,13 @@
           z: [colorbarValues],
           x: barX,
           type: 'heatmap',
-          // 🔁 ESCALA separada: azul (negativos) → vermelho (positivos)
           colorscale: [
-            [0.0, '#08306b'], [0.125, '#08519c'], [0.25, '#2171b5'], [0.375, '#4292c6'],
-            [0.5, '#6baed6'], [0.501, '#fee0d2'], [0.625, '#fcbba1'],
-            [0.75, '#fc9272'], [0.875, '#fb6a4a'], [1.0, '#67000d']
+            [0.0, '#08306b'], [0.066, '#08519c'], [0.133, '#2171b5'],
+            [0.2, '#4292c6'], [0.266, '#6baed6'], [0.333, '#9ecae1'],
+            [0.4, '#c6dbef'], [0.466, '#deebf7'], [0.533, '#fee0d2'],
+            [0.6, '#fcbba1'], [0.666, '#fc9272'], [0.733, '#fb6a4a'],
+            [0.8, '#ef3b2c'], [0.866, '#cb181d'], [0.933, '#a50f15'],
+            [1.0, '#67000d']
           ],
           showscale: false,
           hoverinfo: 'none',
@@ -83,7 +83,7 @@
         const layout = {
           height: 700,
           margin: { l: 40, r: 60, t: 0, b: 80 },
-          bargap: 0,
+          bargap: 0,  // 🔧 REMOVE ESPAÇO ENTRE BARRAS
           xaxis: {
             title: 'Ano',
             tickvals: years.filter(y => y % 10 === 0),
@@ -94,8 +94,8 @@
             showticklabels: false
           },
           yaxis2: {
-            domain: [0.06, 0.13],
-            ticks: '',
+            domain: [0.06, 0.13],  // Barra de anomalia no eixo Y
+            ticks: '',              // Remove os traços
             showticklabels: false
           },
           annotations: [
