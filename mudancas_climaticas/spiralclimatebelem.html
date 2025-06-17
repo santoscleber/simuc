@@ -62,14 +62,23 @@
     let dates = [];
     let frame = 0;
     let isPaused = false;
+    let timer = null;
+    let speed = 1.0;
     let minAnomaly = Infinity;
     let maxAnomaly = -Infinity;
 
-    let speed = 1.0;
-    let lastTime = 0;
-    let interval = 1000 / 30;
-
     const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+    function startAnimationLoop() {
+      clearInterval(timer);
+      const interval = 100 / speed;
+      timer = setInterval(() => {
+        if (!isPaused) {
+          drawFrame(frame);
+          frame = (frame + 1) % (anomalies.length - 1);
+        }
+      }, interval);
+    }
 
     fetch("../principal/base_de_dados/ERA5_temperature_2m_monthly_belem.csv")
       .then(response => {
@@ -90,7 +99,7 @@
                 maxAnomaly = Math.max(maxAnomaly, val);
               }
             });
-            animate();
+            startAnimationLoop(); // inicia já animando
           }
         });
       })
@@ -214,20 +223,6 @@
       }
     }
 
-    function animate(timestamp) {
-      if (!lastTime) lastTime = timestamp;
-      const elapsed = timestamp - lastTime;
-      const delay = interval / speed;
-
-      if (!isPaused && elapsed > delay) {
-        drawFrame(frame);
-        frame++;
-        if (frame >= anomalies.length - 1) frame = 0;
-        lastTime = timestamp;
-      }
-      requestAnimationFrame(animate);
-    }
-
     function togglePlayPause() {
       isPaused = !isPaused;
       const button = document.getElementById("toggleButton");
@@ -238,6 +233,7 @@
     function updateSpeed(value) {
       speed = parseFloat(value);
       document.getElementById("speedValue").textContent = `${speed.toFixed(1)}x`;
+      startAnimationLoop(); // reinicia a animação com a nova velocidade
     }
   </script>
 </body>
