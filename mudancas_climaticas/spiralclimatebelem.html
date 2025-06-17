@@ -213,7 +213,7 @@
       if (!isPaused) {
         drawFrame(Math.floor(frame));
         frame += speed;
-        if (frame >= anomalies.length - 1) frame = 0;
+        if (frame >= anomalies.length) frame = 0;
       }
       requestAnimationFrame(animate);
     }
