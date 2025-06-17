@@ -28,7 +28,7 @@
       cursor: pointer;
     }
     .play { background-color: #4CAF50; color: white; }
-    .pause { background-color: #f44336; color: white; }
+    .reset { background-color: #f44336; color: white; }
     .speed { background-color: #008CBA; color: white; }
   </style>
 </head>
@@ -38,8 +38,8 @@
   <canvas id="canvas" width="800" height="800"></canvas>
 
   <div class="controls">
-    <button class="play" onclick="play()">Play</button>
-    <button class="pause" onclick="pause()">Pause</button>
+    <button id="toggleButton" class="play" onclick="togglePlayPause()">Play</button>
+    <button class="reset" onclick="reset()">Reset</button>
     <select class="speed" onchange="setSpeed(this.value)">
       <option value="200">Lenta</option>
       <option value="100" selected>Média</option>
@@ -60,11 +60,11 @@
     let anomalies = [];
     let dates = [];
     let frame = 0;
-    let isPaused = false;
+    let isPaused = true;
     let minAnomaly = Infinity;
     let maxAnomaly = -Infinity;
+    let baseDelay = 100;
 
-    let baseDelay = 100; // valor padrão
     const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
     fetch("../principal/base_de_dados/ERA5_temperature_2m_monthly_belem.csv")
@@ -83,7 +83,7 @@
                 maxAnomaly = Math.max(maxAnomaly, val);
               }
             });
-            animate();
+            drawFrame(0); // inicia parado em janeiro
           }
         });
       });
@@ -162,12 +162,12 @@
         ctx.restore();
       }
 
-      for (let i = 0; i < f; i++) {
-        const angle1 = (2 * Math.PI / 12) * (i % 12) - Math.PI / 2;
-        const angle2 = (2 * Math.PI / 12) * ((i + 1) % 12) - Math.PI / 2;
+      for (let i = 1; i < f; i++) {
+        const angle1 = (2 * Math.PI / 12) * ((i - 1) % 12) - Math.PI / 2;
+        const angle2 = (2 * Math.PI / 12) * (i % 12) - Math.PI / 2;
 
-        const radius1 = (anomalies[i] + offset) * rFactor;
-        const radius2 = (anomalies[i + 1] + offset) * rFactor;
+        const radius1 = (anomalies[i - 1] + offset) * rFactor;
+        const radius2 = (anomalies[i] + offset) * rFactor;
 
         const p1 = polarToCartesian(angle1, radius1);
         const p2 = polarToCartesian(angle2, radius2);
@@ -213,13 +213,23 @@
         const delay = isLastYear ? baseDelay * 3 : baseDelay;
 
         setTimeout(() => requestAnimationFrame(animate), delay);
-      } else {
-        requestAnimationFrame(animate);
       }
     }
 
-    function pause() { isPaused = true; }
-    function play() { if (isPaused) { isPaused = false; animate(); } }
+    const toggleButton = document.getElementById('toggleButton');
+
+    function togglePlayPause() {
+      isPaused = !isPaused;
+      toggleButton.textContent = isPaused ? "Play" : "Pause";
+      if (!isPaused) animate();
+    }
+
+    function reset() {
+      frame = 0;
+      drawFrame(frame);
+      isPaused = true;
+      toggleButton.textContent = "Play";
+    }
   </script>
 </body>
 </html>
