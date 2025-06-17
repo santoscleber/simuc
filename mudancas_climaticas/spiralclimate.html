@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Espiral Climática</title>
+  <title>Espiral Climática Azul-Branco-Vermelho</title>
   <style>
     body {
       background: white;
@@ -31,7 +31,7 @@
   </style>
 </head>
 <body>
-  <h2>Espiral Climática</h2>
+  <h2>Espiral Climática Azul-Branco-Vermelho</h2>
 
   <canvas id="canvas" width="800" height="800"></canvas>
 
@@ -60,6 +60,7 @@
     const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
                     "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
+    // Carregue seu CSV aqui, por exemplo:
     fetch("HadCRUT.5.0.2.0.analysis.summary_series.global.monthly.csv")
       .then(response => {
         if (!response.ok) throw new Error("Erro ao carregar o CSV.");
@@ -88,18 +89,39 @@
         alert("Não foi possível carregar o arquivo CSV.");
       });
 
+    // Função para interpolar cor RGB linear entre dois arrays RGB
+    function lerpColorRGB(c1, c2, t) {
+      const r = c1[0] + (c2[0] - c1[0]) * t;
+      const g = c1[1] + (c2[1] - c1[1]) * t;
+      const b = c1[2] + (c2[2] - c1[2]) * t;
+      return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
+    }
+
+    // Cores base conforme seu código p5.js
+    const coldColor = [0, 0, 255];   // azul puro
+    const warmColor = [255, 0, 0];   // vermelho puro
+    const zeroColor = [255, 255, 255]; // branco
+
+    // Função que retorna a cor interpolada, igual ao seu código p5.js:
+    // Para valores negativos: branco → azul
+    // Para valores positivos: branco → vermelho
+    function getColorFromAnomaly(value) {
+      if (value < 0) {
+        // Mapear valor negativo de 0 até -maxNegativo para 0..1
+        const t = Math.min(1, Math.abs(value) / Math.max(Math.abs(minAnomaly), 1));
+        return lerpColorRGB(zeroColor, coldColor, t);
+      } else {
+        // Mapear valor positivo de 0 até maxPositivo para 0..1
+        const t = Math.min(1, Math.abs(value) / Math.max(Math.abs(maxAnomaly), 1));
+        return lerpColorRGB(zeroColor, warmColor, t);
+      }
+    }
+
     function polarToCartesian(angle, radius) {
       return {
         x: centerX + radius * Math.cos(angle),
         y: centerY + radius * Math.sin(angle)
       };
-    }
-
-    // Escala de azul escuro até vermelho escuro, sem roxo
-    function getBlueToRedColor(value, min, max) {
-      const t = Math.max(0, Math.min(1, (value - min) / (max - min)));
-      const hue = (1 - t) * 240; // de 240 (azul) até 0 (vermelho)
-      return `hsl(${hue}, 100%, 50%)`;
     }
 
     function drawFrame(f) {
@@ -154,7 +176,7 @@
         ctx.restore();
       }
 
-      // Desenha espiral com cor coolwarm e sombra leve
+      // Desenha espiral com cor azul-branco-vermelho e sombra leve
       for (let i = 1; i < f; i++) {
         const angle1 = (2 * Math.PI / 12) * (i % 12) - Math.PI / 2;
         const angle2 = (2 * Math.PI / 12) * ((i + 1) % 12) - Math.PI / 2;
@@ -166,7 +188,7 @@
         const p2 = polarToCartesian(angle2, radius2);
 
         const temp = anomalies[i];
-        const color = getBlueToRedColor(temp, minAnomaly, maxAnomaly);
+        const color = getColorFromAnomaly(temp);
 
         // Sombra 3D leve
         ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
