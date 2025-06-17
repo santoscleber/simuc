@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Spiral Climate Cuiabá</title>
+  <title>Spiral Climate Boa Vista</title>
   <style>
     body {
       background: white;
@@ -48,7 +48,7 @@
   </style>
 </head>
 <body>
-  <h2>Anomalias de Temperatura do Ar em Cuiabá - MT (1970–2025)</h2>
+  <h2>Anomalias de Temperatura do Ar em Boa Vista - RR (1970–2025)</h2>
 
   <canvas id="canvas" width="800" height="800"></canvas>
 
@@ -89,7 +89,7 @@
     let recordedChunks = [];
     let isRecording = false;
 
-    fetch("../principal/base_de_dados/ERA5_temperature_2m_monthly_cuiaba.csv")
+    fetch("../principal/base_de_dados/ERA5_temperature_2m_monthly_boavista.csv")
       .then(response => response.text())
       .then(csvText => {
         Papa.parse(csvText, {
@@ -146,7 +146,7 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = "black";
       ctx.beginPath();
-      ctx.arc(centerX, centerY, r + 180, 0, 2 * Math.PI);
+      ctx.arc(centerX, centerY, r + 120, 0, 2 * Math.PI);
       ctx.fill();
 
       ctx.strokeStyle = "gray";
@@ -155,8 +155,8 @@
       ctx.textBaseline = "middle";
       ctx.lineWidth = 3;
 
-      // Adiciona círculo até +3°C
-      for (let val = -1.0; val <= 3.0; val++) {
+      // Alterado: até +4.0°C
+      for (let val = -1.0; val <= 4.0; val++) {
         const radius = (val + offset) * rFactor;
         ctx.beginPath();
         ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
@@ -166,7 +166,7 @@
         const pos = polarToCartesian(angle, radius);
         ctx.save();
         ctx.translate(pos.x, pos.y);
-        const label = `${val}°C`;
+        const label = `${val % 1 === 0 ? val : val.toFixed(1)}°C`;
 
         const padding = 4;
         const textWidth = ctx.measureText(label).width;
@@ -183,7 +183,7 @@
       ctx.font = "22px sans-serif";
       for (let m = 0; m < 12; m++) {
         const angle = (2 * Math.PI / 12) * m - Math.PI / 2;
-        const pos = polarToCartesian(angle, r + 188);           //Afastamento dos meses em relação ao centros
+        const pos = polarToCartesian(angle, r + 128);
         ctx.save();
         ctx.translate(pos.x, pos.y);
         ctx.rotate(angle + Math.PI / 2);
@@ -231,9 +231,7 @@
     function animate() {
       if (!isPaused) {
         drawFrame(Math.floor(frame));
-        if (isRecording) {
-          // gravação tratada pelo MediaRecorder automaticamente
-        }
+        if (isRecording) {}
         frame += speed;
         if (frame >= anomalies.length) {
           if (isRecording) {
