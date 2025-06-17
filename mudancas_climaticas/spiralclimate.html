@@ -92,23 +92,31 @@
       ctx.fillStyle = "black";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Círculos concêntricos e valores verticais à direita
+      // Círculos concêntricos
       ctx.strokeStyle = "gray";
       ctx.fillStyle = "white";
       ctx.font = "14px sans-serif";
-      ctx.textAlign = "left";
+      ctx.textAlign = "center";
       ctx.textBaseline = "middle";
 
       for (let val = 1.0; val <= 5.0; val++) {
         let radius = val * rFactor;
 
-        // Círculo
+        // Desenha círculo
         ctx.beginPath();
         ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
         ctx.stroke();
 
-        // Texto ao lado direito, alinhado verticalmente com o círculo
-        ctx.fillText(`${val.toFixed(1)}°C`, centerX + radius + 10, centerY);
+        // Coordenadas para o texto no ângulo de 360°
+        const angle = 0; // ângulo zero = direita
+        const pos = polarToCartesian(angle, radius + 10);
+
+        // Rotaciona texto na vertical
+        ctx.save();
+        ctx.translate(pos.x, pos.y);
+        ctx.rotate(Math.PI / 2);  // 90 graus para texto vertical
+        ctx.fillText(`${val.toFixed(1)}°C`, 0, 0);
+        ctx.restore();
       }
 
       // Nomes dos meses ao redor do círculo
