@@ -9,7 +9,6 @@ const offset = 2.5;
 let anomalies = [];
 let dates = [];
 let frame = 0;
-let isPaused = false;
 let minAnomaly = Infinity;
 let maxAnomaly = -Infinity;
 let speed = 1.0;
@@ -32,7 +31,7 @@ fetch("../principal/base_de_dados/HadCRUT.5.0.2.0.analysis.summary_series.global
             maxAnomaly = Math.max(maxAnomaly, val);
           }
         });
-        animate();
+        animate(); // ✅ Inicia a animação assim que os dados são carregados
       }
     });
   })
@@ -155,12 +154,10 @@ function drawFrame(f) {
 }
 
 function animate() {
-  if (!isPaused) {
-    drawFrame(Math.floor(frame));
-    frame += speed;
-    if (frame >= anomalies.length) {
-      frame = 0;
-    }
+  drawFrame(Math.floor(frame));
+  frame += speed;
+  if (frame >= anomalies.length) {
+    frame = 0; // ✅ reinicia do início automaticamente
   }
   requestAnimationFrame(animate);
 }
