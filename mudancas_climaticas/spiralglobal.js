@@ -15,7 +15,7 @@ let speed = 1.0;
 
 const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-fetch("../principal/base_de_dados/HadCRUT.5.0.2.0.analysis.summary_series.global.monthly.csv")
+fetch("principal/base_de_dados/HadCRUT.5.0.2.0.analysis.summary_series.global.monthly.csv")
   .then(response => response.text())
   .then(csvText => {
     Papa.parse(csvText, {
