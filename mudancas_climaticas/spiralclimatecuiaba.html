@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Spiral Climate Boa Vista</title>
+  <title>Spiral Climate Cuiabá</title>
   <style>
     body {
       background: white;
@@ -48,7 +48,7 @@
   </style>
 </head>
 <body>
-  <h2>Anomalias de Temperatura do Ar em Boa Vista - RR (1970–2025)</h2>
+  <h2>Anomalias de Temperatura do Ar em Cuiabá - MT (1970–2025)</h2>
 
   <canvas id="canvas" width="900" height="900"></canvas>
 
@@ -89,7 +89,7 @@
     let recordedChunks = [];
     let isRecording = false;
 
-    fetch("../principal/base_de_dados/ERA5_temperature_2m_monthly_boavista.csv")
+    fetch("../principal/base_de_dados/ERA5_temperature_2m_monthly_cuiaba.csv")
       .then(response => response.text())
       .then(csvText => {
         Papa.parse(csvText, {
