@@ -1,163 +1,165 @@
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-const r = 135;
-const centerX = canvas.width / 2;
-const centerY = canvas.height / 2;
-const rFactor = r / 3.0;
-const offset = 2.5;
+window.addEventListener("DOMContentLoaded", function () {
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const r = 135;
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+  const rFactor = r / 3.0;
+  const offset = 2.5;
 
-let anomalies = [];
-let dates = [];
-let frame = 0;
-let minAnomaly = Infinity;
-let maxAnomaly = -Infinity;
-let speed = 1.0;
+  let anomalies = [];
+  let dates = [];
+  let frame = 0;
+  let minAnomaly = Infinity;
+  let maxAnomaly = -Infinity;
+  let speed = 1.0;
 
-const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-fetch("../principal/base_de_dados/HadCRUT.5.0.2.0.analysis.summary_series.global.monthly.csv")
-  .then(response => response.text())
-  .then(csvText => {
-    Papa.parse(csvText, {
-      header: true,
-      dynamicTyping: true,
-      skipEmptyLines: true,
-      complete: function(results) {
-        anomalies = results.data.map(row => row["Anomaly (deg C)"]);
-        dates = results.data.map(row => row["Time"]);
-        anomalies.forEach(val => {
-          if (typeof val === "number") {
-            minAnomaly = Math.min(minAnomaly, val);
-            maxAnomaly = Math.max(maxAnomaly, val);
-          }
-        });
-        animate(); // ✅ Inicia a animação assim que os dados são carregados
-      }
+  fetch("../principal/base_de_dados/HadCRUT.5.0.2.0.analysis.summary_series.global.monthly.csv")
+    .then(response => response.text())
+    .then(csvText => {
+      Papa.parse(csvText, {
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          anomalies = results.data.map(row => row["Anomaly (deg C)"]);
+          dates = results.data.map(row => row["Time"]);
+          anomalies.forEach(val => {
+            if (typeof val === "number") {
+              minAnomaly = Math.min(minAnomaly, val);
+              maxAnomaly = Math.max(maxAnomaly, val);
+            }
+          });
+          animate();
+        }
+      });
+    })
+    .catch(error => {
+      console.error("Erro:", error);
+      alert("Não foi possível carregar o arquivo CSV.");
     });
-  })
-  .catch(error => {
-    console.error("Erro:", error);
-    alert("Não foi possível carregar o arquivo CSV.");
-  });
 
-function lerpColorRGB(c1, c2, t) {
-  const r = c1[0] + (c2[0] - c1[0]) * t;
-  const g = c1[1] + (c2[1] - c1[1]) * t;
-  const b = c1[2] + (c2[2] - c1[2]) * t;
-  return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
-}
-
-const coldColor = [0, 0, 255];
-const warmColor = [255, 0, 0];
-const zeroColor = [255, 255, 255];
-
-function getColorFromAnomaly(value) {
-  if (value < 0) {
-    const t = Math.min(1, Math.abs(value) / Math.max(Math.abs(minAnomaly), 1));
-    return lerpColorRGB(zeroColor, coldColor, t);
-  } else {
-    const t = Math.min(1, Math.abs(value) / Math.max(Math.abs(maxAnomaly), 1));
-    return lerpColorRGB(zeroColor, warmColor, t);
+  function lerpColorRGB(c1, c2, t) {
+    const r = c1[0] + (c2[0] - c1[0]) * t;
+    const g = c1[1] + (c2[1] - c1[1]) * t;
+    const b = c1[2] + (c2[2] - c1[2]) * t;
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
   }
-}
 
-function polarToCartesian(angle, radius) {
-  return {
-    x: centerX + radius * Math.cos(angle),
-    y: centerY + radius * Math.sin(angle)
-  };
-}
+  const coldColor = [0, 0, 255];
+  const warmColor = [255, 0, 0];
+  const zeroColor = [255, 255, 255];
 
-function drawFrame(f) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "black";
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, r + 90, 0, 2 * Math.PI);
-  ctx.fill();
+  function getColorFromAnomaly(value) {
+    if (value < 0) {
+      const t = Math.min(1, Math.abs(value) / Math.max(Math.abs(minAnomaly), 1));
+      return lerpColorRGB(zeroColor, coldColor, t);
+    } else {
+      const t = Math.min(1, Math.abs(value) / Math.max(Math.abs(maxAnomaly), 1));
+      return lerpColorRGB(zeroColor, warmColor, t);
+    }
+  }
 
-  ctx.strokeStyle = "gray";
-  ctx.font = "14px sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.lineWidth = 3;
+  function polarToCartesian(angle, radius) {
+    return {
+      x: centerX + radius * Math.cos(angle),
+      y: centerY + radius * Math.sin(angle)
+    };
+  }
 
-  for (let val = -1.0; val <= 2.0; val++) {
-    const radius = (val + offset) * rFactor;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-    ctx.stroke();
-
-    const angle = -Math.PI / 2;
-    const pos = polarToCartesian(angle, radius);
-    ctx.save();
-    ctx.translate(pos.x, pos.y);
-    const label = `${val % 1 === 0 ? val : val.toFixed(1)}°C`;
-
-    const padding = 4;
-    const textWidth = ctx.measureText(label).width;
-    const textHeight = 16;
-
+  function drawFrame(f) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "black";
-    ctx.fillRect(-textWidth / 2 - padding, -textHeight / 2 - padding, textWidth + padding * 2, textHeight + padding * 2);
-    ctx.fillStyle = "white";
-    ctx.fillText(label, 0, 0);
-    ctx.restore();
-  }
-
-  ctx.fillStyle = "white";
-  ctx.font = "22px sans-serif";
-  for (let m = 0; m < 12; m++) {
-    const angle = (2 * Math.PI / 12) * m - Math.PI / 2;
-    const pos = polarToCartesian(angle, r + 96);
-    ctx.save();
-    ctx.translate(pos.x, pos.y);
-    ctx.rotate(angle + Math.PI / 2);
-    ctx.fillText(months[m], 0, 0);
-    ctx.restore();
-  }
-
-  for (let i = 0; i < f; i++) {
-    const angle1 = (2 * Math.PI / 12) * (i % 12) - Math.PI / 2;
-    const angle2 = (2 * Math.PI / 12) * ((i + 1) % 12) - Math.PI / 2;
-    const radius1 = (anomalies[i] + offset) * rFactor;
-    const radius2 = (anomalies[i + 1] + offset) * rFactor;
-    const p1 = polarToCartesian(angle1, radius1);
-    const p2 = polarToCartesian(angle2, radius2);
-    const color = getColorFromAnomaly(anomalies[i]);
-
-    ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
-    ctx.shadowBlur = 5;
-    ctx.shadowOffsetX = 2;
-    ctx.shadowOffsetY = 2;
-
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.moveTo(p1.x, p1.y);
-    ctx.lineTo(p2.x, p2.y);
-    ctx.stroke();
+    ctx.arc(centerX, centerY, r + 90, 0, 2 * Math.PI);
+    ctx.fill();
 
-    ctx.shadowColor = "transparent";
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-  }
-
-  if (dates[f]) {
-    const year = dates[f].split("-")[0];
-    ctx.fillStyle = "white";
-    ctx.font = "28px sans-serif";
+    ctx.strokeStyle = "gray";
+    ctx.font = "14px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(year, centerX, centerY);
-  }
-}
+    ctx.lineWidth = 3;
 
-function animate() {
-  drawFrame(Math.floor(frame));
-  frame += speed;
-  if (frame >= anomalies.length) {
-    frame = 0; // ✅ reinicia do início automaticamente
+    for (let val = -1.0; val <= 2.0; val++) {
+      const radius = (val + offset) * rFactor;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+      ctx.stroke();
+
+      const angle = -Math.PI / 2;
+      const pos = polarToCartesian(angle, radius);
+      ctx.save();
+      ctx.translate(pos.x, pos.y);
+
+      const label = `${val % 1 === 0 ? val : val.toFixed(1)}°C`;
+      const padding = 4;
+      const textWidth = ctx.measureText(label).width;
+      const textHeight = 16;
+
+      ctx.fillStyle = "black";
+      ctx.fillRect(-textWidth / 2 - padding, -textHeight / 2 - padding, textWidth + padding * 2, textHeight + padding * 2);
+      ctx.fillStyle = "white";
+      ctx.fillText(label, 0, 0);
+      ctx.restore();
+    }
+
+    ctx.fillStyle = "white";
+    ctx.font = "22px sans-serif";
+    for (let m = 0; m < 12; m++) {
+      const angle = (2 * Math.PI / 12) * m - Math.PI / 2;
+      const pos = polarToCartesian(angle, r + 96);
+      ctx.save();
+      ctx.translate(pos.x, pos.y);
+      ctx.rotate(angle + Math.PI / 2);
+      ctx.fillText(months[m], 0, 0);
+      ctx.restore();
+    }
+
+    for (let i = 0; i < f; i++) {
+      const angle1 = (2 * Math.PI / 12) * (i % 12) - Math.PI / 2;
+      const angle2 = (2 * Math.PI / 12) * ((i + 1) % 12) - Math.PI / 2;
+      const radius1 = (anomalies[i] + offset) * rFactor;
+      const radius2 = (anomalies[i + 1] + offset) * rFactor;
+      const p1 = polarToCartesian(angle1, radius1);
+      const p2 = polarToCartesian(angle2, radius2);
+      const color = getColorFromAnomaly(anomalies[i]);
+
+      ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
+      ctx.shadowBlur = 5;
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 2;
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+    }
+
+    if (dates[f]) {
+      const year = dates[f].split("-")[0];
+      ctx.fillStyle = "white";
+      ctx.font = "28px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(year, centerX, centerY);
+    }
   }
-  requestAnimationFrame(animate);
-}
+
+  function animate() {
+    drawFrame(Math.floor(frame));
+    frame += speed;
+    if (frame >= anomalies.length) {
+      frame = 0;
+    }
+    requestAnimationFrame(animate);
+  }
+});
