@@ -51,7 +51,7 @@
 <body>
   <h2>Anomalias de Temperatura do Ar Global (1850–2025)</h2>
 
-  <canvas id="canvas" width="600" height="600"></canvas>        // Era 800, agora 75% menor (MUDAR O TAMANHO DA FIGURA PROPORCIONALMENTE)
+  <canvas id="canvas" width="600" height="600"></canvas>        <!-- Era 800, agora 75% menor (MUDAR O TAMANHO DA FIGURA PROPORCIONALMENTE) -->
 
   <div class="controls">
     <div class="speed-control">
@@ -183,7 +183,7 @@
       ctx.font = "22px sans-serif";
       for (let m = 0; m < 12; m++) {
         const angle = (2 * Math.PI / 12) * m - Math.PI / 2;
-        const pos = polarToCartesian(angle, r + 96);       // Era 1820, agora 75% menor (MUDAR O TAMANHO DA FIGURA PROPORCIONALMENTE)
+        const pos = polarToCartesian(angle, r + 96);       // Era 128, agora 75% menor (MUDAR O TAMANHO DA FIGURA PROPORCIONALMENTE)
         ctx.save();
         ctx.translate(pos.x, pos.y);
         ctx.rotate(angle + Math.PI / 2);
