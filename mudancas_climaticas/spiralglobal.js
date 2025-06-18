@@ -9,42 +9,42 @@ const offset = 2.5;
 let anomalies = [];
 let dates = [];
 let frame = 0;
+let isPaused = false;
 let minAnomaly = Infinity;
 let maxAnomaly = -Infinity;
 let speed = 1.0;
 
-const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
+                "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-// Função para carregar dados e iniciar animação
-function carregarDadosCSV() {
-  fetch("../principal/base_de_dados/HadCRUT.5.0.2.0.analysis.summary_series.global.monthly.csv")
-    .then(response => response.text())
-    .then(csvText => {
-      Papa.parse(csvText, {
-        header: true,
-        dynamicTyping: true,
-        skipEmptyLines: true,
-        complete: function(results) {
-          anomalies = results.data.map(row => row["Anomaly (deg C)"]);
-          dates = results.data.map(row => row["Time"]);
-          anomalies.forEach(val => {
-            if (typeof val === "number") {
-              minAnomaly = Math.min(minAnomaly, val);
-              maxAnomaly = Math.max(maxAnomaly, val);
-            }
-          });
+let mediaRecorder;
+let recordedChunks = [];
+let isRecording = false;
 
-          console.log("Dados carregados. Iniciando animação...");
-          frame = 0;
-          requestAnimationFrame(animate); // CHAMA a animação aqui
-        }
-      });
-    })
-    .catch(error => {
-      console.error("Erro ao carregar CSV:", error);
-      alert("Erro ao carregar os dados.");
+fetch("../principal/base_de_dados/HadCRUT.5.0.2.0.analysis.summary_series.global.monthly.csv")
+  .then(response => response.text())
+  .then(csvText => {
+    Papa.parse(csvText, {
+      header: true,
+      dynamicTyping: true,
+      skipEmptyLines: true,
+      complete: function(results) {
+        anomalies = results.data.map(row => row["Anomaly (deg C)"]);
+        dates = results.data.map(row => row["Time"]);
+        anomalies.forEach(val => {
+          if (typeof val === "number") {
+            minAnomaly = Math.min(minAnomaly, val);
+            maxAnomaly = Math.max(maxAnomaly, val);
+          }
+        });
+        animate();
+      }
     });
-}
+  })
+  .catch(error => {
+    console.error("Erro:", error);
+    alert("Não foi possível carregar o arquivo CSV.");
+  });
 
 function lerpColorRGB(c1, c2, t) {
   const r = c1[0] + (c2[0] - c1[0]) * t;
@@ -159,15 +159,77 @@ function drawFrame(f) {
   }
 }
 
-// ✅ Animação contínua
 function animate() {
-  drawFrame(Math.floor(frame));
-  frame += speed;
-  if (frame >= anomalies.length) {
-    frame = 0;
+  if (!isPaused) {
+    drawFrame(Math.floor(frame));
+    if (isRecording) {
+      // gravação tratada pelo MediaRecorder automaticamente
+    }
+    frame += speed;
+    if (frame >= anomalies.length) {
+      if (isRecording) {
+        stopRecording();
+        frame = 0;
+        isPaused = true;
+        document.getElementById("toggleBtn").textContent = "Play";
+      } else {
+        frame = 0;
+      }
+    }
   }
   requestAnimationFrame(animate);
 }
 
-// 🚀 Inicia tudo
-carregarDadosCSV();
+function togglePlayPause() {
+  isPaused = !isPaused;
+  document.getElementById("toggleBtn").textContent = isPaused ? "Play" : "Pause";
+}
+
+function reset() {
+  frame = 0;
+}
+
+function updateSpeed(val) {
+  speed = parseFloat(val);
+  document.getElementById("speedValue").textContent = `${speed.toFixed(1)}x`;
+}
+
+function startRecording() {
+  if (isRecording) return;
+  isRecording = true;
+  frame = 0;
+  isPaused = false;
+  document.getElementById("toggleBtn").textContent = "Pause";
+
+  recordedChunks = [];
+
+  const stream = canvas.captureStream(30);
+  mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+
+  mediaRecorder.ondataavailable = function(e) {
+    if (e.data.size > 0) {
+      recordedChunks.push(e.data);
+    }
+  };
+
+  mediaRecorder.onstop = function() {
+    const blob = new Blob(recordedChunks, { type: "video/webm" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.style.display = "none";
+    a.href = url;
+    a.download = "espiral_climatica.webm";
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    isRecording = false;
+  };
+
+  mediaRecorder.start();
+}
+
+function stopRecording() {
+  if (!isRecording) return;
+  mediaRecorder.stop();
+}
