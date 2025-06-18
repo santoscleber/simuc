@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Espiral Climática</title>
+  <title>Spiral Climate Belém</title>
   <style>
     body {
       background: white;
@@ -17,6 +17,11 @@
     }
     .controls {
       margin-top: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
     }
     .controls button {
       font-size: 16px;
@@ -26,18 +31,37 @@
       border-radius: 5px;
       cursor: pointer;
     }
-    .play { background-color: #4CAF50; color: white; }
-    .pause { background-color: #f44336; color: white; }
+    .toggle { background-color: #2196F3; color: white; }
+    .reset { background-color: #9C27B0; color: white; }
+    .record { background-color: #E91E63; color: white; }
+
+    .speed-control {
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+    }
+    .speed-control input[type="range"] {
+      vertical-align: middle;
+    }
   </style>
 </head>
 <body>
-  <h2>Espiral Climática</h2>
+  <h2>Anomalias de Temperatura do Ar em Belém - PA (1970–2025)</h2>
 
   <canvas id="canvas" width="800" height="800"></canvas>
 
   <div class="controls">
-    <button class="play" onclick="play()">Play</button>
-    <button class="pause" onclick="pause()">Pause</button>
+    <div class="speed-control">
+      <label for="speedRange">Velocidade:</label>
+      <input type="range" id="speedRange" min="0.1" max="3" step="0.1" value="1" oninput="updateSpeed(this.value)">
+      <span id="speedValue">1.0x</span>
+    </div>
+
+    <button id="toggleBtn" class="toggle" onclick="togglePlayPause()">Pause</button>
+    <button class="reset" onclick="reset()">Reset</button>
+    <button id="recordBtn" class="record" onclick="startRecording()">Baixar Vídeo</button>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
@@ -56,16 +80,17 @@
     let isPaused = false;
     let minAnomaly = Infinity;
     let maxAnomaly = -Infinity;
+    let speed = 1.0;
 
     const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
                     "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-    // Carregue seu CSV aqui, por exemplo:
+    let mediaRecorder;
+    let recordedChunks = [];
+    let isRecording = false;
+
     fetch("../principal/base_de_dados/HadCRUT.5.0.2.0.analysis.summary_series.global.monthly.csv")
-      .then(response => {
-        if (!response.ok) throw new Error("Erro ao carregar o CSV.");
-        return response.text();
-      })
+      .then(response => response.text())
       .then(csvText => {
         Papa.parse(csvText, {
           header: true,
@@ -89,7 +114,6 @@
         alert("Não foi possível carregar o arquivo CSV.");
       });
 
-    // Função para interpolar cor RGB linear entre dois arrays RGB
     function lerpColorRGB(c1, c2, t) {
       const r = c1[0] + (c2[0] - c1[0]) * t;
       const g = c1[1] + (c2[1] - c1[1]) * t;
@@ -97,21 +121,15 @@
       return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
     }
 
-    // Cores base conforme seu código p5.js
-    const coldColor = [0, 0, 255];   // azul puro
-    const warmColor = [255, 0, 0];   // vermelho puro
-    const zeroColor = [255, 255, 255]; // branco
+    const coldColor = [0, 0, 255];
+    const warmColor = [255, 0, 0];
+    const zeroColor = [255, 255, 255];
 
-    // Função que retorna a cor interpolada, igual ao seu código p5.js:
-    // Para valores negativos: branco → azul
-    // Para valores positivos: branco → vermelho
     function getColorFromAnomaly(value) {
       if (value < 0) {
-        // Mapear valor negativo de 0 até -maxNegativo para 0..1
         const t = Math.min(1, Math.abs(value) / Math.max(Math.abs(minAnomaly), 1));
         return lerpColorRGB(zeroColor, coldColor, t);
       } else {
-        // Mapear valor positivo de 0 até maxPositivo para 0..1
         const t = Math.min(1, Math.abs(value) / Math.max(Math.abs(maxAnomaly), 1));
         return lerpColorRGB(zeroColor, warmColor, t);
       }
@@ -131,7 +149,6 @@
       ctx.arc(centerX, centerY, r + 120, 0, 2 * Math.PI);
       ctx.fill();
 
-      // Círculos concêntricos
       ctx.strokeStyle = "gray";
       ctx.font = "14px sans-serif";
       ctx.textAlign = "center";
@@ -146,10 +163,8 @@
 
         const angle = -Math.PI / 2;
         const pos = polarToCartesian(angle, radius);
-
         ctx.save();
         ctx.translate(pos.x, pos.y);
-        ctx.rotate(0);
         const label = `${val % 1 === 0 ? val : val.toFixed(1)}°C`;
 
         const padding = 4;
@@ -163,7 +178,6 @@
         ctx.restore();
       }
 
-      // Meses ao redor do círculo
       ctx.fillStyle = "white";
       ctx.font = "22px sans-serif";
       for (let m = 0; m < 12; m++) {
@@ -176,21 +190,15 @@
         ctx.restore();
       }
 
-      // Desenha espiral com cor azul-branco-vermelho e sombra leve
-      for (let i = 1; i < f; i++) {
+      for (let i = 0; i < f; i++) {
         const angle1 = (2 * Math.PI / 12) * (i % 12) - Math.PI / 2;
         const angle2 = (2 * Math.PI / 12) * ((i + 1) % 12) - Math.PI / 2;
-
         const radius1 = (anomalies[i] + offset) * rFactor;
         const radius2 = (anomalies[i + 1] + offset) * rFactor;
-
         const p1 = polarToCartesian(angle1, radius1);
         const p2 = polarToCartesian(angle2, radius2);
+        const color = getColorFromAnomaly(anomalies[i]);
 
-        const temp = anomalies[i];
-        const color = getColorFromAnomaly(temp);
-
-        // Sombra 3D leve
         ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
         ctx.shadowBlur = 5;
         ctx.shadowOffsetX = 2;
@@ -203,14 +211,12 @@
         ctx.lineTo(p2.x, p2.y);
         ctx.stroke();
 
-        // Limpa sombra
         ctx.shadowColor = "transparent";
         ctx.shadowBlur = 0;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
       }
 
-      // Ano no centro
       if (dates[f]) {
         const year = dates[f].split("-")[0];
         ctx.fillStyle = "white";
@@ -223,15 +229,78 @@
 
     function animate() {
       if (!isPaused) {
-        drawFrame(frame);
-        frame++;
-        if (frame >= anomalies.length - 1) frame = 0;
+        drawFrame(Math.floor(frame));
+        if (isRecording) {
+          // gravação tratada pelo MediaRecorder automaticamente
+        }
+        frame += speed;
+        if (frame >= anomalies.length) {
+          if (isRecording) {
+            stopRecording();
+            frame = 0;
+            isPaused = true;
+            document.getElementById("toggleBtn").textContent = "Play";
+          } else {
+            frame = 0;
+          }
+        }
       }
       requestAnimationFrame(animate);
     }
 
-    function pause() { isPaused = true; }
-    function play() { if (isPaused) { isPaused = false; animate(); } }
+    function togglePlayPause() {
+      isPaused = !isPaused;
+      document.getElementById("toggleBtn").textContent = isPaused ? "Play" : "Pause";
+    }
+
+    function reset() {
+      frame = 0;
+    }
+
+    function updateSpeed(val) {
+      speed = parseFloat(val);
+      document.getElementById("speedValue").textContent = `${speed.toFixed(1)}x`;
+    }
+
+    function startRecording() {
+      if (isRecording) return;
+      isRecording = true;
+      frame = 0;
+      isPaused = false;
+      document.getElementById("toggleBtn").textContent = "Pause";
+
+      recordedChunks = [];
+
+      const stream = canvas.captureStream(30);
+      mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+
+      mediaRecorder.ondataavailable = function(e) {
+        if (e.data.size > 0) {
+          recordedChunks.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = function() {
+        const blob = new Blob(recordedChunks, { type: "video/webm" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = url;
+        a.download = "espiral_climatica.webm";
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        isRecording = false;
+      };
+
+      mediaRecorder.start();
+    }
+
+    function stopRecording() {
+      if (!isRecording) return;
+      mediaRecorder.stop();
+    }
   </script>
 </body>
 </html>
