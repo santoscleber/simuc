@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Spiral Climate Manaus</title>
+  <link rel="shortcut icon" href="../principal/imagens/logo.ico" type="image/x-icon">
   <style>
     body {
       background: white;
@@ -146,7 +147,7 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = "black";
       ctx.beginPath();
-      ctx.arc(centerX, centerY, r + 120, 0, 2 * Math.PI);
+      ctx.arc(centerX, centerY, r + 180, 0, 2 * Math.PI);
       ctx.fill();
 
       ctx.strokeStyle = "gray";
@@ -155,7 +156,8 @@
       ctx.textBaseline = "middle";
       ctx.lineWidth = 3;
 
-      for (let val = -1.0; val <= 2.0; val++) {
+      // Adiciona círculo até +3°C
+      for (let val = -1.0; val <= 3.0; val++) {
         const radius = (val + offset) * rFactor;
         ctx.beginPath();
         ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
@@ -165,7 +167,7 @@
         const pos = polarToCartesian(angle, radius);
         ctx.save();
         ctx.translate(pos.x, pos.y);
-        const label = `${val % 1 === 0 ? val : val.toFixed(1)}°C`;
+        const label = `${val}°C`;
 
         const padding = 4;
         const textWidth = ctx.measureText(label).width;
@@ -182,7 +184,7 @@
       ctx.font = "22px sans-serif";
       for (let m = 0; m < 12; m++) {
         const angle = (2 * Math.PI / 12) * m - Math.PI / 2;
-        const pos = polarToCartesian(angle, r + 128);
+        const pos = polarToCartesian(angle, r + 188);           //Afastamento dos meses em relação ao centros
         ctx.save();
         ctx.translate(pos.x, pos.y);
         ctx.rotate(angle + Math.PI / 2);
