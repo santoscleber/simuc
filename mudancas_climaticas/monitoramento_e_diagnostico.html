@@ -59,6 +59,12 @@
       align-items: flex-end;
       gap: 5px;
     }
+
+    /* Estilo aplicado a todos os popups do mapa */
+    .leaflet-popup-content {
+      text-align: center;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
@@ -109,10 +115,10 @@
           } else if (nomeLower === "macapá" || nomeLower === "macapa") {
             popupContent += `<br><a href="../mudancas_climaticas/stripeswarmingmacapa.html" target="_blank">Stripes Warming</a>
                              <br><a href="../mudancas_climaticas/spiralclimatemacapa.html" target="_blank">Spiral Climate</a>`;
-          } else if (nomeLower === "manaus" || nomeLower === "manaus") {
+          } else if (nomeLower === "manaus") {
             popupContent += `<br><a href="../mudancas_climaticas/stripeswarmingmanaus.html" target="_blank">Stripes Warming</a>
                              <br><a href="../mudancas_climaticas/spiralclimatemanaus.html" target="_blank">Spiral Climate</a>`;
-          } else if (nomeLower === "palmas" || nomeLower === "palmas") {
+          } else if (nomeLower === "palmas") {
             popupContent += `<br><a href="../mudancas_climaticas/stripeswarmingpalmas.html" target="_blank">Stripes Warming</a>
                              <br><a href="../mudancas_climaticas/spiralclimatepalmas.html" target="_blank">Spiral Climate</a>`;
           } else if (nomeLower === "porto velho" || nomeLower === "portovelho") {
