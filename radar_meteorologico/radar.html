@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Mapa Polar da Refletividade</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+  <h2>Refletividade Radar (scan5)</h2>
+  <div id="grafico" style="width: 800px; height: 800px;"></div>
+
+  <script>
+    fetch("refletividade.json")
+      .then(response => response.json())
+      .then(data => {
+        const azimutes = data.azimutes;
+        const alcances = data.alcances;
+        const refletividade = data.refletividade;
+
+        const traces = [];
+
+        for (let i = 0; i < alcances.length; i++) {
+          const r = new Array(azimutes.length).fill(alcances[i]);
+          const z = refletividade.map(row => row[i]); // bin i ao longo dos azimutes
+
+          traces.push({
+            type: 'scatterpolar',
+            r: r,
+            theta: azimutes,
+            mode: 'lines',
+            line: { color: `rgb(${255 - i}, ${50 + i}, 255)`, width: 2 },
+            name: `Bin ${i} (~${(alcances[i] / 1000).toFixed(1)} km)`,
+            hoverinfo: 'text',
+            text: z.map(v => `${v.toFixed(1)} dBZ`)
+          });
+        }
+
+        Plotly.newPlot('grafico', traces, {
+          polar: {
+            radialaxis: { visible: false },
+            angularaxis: { direction: "clockwise" }
+          },
+          showlegend: false
+        });
+      });
+  </script>
+</body>
+</html>
