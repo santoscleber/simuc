@@ -1,150 +1,90 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Visualizador de Imagens GOES-19 (NOAA)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body { margin: 0; font-family: Arial, sans-serif; }
-    #goes19Image { width: 100%; max-height: 600px; display: none; }
-    .controls {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 1000;
-      background: white;
-      padding: 15px;
-      border-radius: 5px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-      max-width: 280px;
-    }
-    .controls label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-    .controls select {
-      width: 100%;
-      padding: 5px;
-      margin-bottom: 10px;
-    }
-    .status {
-      font-size: 12px;
-      color: #666;
-      margin-bottom: 10px;
-    }
-    .info {
-      font-size: 11px;
-      color: #888;
-      line-height: 1.3;
-    }
-  </style>
+    <meta charset="utf-8">
+    <title>Animação GOES Online</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        html, body, #map {
+            height: 100%;
+            margin: 0;
+        }
+        #slider-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,255,255,0.8);
+            padding: 8px 16px;
+            border-radius: 8px;
+            z-index: 999;
+        }
+    </style>
 </head>
 <body>
-
-<div class="controls">
-  <label for="sectorSelect">Selecionar Setor/Produto:</label>
-  <select id="sectorSelect">
-    <option value="CONUS/GEOCOLOR">CONUS - GeoColor</option>
-    <option value="FullDisk/GEOCOLOR">Full Disk - GeoColor</option>
-    <option value="Meso1/GEOCOLOR">Meso 1 - GeoColor</option>
-    <option value="Meso2/GEOCOLOR">Meso 2 - GeoColor</option>
-    <option value="SouthAmerica_north/GEOCOLOR">América do Sul (Norte) - GeoColor</option>
-    <option value="SouthAmerica_south/GEOCOLOR">América do Sul (Sul) - GeoColor</option>
-    <option value="CONUS/Band02">CONUS - Band 2 (Visível)</option>
-    <option value="FullDisk/Band02">Full Disk - Band 2 (Visível)</option>
-  </select>
-  <div class="status" id="status">Carregando imagem GOES-19...</div>
-  <div class="info">
-    <strong>Sobre as imagens:</strong><br>
-    • GOES-19: Satélite geoestacionário da NOAA<br>
-    • GeoColor: Cores verdadeiras (dia), IR multiespectral (noite)<br>
-    • Band 2: Visível (alta resolução)<br>
-    • Fonte: NOAA/NESDIS/STAR<br>
-    • Data: <span id="dateInfo"></span>
-  </div>
+<div id="map"></div>
+<div id="slider-container">
+    <input type="range" min="0" max="11" value="0" id="slider" step="1">
+    <span id="timestamp">--:--</span>
 </div>
 
-<img id="goes19Image" src="" alt="Imagem GOES-19" />
-<img id="fallbackImage" src="https://via.placeholder.com/800x600?text=Imagem+GOES-19+Indisponível" alt="Imagem de Fallback" style="display: none; width: 100%; max-height: 600px;" />
-
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  var goes19Image = document.getElementById('goes19Image');
-  var fallbackImage = document.getElementById('fallbackImage');
-  var statusDiv = document.getElementById('status');
-  var dateInfoDiv = document.getElementById('dateInfo');
-  var sectorSelect = document.getElementById('sectorSelect');
+    const map = L.map('map').setView([2.0, -54.0], 4);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-  // Função para gerar a data/hora no formato do nome do arquivo
-  function getCurrentDateTime(offsetMinutes = 0) {
-    const now = new Date();
-    now.setMinutes(now.getMinutes() - offsetMinutes);
-    const year = now.getFullYear();
-    const dayOfYear = String(Math.floor((now - new Date(year, 0, 1)) / (1000 * 60 * 60 * 24)) + 1).padStart(3, '0');
-    const hours = String(now.getUTCHours()).padStart(2, '0');
-    const minutes = String(Math.floor(now.getUTCMinutes() / 5) * 5).padStart(2, '0'); // Arredonda para o múltiplo de 5 mais próximo
-    const dateStr = `${year}${dayOfYear}${hours}${minutes}`;
-    dateInfoDiv.textContent = `${year}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')} ${hours}:${minutes} UTC`;
-    return dateStr;
-  }
+    // Lista com os últimos 12 links da NOAA (pode ser atualizado dinamicamente)
+    const baseURL = 'https://cdn.star.nesdis.noaa.gov/GOES16/ABI/SECTOR/nsa/Sandwich/';
+    const names = [
+        '202507101500Sandwich.png',
+        '202507101515Sandwich.png',
+        '202507101530Sandwich.png',
+        '202507101545Sandwich.png',
+        '202507101600Sandwich.png',
+        '202507101615Sandwich.png',
+        '202507101630Sandwich.png',
+        '202507101645Sandwich.png',
+        '202507101700Sandwich.png',
+        '202507101715Sandwich.png',
+        '202507101730Sandwich.png',
+        '202507101745Sandwich.png'
+    ];
 
-  // Função para carregar a imagem do GOES-19
-  function loadGoes19Image(sector) {
-    // Tentar a imagem mais recente e, se falhar, tentar até 30 minutos antes
-    let attempts = 0;
-    const maxAttempts = 6; // Tentar até 30 minutos antes (6 * 5 minutos)
-    function tryLoadImage(offsetMinutes) {
-      const dateTime = getCurrentDateTime(offsetMinutes);
-      const imageUrl = `https://cdn.star.nesdis.noaa.gov/GOES19/ABI/${sector}/${dateTime}_GOES19-ABI-${sector.replace('/', '-')}-1000x1000.jpg`;
+    const timestamps = names.map(name => {
+        const hhmm = name.slice(9,13);
+        return hhmm.slice(0,2) + ":" + hhmm.slice(2) + "Z";
+    });
 
-      statusDiv.textContent = `Carregando imagem GOES-19 (${sector})...`;
-      statusDiv.style.color = '#666';
+    const bounds = [[-10, -85], [20, -35]];  // Região da imagem (NSA)
 
-      fetch(imageUrl, { method: 'HEAD' })
-        .then(response => {
-          if (response.ok) {
-            goes19Image.src = imageUrl;
-            goes19Image.style.display = 'block';
-            fallbackImage.style.display = 'none';
-            statusDiv.textContent = 'Imagem carregada com sucesso!';
-            statusDiv.style.color = 'green';
-          } else if (attempts < maxAttempts) {
-            attempts++;
-            tryLoadImage(offsetMinutes + 5); // Tentar 5 minutos antes
-          } else {
-            showFallback();
-          }
-        })
-        .catch(error => {
-          console.error('Erro ao carregar imagem:', error);
-          if (attempts < maxAttempts) {
-            attempts++;
-            tryLoadImage(offsetMinutes + 5); // Tentar 5 minutos antes
-          } else {
-            showFallback();
-          }
+    const overlays = names.map((filename, idx) => {
+        return L.imageOverlay(baseURL + filename, bounds, { opacity: 0 }).addTo(map);
+    });
+
+    const slider = document.getElementById('slider');
+    const timestamp = document.getElementById('timestamp');
+
+    function updateOverlay(index) {
+        overlays.forEach((layer, i) => {
+            layer.setOpacity(i === index ? 1 : 0);
         });
+        timestamp.textContent = timestamps[index];
     }
 
-    tryLoadImage(0); // Começar com a data/hora atual
-  }
+    slider.addEventListener('input', function() {
+        updateOverlay(parseInt(slider.value));
+    });
 
-  // Função para exibir imagem de fallback
-  function showFallback() {
-    statusDiv.textContent = 'Erro: Imagem GOES-19 indisponível. Verifique o status em https://www.ospo.noaa.gov/Operations/messages.html ou tente outro setor.';
-    statusDiv.style.color = 'red';
-    goes19Image.style.display = 'none';
-    fallbackImage.style.display = 'block';
-  }
+    // autoplay loop
+    let current = 0;
+    setInterval(() => {
+        current = (current + 1) % overlays.length;
+        slider.value = current;
+        updateOverlay(current);
+    }, 1000);  // 1 segundo por quadro
 
-  // Event listener para o seletor de setores
-  sectorSelect.addEventListener('change', function(e) {
-    loadGoes19Image(e.target.value);
-  });
-
-  // Carregar a imagem inicial
-  loadGoes19Image(sectorSelect.value);
+    updateOverlay(0); // Inicializa
 </script>
-
 </body>
 </html>
