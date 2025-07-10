@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>GOES-16 Canal 13 - NASA GIBS</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <style>
-    #map { height: 100vh; width: 100%; }
-  </style>
+<meta charset="UTF-8" />
+<title>Mapa GOES-East ABI Fire Temperature</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet/dist/leaflet.css"
+/>
+<style>
+  #map { height: 600px; width: 100%; }
+</style>
 </head>
 <body>
 
@@ -15,24 +18,21 @@
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-  const map = L.map('map').setView([-15, -60], 4);  // América do Sul
+  // Cria o mapa centralizado na América do Sul
+  var map = L.map('map').setView([-15, -60], 4);
 
-  // Camada base
+  // Camada base OpenStreetMap
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
+    attribution: '© OpenStreetMap contributors'
   }).addTo(map);
 
-  // Camada GOES-16 Clean IR via GIBS
-  const goes16IR = L.tileLayer(
-    'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GOES-East_ABI_L2_CleanIR/default/default/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png',
-    {
-      attribution: 'NASA GIBS / GOES-16 Canal 13',
-      tileSize: 256,
-      maxZoom: 9,
-      minZoom: 3,
-      opacity: 0.8
-    }
-  ).addTo(map);
+  // Camada WMS do NOAA NowCoast com GOES-East ABI Fire Temperature
+  var goesLayer = L.tileLayer.wms('https://nowcoast.noaa.gov/arcgis/services/nowcoast/thermal_microwave/goes_fire/MapServer/WMSServer?', {
+    layers: 'GOES-East_ABI_FireTemp',
+    format: 'image/png',
+    transparent: true,
+    attribution: 'NOAA NowCoast'
+  }).addTo(map);
 </script>
 
 </body>
