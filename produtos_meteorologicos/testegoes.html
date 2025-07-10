@@ -129,6 +129,23 @@
     }
   };
 
+  // Função para verificar a disponibilidade do visualizador GOES-19
+  function checkGoes19Availability(callback) {
+    statusDiv.textContent = 'Verificando disponibilidade do GOES-19...';
+    fetch('https://www.star.nesdis.noaa.gov/GOES/sector.php?sat=GOES19&sector=CONUS', { method: 'HEAD' })
+      .then(response => {
+        if (response.ok) {
+          callback(true);
+        } else {
+          callback(false);
+        }
+      })
+      .catch(error => {
+        console.error('Erro ao verificar GOES-19:', error);
+        callback(false);
+      });
+  }
+
   // Função para trocar a camada
   function changeLayer(layerKey) {
     // Mostrar o mapa Leaflet e esconder o iframe por padrão
@@ -142,10 +159,18 @@
 
     // Verificar se é a camada GOES-19
     if (layerKey === 'GOES_19_ABI') {
-      mapDiv.style.display = 'none';
-      goes19Viewer.style.display = 'block';
-      statusDiv.textContent = 'Visualizador GOES-19 carregado';
-      statusDiv.style.color = 'green';
+      checkGoes19Availability(function(available) {
+        if (available) {
+          mapDiv.style.display = 'none';
+          goes19Viewer.style.display = 'block';
+          statusDiv.textContent = 'Visualizador GOES-19 carregado';
+          statusDiv.style.color = 'green';
+        } else {
+          statusDiv.textContent = 'Erro: Servidor GOES-19 (www.star.nesdis.noaa.gov) indisponível. Tente novamente mais tarde.';
+          statusDiv.style.color = 'red';
+          mapDiv.style.display = 'block'; // Mostrar o mapa como fallback
+        }
+      });
       return;
     }
 
