@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Visualizador de Imagens GOES-19</title>
+  <title>Visualizador de Imagens GOES-19 (NOAA)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body { margin: 0; font-family: Arial, sans-serif; }
@@ -43,7 +43,7 @@
 <body>
 
 <div class="controls">
-  <label for="sectorSelect">Selecionar Setor:</label>
+  <label for="sectorSelect">Selecionar Setor/Produto:</label>
   <select id="sectorSelect">
     <option value="CONUS/GEOCOLOR">CONUS - GeoColor</option>
     <option value="FullDisk/GEOCOLOR">Full Disk - GeoColor</option>
@@ -51,13 +51,16 @@
     <option value="Meso2/GEOCOLOR">Meso 2 - GeoColor</option>
     <option value="SouthAmerica_north/GEOCOLOR">América do Sul (Norte) - GeoColor</option>
     <option value="SouthAmerica_south/GEOCOLOR">América do Sul (Sul) - GeoColor</option>
+    <option value="CONUS/Band02">CONUS - Band 2 (Visível)</option>
+    <option value="FullDisk/Band02">Full Disk - Band 2 (Visível)</option>
   </select>
   <div class="status" id="status">Carregando imagem GOES-19...</div>
   <div class="info">
     <strong>Sobre as imagens:</strong><br>
     • GOES-19: Satélite geoestacionário da NOAA<br>
-    • Imagens: Bandas ABI (GeoColor)<br>
-    • Fonte: NOAA NESDIS<br>
+    • GeoColor: Cores verdadeiras (dia), IR multiespectral (noite)<br>
+    • Band 2: Visível (alta resolução)<br>
+    • Fonte: NOAA/NESDIS/STAR<br>
     • Data: <span id="dateInfo"></span>
   </div>
 </div>
@@ -73,8 +76,9 @@
   var sectorSelect = document.getElementById('sectorSelect');
 
   // Função para gerar a data/hora no formato do nome do arquivo
-  function getCurrentDateTime() {
+  function getCurrentDateTime(offsetMinutes = 0) {
     const now = new Date();
+    now.setMinutes(now.getMinutes() - offsetMinutes);
     const year = now.getFullYear();
     const dayOfYear = String(Math.floor((now - new Date(year, 0, 1)) / (1000 * 60 * 60 * 24)) + 1).padStart(3, '0');
     const hours = String(now.getUTCHours()).padStart(2, '0');
@@ -86,29 +90,43 @@
 
   // Função para carregar a imagem do GOES-19
   function loadGoes19Image(sector) {
-    const dateTime = getCurrentDateTime();
-    const imageUrl = `https://cdn.star.nesdis.noaa.gov/GOES19/ABI/${sector}/${dateTime}_GOES19-ABI-${sector.replace('/', '-')}-1000x1000.jpg`;
+    // Tentar a imagem mais recente e, se falhar, tentar até 30 minutos antes
+    let attempts = 0;
+    const maxAttempts = 6; // Tentar até 30 minutos antes (6 * 5 minutos)
+    function tryLoadImage(offsetMinutes) {
+      const dateTime = getCurrentDateTime(offsetMinutes);
+      const imageUrl = `https://cdn.star.nesdis.noaa.gov/GOES19/ABI/${sector}/${dateTime}_GOES19-ABI-${sector.replace('/', '-')}-1000x1000.jpg`;
 
-    statusDiv.textContent = `Carregando imagem GOES-19 (${sector})...`;
-    statusDiv.style.color = '#666';
+      statusDiv.textContent = `Carregando imagem GOES-19 (${sector})...`;
+      statusDiv.style.color = '#666';
 
-    // Testar se a imagem está disponível
-    fetch(imageUrl, { method: 'HEAD' })
-      .then(response => {
-        if (response.ok) {
-          goes19Image.src = imageUrl;
-          goes19Image.style.display = 'block';
-          fallbackImage.style.display = 'none';
-          statusDiv.textContent = 'Imagem carregada com sucesso!';
-          statusDiv.style.color = 'green';
-        } else {
-          showFallback();
-        }
-      })
-      .catch(error => {
-        console.error('Erro ao carregar imagem:', error);
-        showFallback();
-      });
+      fetch(imageUrl, { method: 'HEAD' })
+        .then(response => {
+          if (response.ok) {
+            goes19Image.src = imageUrl;
+            goes19Image.style.display = 'block';
+            fallbackImage.style.display = 'none';
+            statusDiv.textContent = 'Imagem carregada com sucesso!';
+            statusDiv.style.color = 'green';
+          } else if (attempts < maxAttempts) {
+            attempts++;
+            tryLoadImage(offsetMinutes + 5); // Tentar 5 minutos antes
+          } else {
+            showFallback();
+          }
+        })
+        .catch(error => {
+          console.error('Erro ao carregar imagem:', error);
+          if (attempts < maxAttempts) {
+            attempts++;
+            tryLoadImage(offsetMinutes + 5); // Tentar 5 minutos antes
+          } else {
+            showFallback();
+          }
+        });
+    }
+
+    tryLoadImage(0); // Começar com a data/hora atual
   }
 
   // Função para exibir imagem de fallback
