@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8" />
-<title>Teste de Camadas GOES - NASA GIBS</title>
+<title>Mapa de Satélite - NASA GIBS (Funcionando)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 <style>
@@ -13,14 +13,15 @@
     right: 10px;
     z-index: 1000;
     background: white;
-    padding: 10px;
+    padding: 15px;
     border-radius: 5px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    max-width: 300px;
+    max-width: 280px;
   }
   .controls label {
     display: block;
     margin-bottom: 5px;
+    font-weight: bold;
   }
   .controls select {
     width: 100%;
@@ -30,30 +31,51 @@
   .status {
     font-size: 12px;
     color: #666;
+    margin-bottom: 10px;
+  }
+  .info {
+    font-size: 11px;
+    color: #888;
+    line-height: 1.3;
   }
 </style>
 </head>
 <body>
 
 <div class="controls">
-  <label for="layerSelect">Testar Camadas GOES:</label>
+  <label for="layerSelect">Selecionar Camada de Satélite:</label>
   <select id="layerSelect">
-    <option value="GOES16_ABI_L2_CMI_C13">GOES16_ABI_L2_CMI_C13</option>
-    <option value="GOES19_ABI_L2_CMI_C13">GOES19_ABI_L2_CMI_C13</option>
-    <option value="GOES_East_ABI_L2_CMI_C13">GOES_East_ABI_L2_CMI_C13</option>
-    <option value="GOES_East_ABI_C13">GOES_East_ABI_C13</option>
-    <option value="GOES16_ABI_C13">GOES16_ABI_C13</option>
-    <option value="GOES19_ABI_C13">GOES19_ABI_C13</option>
-    <option value="GOES_East_Infrared">GOES_East_Infrared</option>
-    <option value="MODIS_Terra_CorrectedReflectance_TrueColor">MODIS Terra (Teste)</option>
+    <option value="MODIS_Terra_CorrectedReflectance_TrueColor">MODIS Terra - Cores Verdadeiras</option>
+    <option value="MODIS_Aqua_CorrectedReflectance_TrueColor">MODIS Aqua - Cores Verdadeiras</option>
+    <option value="VIIRS_SNPP_CorrectedReflectance_TrueColor">VIIRS S-NPP - Cores Verdadeiras</option>
+    <option value="MODIS_Terra_CorrectedReflectance_Bands721">MODIS Terra - Bandas 7-2-1</option>
+    <option value="MODIS_Aqua_CorrectedReflectance_Bands721">MODIS Aqua - Bandas 7-2-1</option>
   </select>
   <div class="status" id="status">Carregando...</div>
+  <div class="info">
+    <strong>Sobre as imagens:</strong><br>
+    • MODIS: Satélites Terra e Aqua da NASA<br>
+    • VIIRS: Satélite Suomi NPP<br>
+    • Cores Verdadeiras: Como visto pelo olho humano<br>
+    • Bandas 7-2-1: Realça vegetação e queimadas<br>
+    • Data: <span id="dateInfo"></span>
+  </div>
 </div>
 
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
+  // Função para obter data de alguns dias atrás (para garantir disponibilidade)
+  function getRecentDate(daysAgo = 2) {
+    const date = new Date();
+    date.setDate(date.getDate() - daysAgo);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   // Criar mapa centrado na América do Sul
   var map = L.map('map').setView([-15, -60], 4);
 
@@ -62,59 +84,96 @@
     attribution: '© OpenStreetMap contributors'
   }).addTo(map);
 
-  // Variável para armazenar a camada atual do GOES
-  var currentGoesLayer = null;
+  // Variável para armazenar a camada atual
+  var currentSatelliteLayer = null;
   var statusDiv = document.getElementById('status');
+  var dateInfoDiv = document.getElementById('dateInfo');
 
-  // Função para testar uma camada
-  function testLayer(layerIdentifier) {
+  // Data para usar nas requisições (alguns dias atrás para garantir disponibilidade)
+  var dataDate = getRecentDate(2);
+  dateInfoDiv.textContent = dataDate;
+  console.log('Usando data:', dataDate);
+
+  // Definir as diferentes camadas disponíveis
+  var layers = {
+    'MODIS_Terra_CorrectedReflectance_TrueColor': {
+      url: `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${dataDate}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`,
+      attribution: 'NASA GIBS - MODIS Terra True Color',
+      maxZoom: 9
+    },
+    'MODIS_Aqua_CorrectedReflectance_TrueColor': {
+      url: `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Aqua_CorrectedReflectance_TrueColor/default/${dataDate}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`,
+      attribution: 'NASA GIBS - MODIS Aqua True Color',
+      maxZoom: 9
+    },
+    'VIIRS_SNPP_CorrectedReflectance_TrueColor': {
+      url: `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/${dataDate}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`,
+      attribution: 'NASA GIBS - VIIRS S-NPP True Color',
+      maxZoom: 9
+    },
+    'MODIS_Terra_CorrectedReflectance_Bands721': {
+      url: `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_Bands721/default/${dataDate}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`,
+      attribution: 'NASA GIBS - MODIS Terra Bands 7-2-1',
+      maxZoom: 9
+    },
+    'MODIS_Aqua_CorrectedReflectance_Bands721': {
+      url: `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Aqua_CorrectedReflectance_Bands721/default/${dataDate}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`,
+      attribution: 'NASA GIBS - MODIS Aqua Bands 7-2-1',
+      maxZoom: 9
+    }
+  };
+
+  // Função para trocar a camada
+  function changeLayer(layerKey) {
     // Remover a camada atual se existir
-    if (currentGoesLayer) {
-      map.removeLayer(currentGoesLayer);
+    if (currentSatelliteLayer) {
+      map.removeLayer(currentSatelliteLayer);
     }
 
-    statusDiv.textContent = 'Testando: ' + layerIdentifier;
+    statusDiv.textContent = 'Carregando: ' + layerKey.replace(/_/g, ' ');
+    statusDiv.style.color = '#666';
 
-    // Construir a URL
-    var url = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/' + layerIdentifier + '/default/latest/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png';
-    
-    console.log('Testando URL:', url);
-
-    // Criar a camada
-    currentGoesLayer = L.tileLayer(url, {
-      attribution: 'NASA GIBS - ' + layerIdentifier,
-      maxZoom: 9,
-      opacity: 0.7
+    // Adicionar a nova camada
+    var layerConfig = layers[layerKey];
+    currentSatelliteLayer = L.tileLayer(layerConfig.url, {
+      attribution: layerConfig.attribution,
+      maxZoom: layerConfig.maxZoom,
+      opacity: 0.8
     });
 
     // Adicionar eventos para monitorar o carregamento
-    currentGoesLayer.on('loading', function() {
-      statusDiv.textContent = 'Carregando: ' + layerIdentifier;
+    currentSatelliteLayer.on('loading', function() {
+      statusDiv.textContent = 'Carregando tiles...';
     });
 
-    currentGoesLayer.on('load', function() {
-      statusDiv.textContent = 'Sucesso: ' + layerIdentifier;
+    currentSatelliteLayer.on('load', function() {
+      statusDiv.textContent = 'Carregado com sucesso!';
       statusDiv.style.color = 'green';
     });
 
-    currentGoesLayer.on('tileerror', function(e) {
-      statusDiv.textContent = 'Erro: ' + layerIdentifier + ' (Camada não encontrada)';
+    currentSatelliteLayer.on('tileerror', function(e) {
+      statusDiv.textContent = 'Erro ao carregar imagens';
       statusDiv.style.color = 'red';
       console.error('Erro ao carregar tile:', e);
     });
 
-    // Adicionar ao mapa
-    currentGoesLayer.addTo(map);
+    currentSatelliteLayer.addTo(map);
   }
 
   // Event listener para o seletor de camadas
   document.getElementById('layerSelect').addEventListener('change', function(e) {
-    statusDiv.style.color = '#666';
-    testLayer(e.target.value);
+    changeLayer(e.target.value);
   });
 
-  // Testar a primeira camada
-  testLayer('GOES16_ABI_L2_CMI_C13');
+  // Adicionar controle de camadas do Leaflet
+  var overlayMaps = {
+    "Mapa Base": baseLayer
+  };
+
+  L.control.layers(null, overlayMaps).addTo(map);
+
+  // Adicionar a camada inicial
+  changeLayer('MODIS_Terra_CorrectedReflectance_TrueColor');
 
 </script>
 
