@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>GOES-16 Satélite - NOAA</title>
+  <title>GOES‑19 Canal 13 - América do Sul</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
@@ -15,18 +15,29 @@
   <script>
     const map = L.map('map').setView([-15, -60], 4);
 
-    // Camada base OSM
+    // Camada base OpenStreetMap
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // ✅ Camada GOES válida do NOAA NowCoast (imagens visíveis em tempo real)
-    const goesLayer = L.tileLayer.wms('https://nowcoast.noaa.gov/arcgis/services/nowcoast/imagery_satellite_goes_imagery_natl/time/MapServer/WMSServer?', {
-      layers: '1',
+    // Camada GOES‑19 Canal 13 via WMS do NowCoast
+    const goes19Layer = L.tileLayer.wms('https://nowcoast.noaa.gov/geoserver/satellite/wms?', {
+      layers: 'GOES_GEOCOLOR',  // placeholder, substitua em GetCapabilities
       format: 'image/png',
       transparent: true,
-      attribution: 'NOAA GOES-16'
-    }).addTo(map);
+      attribution: 'NOAA GOES‑19 Canal 13'
+    });
+
+    // Descobrindo nomes de camadas disponíveis
+    fetch('https://nowcoast.noaa.gov/geoserver/satellite/wms?SERVICE=WMS&REQUEST=GetCapabilities')
+      .then(res => res.text())
+      .then(xml => {
+        console.log(xml); // veja no console os nomes exatos de camadas
+        // Exemplo: "GOES-East_C13" ou "GOES-West_C13"
+      })
+      .catch(console.error);
+
+    goes19Layer.addTo(map);
   </script>
 </body>
 </html>
