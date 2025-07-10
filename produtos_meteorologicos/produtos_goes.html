@@ -2,23 +2,38 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8" />
-<title>GOES GIBS WMTS no Leaflet</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<style>#map {height:600px; width:100%;}</style>
+<title>Mapa GOES - NASA GIBS com Leaflet</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<style>
+  #map { height: 600px; width: 100%; }
+</style>
 </head>
 <body>
+
 <div id="map"></div>
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
+  // Cria o mapa centrado na América do Sul
   var map = L.map('map').setView([-15, -60], 4);
 
-  // Camada GOES-17 ABI Banda 13 (Infravermelho) do GIBS NASA
-  var goesLayer = L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GOES-West_ABI_L2_CMI_C02/default/latest/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png', {
-    attribution: 'NASA GIBS - GOES-17 ABI Band 13',
-    maxZoom: 9,
-    opacity: 0.7
+  // Camada base OpenStreetMap
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
   }).addTo(map);
+
+  // Camada GOES-17 ABI Banda 13 (Infravermelho Clean IR)
+  var goesLayer = L.tileLayer(
+    'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GOES-West_ABI_L2_CMI_C13/default/latest/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png',
+    {
+      attribution: 'NASA GIBS - GOES-17 ABI Banda 13',
+      maxZoom: 9,
+      opacity: 0.7
+    }
+  ).addTo(map);
+
 </script>
+
 </body>
 </html>
