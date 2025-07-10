@@ -1,90 +1,162 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-    <meta charset="utf-8">
-    <title>Animação GOES Online</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <style>
-        html, body, #map {
-            height: 100%;
-            margin: 0;
-        }
-        #slider-container {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255,255,255,0.8);
-            padding: 8px 16px;
-            border-radius: 8px;
-            z-index: 999;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Animação GOES-19 Online</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    html, body, #map { height: 100%; margin: 0; }
+    #controls {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.8);
+      padding: 8px 16px;
+      border-radius: 8px;
+      z-index: 999;
+      text-align: center;
+    }
+    #slider-container { margin-top: 10px; }
+    #status { font-size: 12px; color: #666; margin-bottom: 10px; }
+    select { padding: 5px; margin-bottom: 10px; width: 200px; }
+  </style>
 </head>
 <body>
 <div id="map"></div>
-<div id="slider-container">
+<div id="controls">
+  <select id="sectorSelect">
+    <option value="SouthAmerica_north/GEOCOLOR">América do Sul (Norte) - GeoColor</option>
+    <option value="SouthAmerica_south/GEOCOLOR">América do Sul (Sul) - GeoColor</option>
+    <option value="CONUS/GEOCOLOR">CONUS - GeoColor</option>
+    <option value="FullDisk/GEOCOLOR">Full Disk - GeoColor</option>
+  </select>
+  <div id="status">Carregando imagens GOES-19...</div>
+  <div id="slider-container">
     <input type="range" min="0" max="11" value="0" id="slider" step="1">
     <span id="timestamp">--:--</span>
+  </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    const map = L.map('map').setView([2.0, -54.0], 4);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  const map = L.map('map').setView([2.0, -54.0], 4);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-    // Lista com os últimos 12 links da NOAA (pode ser atualizado dinamicamente)
-    const baseURL = 'https://cdn.star.nesdis.noaa.gov/GOES16/ABI/SECTOR/nsa/Sandwich/';
-    const names = [
-        '202507101500Sandwich.png',
-        '202507101515Sandwich.png',
-        '202507101530Sandwich.png',
-        '202507101545Sandwich.png',
-        '202507101600Sandwich.png',
-        '202507101615Sandwich.png',
-        '202507101630Sandwich.png',
-        '202507101645Sandwich.png',
-        '202507101700Sandwich.png',
-        '202507101715Sandwich.png',
-        '202507101730Sandwich.png',
-        '202507101745Sandwich.png'
-    ];
+  const slider = document.getElementById('slider');
+  const timestamp = document.getElementById('timestamp');
+  const statusDiv = document.getElementById('status');
+  const sectorSelect = document.getElementById('sectorSelect');
+  let overlays = [];
+  let timestamps = [];
 
-    const timestamps = names.map(name => {
-        const hhmm = name.slice(9,13);
-        return hhmm.slice(0,2) + ":" + hhmm.slice(2) + "Z";
-    });
+  // Função para gerar data/hora no formato do nome do arquivo
+  function getDateTime(offsetMinutes) {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - offsetMinutes);
+    const year = now.getFullYear();
+    const dayOfYear = String(Math.floor((now - new Date(year, 0, 1)) / (1000 * 60 * 60 * 24)) + 1).padStart(3, '0');
+    const hours = String(now.getUTCHours()).padStart(2, '0');
+    const minutes = String(Math.floor(now.getUTCMinutes() / 5) * 5).padStart(2, '0');
+    const dateStr = `${year}${dayOfYear}${hours}${minutes}`;
+    const displayStr = `${year}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')} ${hours}:${minutes}Z`;
+    return { dateStr, displayStr };
+  }
 
-    const bounds = [[-10, -85], [20, -35]];  // Região da imagem (NSA)
+  // Função para carregar imagens dinamicamente
+  function loadImages(sector) {
+    // Limpar camadas existentes
+    overlays.forEach(layer => map.removeLayer(layer));
+    overlays = [];
+    timestamps = [];
+    statusDiv.textContent = `Carregando imagens GOES-19 (${sector})...`;
+    statusDiv.style.color = '#666';
 
-    const overlays = names.map((filename, idx) => {
-        return L.imageOverlay(baseURL + filename, bounds, { opacity: 0 }).addTo(map);
-    });
+    const bounds = [[-10, -85], [20, -35]]; // Região para América do Sul
+    let loadedImages = 0;
+    let failedImages = 0;
+    const maxImages = 12;
 
-    const slider = document.getElementById('slider');
-    const timestamp = document.getElementById('timestamp');
+    // Tentar carregar as 12 imagens mais recentes (intervalos de 5 minutos)
+    for (let i = 0; i < maxImages; i++) {
+      const { dateStr, displayStr } = getDateTime(i * 5);
+      const imageUrl = `https://cdn.star.nesdis.noaa.gov/GOES19/ABI/${sector}/${dateStr}_GOES19-ABI-${sector.replace('/', '-')}-1000x1000.jpg`;
 
-    function updateOverlay(index) {
-        overlays.forEach((layer, i) => {
-            layer.setOpacity(i === index ? 1 : 0);
+      // Verificar se a imagem existe
+      fetch(imageUrl, { method: 'HEAD' })
+        .then(response => {
+          if (response.ok) {
+            const layer = L.imageOverlay(imageUrl, bounds, { opacity: 0 }).addTo(map);
+            overlays.push(layer);
+            timestamps.push(displayStr);
+            loadedImages++;
+            if (loadedImages + failedImages === maxImages) {
+              finalizeLoading();
+            }
+          } else {
+            failedImages++;
+            if (loadedImages + failedImages === maxImages) {
+              finalizeLoading();
+            }
+          }
+        })
+        .catch(error => {
+          console.error(`Erro ao carregar imagem ${imageUrl}:`, error);
+          failedImages++;
+          if (loadedImages + failedImages === maxImages) {
+            finalizeLoading();
+          }
         });
-        timestamp.textContent = timestamps[index];
     }
 
-    slider.addEventListener('input', function() {
-        updateOverlay(parseInt(slider.value));
+    // Finalizar carregamento
+    function finalizeLoading() {
+      if (loadedImages === 0) {
+        statusDiv.textContent = 'Erro: Nenhuma imagem GOES-19 disponível. Verifique https://www.ospo.noaa.gov/Operations/messages.html';
+        statusDiv.style.color = 'red';
+        slider.disabled = true;
+        timestamp.textContent = '--:--';
+      } else {
+        statusDiv.textContent = `Carregadas ${loadedImages} imagens GOES-19`;
+        statusDiv.style.color = 'green';
+        slider.max = loadedImages - 1;
+        slider.disabled = false;
+        updateOverlay(0);
+      }
+    }
+  }
+
+  // Função para atualizar a camada visível
+  function updateOverlay(index) {
+    overlays.forEach((layer, i) => {
+      layer.setOpacity(i === index ? 1 : 0);
     });
+    timestamp.textContent = timestamps[index] || '--:--';
+  }
 
-    // autoplay loop
-    let current = 0;
-    setInterval(() => {
-        current = (current + 1) % overlays.length;
-        slider.value = current;
-        updateOverlay(current);
-    }, 1000);  // 1 segundo por quadro
+  // Event listener para o slider
+  slider.addEventListener('input', function() {
+    updateOverlay(parseInt(slider.value));
+  });
 
-    updateOverlay(0); // Inicializa
+  // Event listener para o seletor de setores
+  sectorSelect.addEventListener('change', function() {
+    loadImages(sectorSelect.value);
+  });
+
+  // Autoplay loop
+  let current = 0;
+  setInterval(() => {
+    if (overlays.length > 0) {
+      current = (current + 1) % overlays.length;
+      slider.value = current;
+      updateOverlay(current);
+    }
+  }, 1000); // 1 segundo por quadro
+
+  // Carregar imagens iniciais
+  loadImages(sectorSelect.value);
 </script>
 </body>
 </html>
