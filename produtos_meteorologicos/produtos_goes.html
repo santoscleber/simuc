@@ -1,26 +1,32 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<title>Mapa GOES Leaflet WMS</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-<style>
-  #map { height: 600px; width: 100%; }
-</style>
+  <meta charset="UTF-8" />
+  <title>GOES-16 Satélite - NOAA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    #map { height: 100vh; width: 100vw; }
+  </style>
 </head>
 <body>
-<div id="map"></div>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script>
-  var map = L.map('map').setView([-15, -60], 4);
+  <div id="map"></div>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([-15, -60], 4);
 
-  var goesLayer = L.tileLayer.wms('https://nowcoast.noaa.gov/arcgis/services/nowcoast/imagery_goes_time/MapServer/WMSServer?', {
-    layers: 'GOES-16_ABI_BAND_13',  // camada satélite banda infravermelha, pode ajustar
-    format: 'image/png',
-    transparent: true,
-    attribution: 'NOAA NowCoast'
-  }).addTo(map);
-</script>
+    // Camada base OSM
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // ✅ Camada GOES válida do NOAA NowCoast (imagens visíveis em tempo real)
+    const goesLayer = L.tileLayer.wms('https://nowcoast.noaa.gov/arcgis/services/nowcoast/imagery_satellite_goes_imagery_natl/time/MapServer/WMSServer?', {
+      layers: '1',
+      format: 'image/png',
+      transparent: true,
+      attribution: 'NOAA GOES-16'
+    }).addTo(map);
+  </script>
 </body>
 </html>
