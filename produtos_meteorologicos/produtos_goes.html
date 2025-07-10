@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8" />
-<title>Mapa GOES - NASA GIBS com Leaflet</title>
+<title>Mapa GOES-16 Banda 13 - NASA GIBS com Leaflet</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 <style>
@@ -15,7 +15,7 @@
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-  // Cria o mapa centrado na América do Sul
+  // Criar mapa centrado na América do Sul
   var map = L.map('map').setView([-15, -60], 4);
 
   // Camada base OpenStreetMap
@@ -23,11 +23,11 @@
     attribution: '© OpenStreetMap contributors'
   }).addTo(map);
 
-  // Camada GOES-17 ABI Banda 13 (Infravermelho Clean IR)
-  var goesLayer = L.tileLayer(
-    'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GOES-West_ABI_L2_CMI_C13/default/latest/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png',
+  // Camada GOES-16 Banda 13 (Infrared Clean)
+  var goes16Layer = L.tileLayer(
+    'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GOES-East_ABI_L2_CMI_C13/default/latest/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png',
     {
-      attribution: 'NASA GIBS - GOES-17 ABI Banda 13',
+      attribution: 'NASA GIBS - GOES-16 ABI Banda 13',
       maxZoom: 9,
       opacity: 0.7
     }
