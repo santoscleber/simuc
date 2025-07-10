@@ -2,44 +2,36 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Visualizar GOES-19 - América do Sul</title>
-  <style>
-    body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      font-family: sans-serif;
-      background-color: #f4f4f4;
-    }
-    button {
-      padding: 1rem 2rem;
-      font-size: 1.2rem;
-      background-color: #0077cc;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #005fa3;
-    }
-  </style>
+  <title>GOES‑19 IR com Leaflet via NASA GIBS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet/dist/leaflet.css"
+  />
+  <style>#map { height: 100vh; width: 100%; }</style>
 </head>
 <body>
+  <div id="map"></div>
 
-  <h1>Visualizar GOES-19 (Canal 13 - América do Sul)</h1>
-  <button onclick="abrirRAMMB()">Abrir Visualizador</button>
-
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    function abrirRAMMB() {
-      window.open(
-        "https://rammb-slider.cira.colostate.edu/?sat=goes-19&sec=full_disk&band=13&x=-60&y=-15&z=4&map=1&colorbar=1",
-        "_blank"
-      );
-    }
-  </script>
+    const map = L.map('map').setView([-15, -60], 4);
 
+    // Mapa base
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    // Camada GOES-19 IR a partir do GIBS (via WMTS/XYZ)
+    L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GOES-ABI-L2-IR_Clean_Window_Enhanced/default/{time}/{TileMatrixSet}/{z}/{y}/{x}.png', {
+      time: 'default',
+      TileMatrixSet: 'GoogleMapsCompatible_Level9',
+      attribution: 'NOAA/GOES via NASA GIBS',
+      opacity: 0.6,
+      maxZoom: 9,
+      tileSize: 256,
+      subdomains: 'abc',
+    }).addTo(map);
+  </script>
 </body>
 </html>
