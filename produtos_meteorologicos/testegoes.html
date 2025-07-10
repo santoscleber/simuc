@@ -1,243 +1,131 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<title>Mapa de Satélite - NASA GIBS e GOES-19</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-<style>
-  #map { height: 600px; width: 100%; }
-  #goes19Viewer { height: 600px; width: 100%; display: none; }
-  .controls {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 1000;
-    background: white;
-    padding: 15px;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    max-width: 280px;
-  }
-  .controls label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-  }
-  .controls select {
-    width: 100%;
-    padding: 5px;
-    margin-bottom: 10px;
-  }
-  .status {
-    font-size: 12px;
-    color: #666;
-    margin-bottom: 10px;
-  }
-  .info {
-    font-size: 11px;
-    color: #888;
-    line-height: 1.3;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <title>Visualizador de Imagens GOES-19</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; }
+    #goes19Image { width: 100%; max-height: 600px; display: none; }
+    .controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      background: white;
+      padding: 15px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      max-width: 280px;
+    }
+    .controls label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .controls select {
+      width: 100%;
+      padding: 5px;
+      margin-bottom: 10px;
+    }
+    .status {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+    .info {
+      font-size: 11px;
+      color: #888;
+      line-height: 1.3;
+    }
+  </style>
 </head>
 <body>
 
 <div class="controls">
-  <label for="layerSelect">Selecionar Camada de Satélite:</label>
-  <select id="layerSelect">
-    <option value="MODIS_Terra_CorrectedReflectance_TrueColor">MODIS Terra - Cores Verdadeiras</option>
-    <option value="MODIS_Aqua_CorrectedReflectance_TrueColor">MODIS Aqua - Cores Verdadeiras</option>
-    <option value="VIIRS_SNPP_CorrectedReflectance_TrueColor">VIIRS S-NPP - Cores Verdadeiras</option>
-    <option value="MODIS_Terra_CorrectedReflectance_Bands721">MODIS Terra - Bandas 7-2-1</option>
-    <option value="MODIS_Aqua_CorrectedReflectance_Bands721">MODIS Aqua - Bandas 7-2-1</option>
-    <option value="GOES_19_ABI">GOES-19 - Bandas ABI (Visível)</option>
+  <label for="sectorSelect">Selecionar Setor:</label>
+  <select id="sectorSelect">
+    <option value="CONUS/GEOCOLOR">CONUS - GeoColor</option>
+    <option value="FullDisk/GEOCOLOR">Full Disk - GeoColor</option>
+    <option value="Meso1/GEOCOLOR">Meso 1 - GeoColor</option>
+    <option value="Meso2/GEOCOLOR">Meso 2 - GeoColor</option>
+    <option value="SouthAmerica_north/GEOCOLOR">América do Sul (Norte) - GeoColor</option>
+    <option value="SouthAmerica_south/GEOCOLOR">América do Sul (Sul) - GeoColor</option>
   </select>
-  <div class="status" id="status">Carregando...</div>
+  <div class="status" id="status">Carregando imagem GOES-19...</div>
   <div class="info">
     <strong>Sobre as imagens:</strong><br>
-    • MODIS: Satélites Terra e Aqua da NASA<br>
-    • VIIRS: Satélite Suomi NPP<br>
     • GOES-19: Satélite geoestacionário da NOAA<br>
-    • Cores Verdadeiras: Como visto pelo olho humano<br>
-    • Bandas 7-2-1: Realça vegetação e queimadas<br>
+    • Imagens: Bandas ABI (GeoColor)<br>
+    • Fonte: NOAA NESDIS<br>
     • Data: <span id="dateInfo"></span>
   </div>
 </div>
 
-<div id="map"></div>
-<iframe id="goes19Viewer" src="https://www.star.nesdis.noaa.gov/GOES/sector.php?sat=GOES19&sector=CONUS" frameborder="0"></iframe>
+<img id="goes19Image" src="" alt="Imagem GOES-19" />
+<img id="fallbackImage" src="https://via.placeholder.com/800x600?text=Imagem+GOES-19+Indisponível" alt="Imagem de Fallback" style="display: none; width: 100%; max-height: 600px;" />
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-  // Função para obter data de alguns dias atrás (com validação)
-  function getRecentDate(daysAgo = 2) {
-    const date = new Date();
-    date.setDate(date.getDate() - daysAgo);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-
-  // Criar mapa centrado na América do Sul
-  var map = L.map('map').setView([-15, -60], 4);
-  var mapDiv = document.getElementById('map');
-  var goes19Viewer = document.getElementById('goes19Viewer');
+  var goes19Image = document.getElementById('goes19Image');
+  var fallbackImage = document.getElementById('fallbackImage');
   var statusDiv = document.getElementById('status');
   var dateInfoDiv = document.getElementById('dateInfo');
+  var sectorSelect = document.getElementById('sectorSelect');
 
-  // Camada base OpenStreetMap
-  var baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
-  }).addTo(map);
-
-  // Variável para armazenar a camada atual
-  var currentSatelliteLayer = null;
-
-  // Data para usar nas requisições
-  var dataDate = getRecentDate(2);
-  dateInfoDiv.textContent = dataDate;
-  console.log('Usando data:', dataDate);
-
-  // Definir as diferentes camadas disponíveis
-  var layers = {
-    'MODIS_Terra_CorrectedReflectance_TrueColor': {
-      url: `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${dataDate}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`,
-      attribution: 'NASA GIBS - MODIS Terra True Color',
-      maxZoom: 9
-    },
-    'MODIS_Aqua_CorrectedReflectance_TrueColor': {
-      url: `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Aqua_CorrectedReflectance_TrueColor/default/${dataDate}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`,
-      attribution: 'NASA GIBS - MODIS Aqua True Color',
-      maxZoom: 9
-    },
-    'VIIRS_SNPP_CorrectedReflectance_TrueColor': {
-      url: `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/${dataDate}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`,
-      attribution: 'NASA GIBS - VIIRS S-NPP True Color',
-      maxZoom: 9
-    },
-    'MODIS_Terra_CorrectedReflectance_Bands721': {
-      url: `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_Bands721/default/${dataDate}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`,
-      attribution: 'NASA GIBS - MODIS Terra Bands 7-2-1',
-      maxZoom: 9
-    },
-    'MODIS_Aqua_CorrectedReflectance_Bands721': {
-      url: `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Aqua_CorrectedReflectance_Bands721/default/${dataDate}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`,
-      attribution: 'NASA GIBS - MODIS Aqua Bands 7-2-1',
-      maxZoom: 9
-    }
-  };
-
-  // Função para verificar a disponibilidade do visualizador GOES-19
-  function checkGoes19Availability(callback) {
-    statusDiv.textContent = 'Verificando disponibilidade do GOES-19...';
-    fetch('https://www.star.nesdis.noaa.gov/GOES/sector.php?sat=GOES19&sector=CONUS', { method: 'HEAD' })
-      .then(response => {
-        if (response.ok) {
-          callback(true);
-        } else {
-          callback(false);
-        }
-      })
-      .catch(error => {
-        console.error('Erro ao verificar GOES-19:', error);
-        callback(false);
-      });
+  // Função para gerar a data/hora no formato do nome do arquivo
+  function getCurrentDateTime() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const dayOfYear = String(Math.floor((now - new Date(year, 0, 1)) / (1000 * 60 * 60 * 24)) + 1).padStart(3, '0');
+    const hours = String(now.getUTCHours()).padStart(2, '0');
+    const minutes = String(Math.floor(now.getUTCMinutes() / 5) * 5).padStart(2, '0'); // Arredonda para o múltiplo de 5 mais próximo
+    const dateStr = `${year}${dayOfYear}${hours}${minutes}`;
+    dateInfoDiv.textContent = `${year}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')} ${hours}:${minutes} UTC`;
+    return dateStr;
   }
 
-  // Função para trocar a camada
-  function changeLayer(layerKey) {
-    // Mostrar o mapa Leaflet e esconder o iframe por padrão
-    mapDiv.style.display = 'block';
-    goes19Viewer.style.display = 'none';
+  // Função para carregar a imagem do GOES-19
+  function loadGoes19Image(sector) {
+    const dateTime = getCurrentDateTime();
+    const imageUrl = `https://cdn.star.nesdis.noaa.gov/GOES19/ABI/${sector}/${dateTime}_GOES19-ABI-${sector.replace('/', '-')}-1000x1000.jpg`;
 
-    // Remover a camada atual se existir
-    if (currentSatelliteLayer) {
-      map.removeLayer(currentSatelliteLayer);
-    }
-
-    // Verificar se é a camada GOES-19
-    if (layerKey === 'GOES_19_ABI') {
-      checkGoes19Availability(function(available) {
-        if (available) {
-          mapDiv.style.display = 'none';
-          goes19Viewer.style.display = 'block';
-          statusDiv.textContent = 'Visualizador GOES-19 carregado';
-          statusDiv.style.color = 'green';
-        } else {
-          statusDiv.textContent = 'Erro: Servidor GOES-19 (www.star.nesdis.noaa.gov) indisponível. Tente novamente mais tarde.';
-          statusDiv.style.color = 'red';
-          mapDiv.style.display = 'block'; // Mostrar o mapa como fallback
-        }
-      });
-      return;
-    }
-
-    statusDiv.textContent = 'Carregando: ' + layerKey.replace(/_/g, ' ');
+    statusDiv.textContent = `Carregando imagem GOES-19 (${sector})...`;
     statusDiv.style.color = '#666';
 
-    // Adicionar a nova camada
-    var layerConfig = layers[layerKey];
-    currentSatelliteLayer = L.tileLayer(layerConfig.url, {
-      attribution: layerConfig.attribution,
-      maxZoom: layerConfig.maxZoom,
-      opacity: 0.8
-    });
-
-    // Adicionar eventos para monitorar o carregamento
-    currentSatelliteLayer.on('loading', function() {
-      statusDiv.textContent = 'Carregando tiles...';
-    });
-
-    currentSatelliteLayer.on('load', function() {
-      statusDiv.textContent = 'Carregado com sucesso!';
-      statusDiv.style.color = 'green';
-    });
-
-    currentSatelliteLayer.on('tileerror', function(e) {
-      statusDiv.textContent = `Erro ao carregar tiles: Verifique a data (${dataDate}) ou a conexão com o servidor GIBS`;
-      statusDiv.style.color = 'red';
-      console.error('Erro ao carregar tile:', e);
-    });
-
-    currentSatelliteLayer.addTo(map);
-  }
-
-  // Event listener para o seletor de camadas
-  document.getElementById('layerSelect').addEventListener('change', function(e) {
-    changeLayer(e.target.value);
-  });
-
-  // Adicionar controle de camadas do Leaflet
-  var overlayMaps = {
-    "Mapa Base": baseLayer
-  };
-
-  L.control.layers(null, overlayMaps).addTo(map);
-
-  // Adicionar a camada inicial
-  changeLayer('MODIS_Terra_CorrectedReflectance_TrueColor');
-
-  // Validação de data para GIBS
-  function validateDate() {
-    fetch(`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${dataDate}/GoogleMapsCompatible_Level9/0/0/0.jpg`)
+    // Testar se a imagem está disponível
+    fetch(imageUrl, { method: 'HEAD' })
       .then(response => {
-        if (!response.ok) {
-          statusDiv.textContent = 'Data indisponível para ' + dataDate + '. Tente outra data.';
-          statusDiv.style.color = 'red';
+        if (response.ok) {
+          goes19Image.src = imageUrl;
+          goes19Image.style.display = 'block';
+          fallbackImage.style.display = 'none';
+          statusDiv.textContent = 'Imagem carregada com sucesso!';
+          statusDiv.style.color = 'green';
+        } else {
+          showFallback();
         }
       })
       .catch(error => {
-        statusDiv.textContent = 'Erro ao verificar data: ' + error.message;
-        statusDiv.style.color = 'red';
-        console.error('Erro na validação de data:', error);
+        console.error('Erro ao carregar imagem:', error);
+        showFallback();
       });
   }
 
-  // Executar validação de data ao carregar a página
-  validateDate();
+  // Função para exibir imagem de fallback
+  function showFallback() {
+    statusDiv.textContent = 'Erro: Imagem GOES-19 indisponível. Verifique o status em https://www.ospo.noaa.gov/Operations/messages.html ou tente outro setor.';
+    statusDiv.style.color = 'red';
+    goes19Image.style.display = 'none';
+    fallbackImage.style.display = 'block';
+  }
 
+  // Event listener para o seletor de setores
+  sectorSelect.addEventListener('change', function(e) {
+    loadGoes19Image(e.target.value);
+  });
+
+  // Carregar a imagem inicial
+  loadGoes19Image(sectorSelect.value);
 </script>
 
 </body>
