@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8" />
-<title>GOES-16 RGB com Leaflet</title>
+<title>GOES Composite no Leaflet via WMS</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <link
   rel="stylesheet"
@@ -18,24 +18,19 @@
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-  // Cria o mapa centralizado na América do Sul
   var map = L.map('map').setView([-15, -60], 4);
 
-  // Camada base OpenStreetMap
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
   }).addTo(map);
 
-  // Camada GOES-16 ABI RGB (AWS Public Dataset)
-  // URL template para os tiles GOES-16 ABI L2 ACMC (Full Disk RGB)
-  // Esta URL é pública e aberta
-  var goes16Layer = L.tileLayer('https://noaa-goes16.s3.amazonaws.com/ABI-L2-ACMC/{z}/{x}/{y}.png', {
-    attribution: 'NOAA GOES-16 ABI RGB',
-    maxZoom: 8,
-    minZoom: 3,
-    opacity: 0.7
+  // NowCOAST WMS composite GOES imagem visível
+  var goesLayer = L.tileLayer.wms('https://nowcoast.noaa.gov/arcgis/services/nowcoast/analysis_meteohydro_imagery_time/MapServer/WMSServer?', {
+    layers: '1', // camada do composite GOES
+    format: 'image/png',
+    transparent: true,
+    attribution: 'NOAA NowCOAST'
   }).addTo(map);
-
 </script>
 
 </body>
