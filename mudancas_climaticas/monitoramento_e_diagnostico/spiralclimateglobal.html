@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Spiral Climate Global</title>
-  <link rel="shortcut icon" href="../principal/imagens/logo.ico" type="image/x-icon">
+  <link rel="shortcut icon" href="../../principal/imagens/logo.ico" type="image/x-icon">
   <style>
     body {
       background: white;
@@ -90,7 +90,7 @@
     let recordedChunks = [];
     let isRecording = false;
 
-    fetch("../principal/base_de_dados/HadCRUT.5.0.2.0.analysis.summary_series.global.monthly.csv")
+    fetch("../../principal/base_de_dados/HadCRUT.5.0.2.0.analysis.summary_series.global.monthly.csv")
       .then(response => response.text())
       .then(csvText => {
         Papa.parse(csvText, {

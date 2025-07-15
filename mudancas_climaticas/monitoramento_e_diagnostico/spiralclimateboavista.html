@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Spiral Climate Boa Vista</title>
-  <link rel="shortcut icon" href="../principal/imagens/logo.ico" type="image/x-icon">
+  <link rel="shortcut icon" href="../../principal/imagens/logo.ico" type="image/x-icon">
   <style>
     body {
       background: white;
@@ -90,7 +90,7 @@
     let recordedChunks = [];
     let isRecording = false;
 
-    fetch("../principal/base_de_dados/ERA5_temperature_2m_monthly_boavista.csv")
+    fetch("../../principal/base_de_dados/ERA5_temperature_2m_monthly_boavista.csv")
       .then(response => response.text())
       .then(csvText => {
         Papa.parse(csvText, {
