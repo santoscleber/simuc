@@ -34,18 +34,33 @@
     button:hover {
       background-color: #005fa3;
     }
+    .slider-container {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    input[type=range] {
+      width: 200px;
+    }
   </style>
 </head>
 <body>
 
   <h2>Animação GOES - Canal 09</h2>
   <img id="viewer" src="" alt="Imagem Satélite">
+  
   <div class="controls">
     <button onclick="prev()">⏮️ Anterior</button>
-    <button onclick="togglePlay()"><span id="playIcon">▶️</span> Play/Pause</button>
+    <button onclick="togglePlay()"><span id="playIcon">⏸️</span> Play/Pause</button>
     <button onclick="next()">⏭️ Próxima</button>
-    <button onclick="slower()">➖ Lento</button>
-    <button onclick="faster()">➕ Rápido</button>
+  </div>
+
+  <div class="slider-container">
+    <label for="speedRange">Velocidade:</label>
+    <input type="range" id="speedRange" min="100" max="2000" step="100" value="1000" onchange="updateSpeed(this.value)">
+    <span id="speedValue">1000ms</span>
   </div>
 
   <script>
@@ -53,16 +68,18 @@
     let index = 0;
     let delay = 1000;
     let interval = null;
-    let playing = false;
+    let playing = true;
 
     const viewer = document.getElementById("viewer");
     const playIcon = document.getElementById("playIcon");
+    const speedValue = document.getElementById("speedValue");
 
     fetch("canal_09/imagens.json")
       .then(response => response.json())
       .then(data => {
         images = data.map(name => `canal_09/${name}`);
         showImage(index);
+        startInterval();  // inicia automaticamente
       });
 
     function showImage(i) {
@@ -86,28 +103,22 @@
         clearInterval(interval);
         playIcon.textContent = "▶️";
       } else {
-        interval = setInterval(next, delay);
+        startInterval();
         playIcon.textContent = "⏸️";
       }
       playing = !playing;
     }
 
-    function faster() {
-      if (delay > 200) {
-        delay -= 200;
-        restartInterval();
-      }
+    function startInterval() {
+      interval = setInterval(next, delay);
     }
 
-    function slower() {
-      delay += 200;
-      restartInterval();
-    }
-
-    function restartInterval() {
+    function updateSpeed(value) {
+      delay = parseInt(value);
+      speedValue.textContent = `${value}ms`;
       if (playing) {
         clearInterval(interval);
-        interval = setInterval(next, delay);
+        startInterval();
       }
     }
   </script>
