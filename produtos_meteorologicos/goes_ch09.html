@@ -1,116 +1,31 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Animação GOES - Canal 09</title>
-  <style>
-    body {
-      background-color: #111;
-      color: white;
-      text-align: center;
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-    img {
-      max-width: 90vw;
-      max-height: 80vh;
-      margin-top: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px #000;
-    }
-    .controls {
-      margin-top: 15px;
-    }
-    button {
-      margin: 5px;
-      padding: 10px 15px;
-      font-size: 16px;
-      border-radius: 5px;
-      background: #0078D7;
-      border: none;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #005fa3;
-    }
-  </style>
+  <meta charset="utf-8">
+  <title>Teste GOES</title>
 </head>
 <body>
-
-  <h2>Animação GOES - Canal 09</h2>
-  <img id="viewer" src="" alt="Imagem Satélite">
-  <div class="controls">
-    <button onclick="prev()">⏮️ Anterior</button>
-    <button onclick="togglePlay()"><span id="playIcon">▶️</span> Play/Pause</button>
-    <button onclick="next()">⏭️ Próxima</button>
-    <button onclick="slower()">➖ Lento</button>
-    <button onclick="faster()">➕ Rápido</button>
-  </div>
+  <img id="img" width="800"><br>
+  <button onclick="play()">▶️ Play</button>
 
   <script>
     let images = [];
     let index = 0;
-    let delay = 1000;
-    let interval = null;
-    let playing = false;
-
-    const viewer = document.getElementById("viewer");
-    const playIcon = document.getElementById("playIcon");
+    let interval;
 
     fetch("canal_09/imagens.json")
-      .then(response => response.json())
+      .then(r => r.json())
       .then(data => {
         images = data.map(name => `canal_09/${name}`);
-        showImage(index);
+        document.getElementById("img").src = images[0];
       });
 
-    function showImage(i) {
-      if (images.length > 0) {
-        viewer.src = images[i];
-      }
-    }
-
-    function next() {
-      index = (index + 1) % images.length;
-      showImage(index);
-    }
-
-    function prev() {
-      index = (index - 1 + images.length) % images.length;
-      showImage(index);
-    }
-
-    function togglePlay() {
-      if (playing) {
-        clearInterval(interval);
-        playIcon.textContent = "▶️";
-      } else {
-        interval = setInterval(next, delay);
-        playIcon.textContent = "⏸️";
-      }
-      playing = !playing;
-    }
-
-    function faster() {
-      if (delay > 200) {
-        delay -= 200;
-        restartInterval();
-      }
-    }
-
-    function slower() {
-      delay += 200;
-      restartInterval();
-    }
-
-    function restartInterval() {
-      if (playing) {
-        clearInterval(interval);
-        interval = setInterval(next, delay);
-      }
+    function play() {
+      interval = setInterval(() => {
+        index = (index + 1) % images.length;
+        document.getElementById("img").src = images[index];
+      }, 1000);
     }
   </script>
-
 </body>
 </html>
