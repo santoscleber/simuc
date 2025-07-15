@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Animação GOES - Moderno</title>
+  <meta http-equiv="refresh" content="300">
+  <style>
+    body {
+      background-color: #f0f0f0;
+      font-family: sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 1rem;
+    }
+    #animation-container {
+      max-width: 800px;
+      margin: auto;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    }
+    .controls {
+      margin-top: 1rem;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 0 5px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: none;
+      background-color: #0078D7;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #005fa3;
+    }
+  </style>
+</head>
+<body>
+  <div id="animation-container">
+    <h2>Animação de Imagens GOES</h2>
+    <img id="sat-image" src="" alt="Imagem de satélite">
+    <div class="controls">
+      <button onclick="prevImage()">⏮️ Anterior</button>
+      <button onclick="togglePlay()"><span id="play-label">▶️</span> Reproduzir</button>
+      <button onclick="nextImage()">⏭️ Próxima</button>
+      <button onclick="speedDown()">➖ Mais Lento</button>
+      <button onclick="speedUp()">➕ Mais Rápido</button>
+    </div>
+  </div>
+
+  <script>
+    const totalImages = 20;
+    const imagePrefix = './TN'; // ajuste o caminho se necessário
+    const imageExtension = 'png';
+
+    let images = [];
+    for (let i = 1; i <= totalImages; i++) {
+      const num = i.toString().padStart(2, '0');
+      images.push(`${imagePrefix}${num}.${imageExtension}`);
+    }
+
+    let currentIndex = 0;
+    let isPlaying = false;
+    let interval = null;
+    let delay = 1000;
+
+    const imgElement = document.getElementById('sat-image');
+    const playLabel = document.getElementById('play-label');
+
+    function showImage(index) {
+      imgElement.src = images[index];
+    }
+
+    function nextImage() {
+      currentIndex = (currentIndex + 1) % images.length;
+      showImage(currentIndex);
+    }
+
+    function prevImage() {
+      currentIndex = (currentIndex - 1 + images.length) % images.length;
+      showImage(currentIndex);
+    }
+
+    function togglePlay() {
+      if (isPlaying) {
+        clearInterval(interval);
+        playLabel.textContent = '▶️';
+      } else {
+        interval = setInterval(nextImage, delay);
+        playLabel.textContent = '⏸️';
+      }
+      isPlaying = !isPlaying;
+    }
+
+    function speedUp() {
+      if (delay > 200) {
+        delay -= 200;
+        if (isPlaying) {
+          clearInterval(interval);
+          interval = setInterval(nextImage, delay);
+        }
+      }
+    }
+
+    function speedDown() {
+      delay += 200;
+      if (isPlaying) {
+        clearInterval(interval);
+        interval = setInterval(nextImage, delay);
+      }
+    }
+
+    // Inicializa com a primeira imagem
+    showImage(currentIndex);
+  </script>
+</body>
+</html>
