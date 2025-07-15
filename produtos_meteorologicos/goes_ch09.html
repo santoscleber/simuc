@@ -2,36 +2,32 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Animação GOES - Moderno</title>
-  <meta http-equiv="refresh" content="300">
+  <title>Animação GOES - Canal 09</title>
   <style>
     body {
-      background-color: #f0f0f0;
-      font-family: sans-serif;
+      background-color: #111;
+      color: white;
       text-align: center;
-      margin: 0;
-      padding: 1rem;
-    }
-    #animation-container {
-      max-width: 800px;
-      margin: auto;
+      font-family: Arial, sans-serif;
+      padding: 20px;
     }
     img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      max-width: 90vw;
+      max-height: 80vh;
+      margin-top: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #000;
     }
     .controls {
-      margin-top: 1rem;
+      margin-top: 15px;
     }
     button {
-      padding: 10px 20px;
-      margin: 0 5px;
+      margin: 5px;
+      padding: 10px 15px;
       font-size: 16px;
       border-radius: 5px;
+      background: #0078D7;
       border: none;
-      background-color: #0078D7;
       color: white;
       cursor: pointer;
     }
@@ -41,82 +37,80 @@
   </style>
 </head>
 <body>
-  <div id="animation-container">
-    <h2>Animação de Imagens GOES</h2>
-    <img id="sat-image" src="" alt="Imagem de satélite">
-    <div class="controls">
-      <button onclick="prevImage()">⏮️ Anterior</button>
-      <button onclick="togglePlay()"><span id="play-label">▶️</span> Reproduzir</button>
-      <button onclick="nextImage()">⏭️ Próxima</button>
-      <button onclick="speedDown()">➖ Mais Lento</button>
-      <button onclick="speedUp()">➕ Mais Rápido</button>
-    </div>
+
+  <h2>Animação GOES - Canal 09</h2>
+  <img id="viewer" src="" alt="Imagem Satélite">
+  <div class="controls">
+    <button onclick="prev()">⏮️ Anterior</button>
+    <button onclick="togglePlay()"><span id="playIcon">▶️</span> Play/Pause</button>
+    <button onclick="next()">⏭️ Próxima</button>
+    <button onclick="slower()">➖ Lento</button>
+    <button onclick="faster()">➕ Rápido</button>
   </div>
 
   <script>
-    const totalImages = 20;
-    const imagePrefix = './TN'; // ajuste o caminho se necessário
-    const imageExtension = 'png';
-
     let images = [];
-    for (let i = 1; i <= totalImages; i++) {
-      const num = i.toString().padStart(2, '0');
-      images.push(`${imagePrefix}${num}.${imageExtension}`);
-    }
-
-    let currentIndex = 0;
-    let isPlaying = false;
-    let interval = null;
+    let index = 0;
     let delay = 1000;
+    let interval = null;
+    let playing = false;
 
-    const imgElement = document.getElementById('sat-image');
-    const playLabel = document.getElementById('play-label');
+    const viewer = document.getElementById("viewer");
+    const playIcon = document.getElementById("playIcon");
 
-    function showImage(index) {
-      imgElement.src = images[index];
+    fetch("canal_09/imagens.json")
+      .then(response => response.json())
+      .then(data => {
+        images = data.map(name => `canal_09/${name}`);
+        showImage(index);
+      });
+
+    function showImage(i) {
+      if (images.length > 0) {
+        viewer.src = images[i];
+      }
     }
 
-    function nextImage() {
-      currentIndex = (currentIndex + 1) % images.length;
-      showImage(currentIndex);
+    function next() {
+      index = (index + 1) % images.length;
+      showImage(index);
     }
 
-    function prevImage() {
-      currentIndex = (currentIndex - 1 + images.length) % images.length;
-      showImage(currentIndex);
+    function prev() {
+      index = (index - 1 + images.length) % images.length;
+      showImage(index);
     }
 
     function togglePlay() {
-      if (isPlaying) {
+      if (playing) {
         clearInterval(interval);
-        playLabel.textContent = '▶️';
+        playIcon.textContent = "▶️";
       } else {
-        interval = setInterval(nextImage, delay);
-        playLabel.textContent = '⏸️';
+        interval = setInterval(next, delay);
+        playIcon.textContent = "⏸️";
       }
-      isPlaying = !isPlaying;
+      playing = !playing;
     }
 
-    function speedUp() {
+    function faster() {
       if (delay > 200) {
         delay -= 200;
-        if (isPlaying) {
-          clearInterval(interval);
-          interval = setInterval(nextImage, delay);
-        }
+        restartInterval();
       }
     }
 
-    function speedDown() {
+    function slower() {
       delay += 200;
-      if (isPlaying) {
-        clearInterval(interval);
-        interval = setInterval(nextImage, delay);
-      }
+      restartInterval();
     }
 
-    // Inicializa com a primeira imagem
-    showImage(currentIndex);
+    function restartInterval() {
+      if (playing) {
+        clearInterval(interval);
+        interval = setInterval(next, delay);
+      }
+    }
   </script>
+
 </body>
 </html>
