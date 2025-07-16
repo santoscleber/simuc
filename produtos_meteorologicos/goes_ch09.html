@@ -34,11 +34,17 @@
     button:hover {
       background-color: #005fa3;
     }
-    .slider-container, .image-count-container {
+    .controls-container {
       margin-top: 10px;
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: center;
+      gap: 20px;
+    }
+    .control-group {
+      display: flex;
+      align-items: center;
       gap: 10px;
     }
     input[type=range] {
@@ -61,21 +67,23 @@
     <button onclick="next()">⏭️ Próxima</button>
   </div>
 
-  <div class="slider-container">
-    <label for="speedRange">Velocidade:</label>
-    <input type="range" id="speedRange" min="100" max="2000" step="100" value="1000" onchange="updateSpeed(this.value)">
-    <span id="speedValue">1000ms</span>
-  </div>
+  <div class="controls-container">
+    <div class="control-group">
+      <label for="speedRange">Velocidade:</label>
+      <input type="range" id="speedRange" min="100" max="2000" step="100" value="1000" onchange="updateSpeed(this.value)">
+      <span id="speedValue">1000ms</span>
+    </div>
 
-  <div class="image-count-container">
-    <label for="imageCount">Nº de imagens no loop:</label>
-    <select id="imageCount" onchange="updateImageCount(this.value)">
-      <option value="5">5 últimas</option>
-      <option value="10" selected>10 últimas</option>
-      <option value="15">15 últimas</option>
-      <option value="20">20 últimas</option>
-      <option value="Todas">Todas</option>
-    </select>
+    <div class="control-group">
+      <label for="imageCount">Nº de imagens:</label>
+      <select id="imageCount" onchange="updateImageCount(this.value)">
+        <option value="5">5</option>
+        <option value="10" selected>10</option>
+        <option value="15">15</option>
+        <option value="20">20</option>
+        <option value="Todas">Todas</option>
+      </select>
+    </div>
   </div>
 
   <script>
