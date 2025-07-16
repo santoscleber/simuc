@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Animação GOES - Canal 13</title>
+  <style>
+    body {
+      background-color: #111;
+      color: white;
+      text-align: center;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    img {
+      max-width: 90vw;
+      max-height: 80vh;
+      margin-top: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #000;
+      transition: all 0.3s ease-in-out;
+      cursor: zoom-in;
+    }
+    img.zoomed {
+      max-width: 98vw;
+      max-height: 95vh;
+      transform: scale(2);
+      cursor: zoom-out;
+      z-index: 9999;
+    }
+    .controls {
+      margin-top: 15px;
+    }
+    button {
+      margin: 5px;
+      padding: 10px 15px;
+      font-size: 16px;
+      border-radius: 5px;
+      background: #0078D7;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #005fa3;
+    }
+    .controls-container {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+    }
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    input[type=range] {
+      width: 200px;
+    }
+    select {
+      padding: 5px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Animação GOES - Canal 13</h2>
+  <img id="viewer" src="" alt="Imagem Satélite" onclick="toggleZoom()">
+  
+  <div class="controls">
+    <button onclick="prev()">⏮️ Anterior</button>
+    <button onclick="togglePlay()"><span id="playIcon">⏸️</span> Play/Pause</button>
+    <button onclick="next()">⏭️ Próxima</button>
+  </div>
+
+  <div class="controls-container">
+    <div class="control-group">
+      <label for="speedRange">Velocidade:</label>
+      <input type="range" id="speedRange" min="100" max="2000" step="100" value="1000" onchange="updateSpeed(this.value)">
+      <span id="speedValue">1000ms</span>
+    </div>
+
+    <div class="control-group">
+      <label for="imageCount">Nº de imagens:</label>
+      <select id="imageCount" onchange="updateImageCount(this.value)">
+        <option value="5">5</option>
+        <option value="10" selected>10</option>
+        <option value="15">15</option>
+        <option value="20">20</option>
+        <option value="Todas">Todas</option>
+      </select>
+    </div>
+  </div>
+
+  <script>
+    let allImages = [];
+    let images = [];
+    let index = 0;
+    let delay = 1000;
+    let interval = null;
+    let playing = true;
+
+    const viewer = document.getElementById("viewer");
+    const playIcon = document.getElementById("playIcon");
+    const speedValue = document.getElementById("speedValue");
+
+    fetch("canal_13/imagens.json")
+      .then(response => response.json())
+      .then(data => {
+        allImages = data.map(name => `canal_13/${name}`);
+        updateImageCount(10); // inicia com 10 últimas imagens
+        showImage(index);
+        startInterval(); // inicia animação automaticamente
+      });
+
+    function updateImageCount(count) {
+      if (count === "Todas") {
+        images = allImages;
+      } else {
+        images = allImages.slice(-parseInt(count));
+      }
+      index = 0;
+      showImage(index);
+    }
+
+    function showImage(i) {
+      if (images.length > 0) {
+        viewer.src = images[i];
+      }
+    }
+
+    function next() {
+      index = (index + 1) % images.length;
+      showImage(index);
+    }
+
+    function prev() {
+      index = (index - 1 + images.length) % images.length;
+      showImage(index);
+    }
+
+    function togglePlay() {
+      if (playing) {
+        clearInterval(interval);
+        playIcon.textContent = "▶️";
+      } else {
+        startInterval();
+        playIcon.textContent = "⏸️";
+      }
+      playing = !playing;
+    }
+
+    function startInterval() {
+      clearInterval(interval);
+      interval = setInterval(next, delay);
+    }
+
+    function updateSpeed(value) {
+      delay = parseInt(value);
+      speedValue.textContent = `${value}ms`;
+      if (playing) {
+        startInterval();
+      }
+    }
+
+    function toggleZoom() {
+      viewer.classList.toggle("zoomed");
+    }
+  </script>
+
+</body>
+</html>
