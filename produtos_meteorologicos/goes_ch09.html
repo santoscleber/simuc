@@ -34,7 +34,7 @@
     button:hover {
       background-color: #005fa3;
     }
-    .slider-container {
+    .slider-container, .image-count-container {
       margin-top: 10px;
       display: flex;
       align-items: center;
@@ -43,6 +43,10 @@
     }
     input[type=range] {
       width: 200px;
+    }
+    select {
+      padding: 5px;
+      font-size: 14px;
     }
   </style>
 </head>
@@ -63,7 +67,19 @@
     <span id="speedValue">1000ms</span>
   </div>
 
+  <div class="image-count-container">
+    <label for="imageCount">Nº de imagens no loop:</label>
+    <select id="imageCount" onchange="updateImageCount(this.value)">
+      <option value="5">5 últimas</option>
+      <option value="10" selected>10 últimas</option>
+      <option value="15">15 últimas</option>
+      <option value="20">20 últimas</option>
+      <option value="Todas">Todas</option>
+    </select>
+  </div>
+
   <script>
+    let allImages = [];
     let images = [];
     let index = 0;
     let delay = 1000;
@@ -77,10 +93,21 @@
     fetch("canal_09/imagens.json")
       .then(response => response.json())
       .then(data => {
-        images = data.map(name => `canal_09/${name}`);
+        allImages = data.map(name => `canal_09/${name}`);
+        updateImageCount(10); // inicia com 10 últimas imagens
         showImage(index);
-        startInterval();  // inicia automaticamente
+        startInterval(); // inicia animação automaticamente
       });
+
+    function updateImageCount(count) {
+      if (count === "Todas") {
+        images = allImages;
+      } else {
+        images = allImages.slice(-parseInt(count));
+      }
+      index = 0;
+      showImage(index);
+    }
 
     function showImage(i) {
       if (images.length > 0) {
@@ -110,6 +137,7 @@
     }
 
     function startInterval() {
+      clearInterval(interval);
       interval = setInterval(next, delay);
     }
 
@@ -117,7 +145,6 @@
       delay = parseInt(value);
       speedValue.textContent = `${value}ms`;
       if (playing) {
-        clearInterval(interval);
         startInterval();
       }
     }
