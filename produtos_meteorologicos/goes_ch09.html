@@ -17,6 +17,15 @@
       margin-top: 20px;
       border-radius: 8px;
       box-shadow: 0 0 10px #000;
+      transition: all 0.3s ease-in-out;
+      cursor: zoom-in;
+    }
+    img.zoomed {
+      max-width: 98vw;
+      max-height: 95vh;
+      transform: scale(1.5);
+      cursor: zoom-out;
+      z-index: 9999;
     }
     .controls {
       margin-top: 15px;
@@ -59,7 +68,7 @@
 <body>
 
   <h2>Animação GOES - Canal 09</h2>
-  <img id="viewer" src="" alt="Imagem Satélite">
+  <img id="viewer" src="" alt="Imagem Satélite" onclick="toggleZoom()">
   
   <div class="controls">
     <button onclick="prev()">⏮️ Anterior</button>
@@ -75,7 +84,7 @@
     </div>
 
     <div class="control-group">
-      <label for="imageCount">Número de imagens:</label>
+      <label for="imageCount">Nº de imagens:</label>
       <select id="imageCount" onchange="updateImageCount(this.value)">
         <option value="5">5</option>
         <option value="10" selected>10</option>
@@ -155,6 +164,10 @@
       if (playing) {
         startInterval();
       }
+    }
+
+    function toggleZoom() {
+      viewer.classList.toggle("zoomed");
     }
   </script>
 
