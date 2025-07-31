@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador 3D Interativo - Dados de Radar</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+        
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 15px;
+            color: white;
+            min-width: 280px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        #info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #4fc3f7;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            margin: 5px 0;
+            background: transparent;
+        }
+        
+        input[type="range"]::-webkit-slider-track {
+            background: #333;
+            height: 6px;
+            border-radius: 3px;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            background: #4fc3f7;
+            border: none;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            border: 2px dashed #4fc3f7;
+            border-radius: 8px;
+            background: rgba(79, 195, 247, 0.1);
+            color: white;
+            cursor: pointer;
+        }
+        
+        input[type="file"]:hover {
+            background: rgba(79, 195, 247, 0.2);
+        }
+        
+        button {
+            background: linear-gradient(45deg, #4fc3f7, #29b6f6);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            margin: 5px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 195, 247, 0.4);
+        }
+        
+        .color-legend {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+        
+        .color-bar {
+            width: 200px;
+            height: 20px;
+            background: linear-gradient(to right, 
+                #646464, #ccffff, #9999cc, #9966cc, #6600cc, #996600,
+                #999900, #00cc00, #00cc99, #0099cc, #0033cc, #0000cc,
+                #0000ff, #3399ff, #66ccff, #99ccff, #cc99ff, #ff99ff,
+                #ff66cc, #ff3399, #ff0000, #cc0000, #990000);
+            border-radius: 10px;
+            margin-right: 10px;
+        }
+        
+        #loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            z-index: 1000;
+        }
+        
+        .spinner {
+            border: 4px solid #333;
+            border-top: 4px solid #4fc3f7;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .file-info {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4caf50;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+        
+        .error-info {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+        
+        .format-examples {
+            font-size: 11px;
+            color: #bbb;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <h3>Carregando Visualizador 3D</h3>
+        <div class="spinner"></div>
+        <p>Inicializando dados do radar...</p>
+    </div>
+    
+    <div id="container">
+        <div id="controls">
+            <h3>🌩️ Controles do Radar</h3>
+            
+            <div class="control-group">
+                <label>📁 Carregar Arquivo de Dados</label>
+                <input type="file" id="fileInput" accept=".csv,.las,.ply,.json" multiple>
+                <div class="format-examples">
+                    <strong>Formatos suportados:</strong><br>
+                    • <strong>CSV:</strong> X,Y,Z,Intensity (com cabeçalhos)<br>
+                    • <strong>LAS:</strong> Dados LiDAR padrão<br>
+                    • <strong>PLY:</strong> Nuvem de pontos com cores<br>
+                    • <strong>JSON:</strong> {positions:[x,y,z], colors:[r,g,b], intensities:[val]}
+                </div>
+                <div id="fileInfo"></div>
+            </div>
+            
+            <div class="control-group">
+                <button onclick="loadSampleData()">📊 Dados de Exemplo</button>
+                <button onclick="exportCurrentView()">💾 Exportar Vista</button>
+            </div>
+            
+            <div class="control-group">
+                <label>Threshold de Intensidade: <span id="thresholdValue">15</span></label>
+                <input type="range" id="threshold" min="0" max="100" value="15" step="1">
+            </div>
+            
+            <div class="control-group">
+                <label>Altitude Mínima: <span id="minAltValue">0</span> km</label>
+                <input type="range" id="minAlt" min="-5" max="20" value="0" step="0.5">
+            </div>
+            
+            <div class="control-group">
+                <label>Altitude Máxima: <span id="maxAltValue">20</span> km</label>
+                <input type="range" id="maxAlt" min="0" max="25" value="20" step="0.5">
+            </div>
+            
+            <div class="control-group">
+                <label>Tamanho dos Pontos: <span id="pointSizeValue">2</span></label>
+                <input type="range" id="pointSize" min="0.1" max="10" value="2" step="0.1">
+            </div>
+            
+            <div class="control-group">
+                <label>Transparência: <span id="opacityValue">80</span>%</label>
+                <input type="range" id="opacity" min="10" max="100" value="80" step="5">
+            </div>
+            
+            <div class="control-group">
+                <label>Modo de Visualização:</label>
+                <button onclick="setVisualizationMode('points')" id="pointsBtn">🔴 Pontos</button>
+                <button onclick="setVisualizationMode('mesh')" id="meshBtn">🔺 Malha</button>
+                <button onclick="setVisualizationMode('both')" id="bothBtn">🔴🔺 Ambos</button>
+            </div>
+            
+            <div class="control-group" id="meshControls" style="display: none;">
+                <label>Tipo de Triangulação:</label>
+                <button onclick="setTriangulationMode('2d')" id="tri2dBtn">📐 2D (Camadas)</button>
+                <button onclick="setTriangulationMode('3d')" id="tri3dBtn">🎲 3D (Volume)</button>
+                
+                <label>Resolução da Malha: <span id="meshResolutionValue">50</span></label>
+                <input type="range" id="meshResolution" min="20" max="100" value="50" step="5">
+                
+                <label>Threshold Malha: <span id="meshThresholdValue">25</span></label>
+                <input type="range" id="meshThreshold" min="10" max="70" value="25" step="5">
+                
+                <label>Suavização: <span id="smoothingValue">2</span></label>
+                <input type="range" id="smoothing" min="0" max="5" value="2" step="1">
+            </div>
+            
+            <div class="control-group">
+                <button onclick="resetView()">🎯 Reset Câmera</button>
+                <button onclick="toggleAnimation()">⏯️ Animação</button>
+                <button onclick="toggleWireframe()">🔲 Grade</button>
+            </div>
+            
+            <div class="color-legend">
+                <div class="color-bar"></div>
+                <small>Intensidade</small>
+            </div>
+        </div>
+        
+        <div id="info">
+            <div><strong>Pontos visíveis:</strong> <span id="pointCount">0</span></div>
+            <div><strong>Total de pontos:</strong> <span id="totalPoints">0</span></div>
+            <div><strong>Coordenadas:</strong> <span id="coordinates">-</span></div>
+            <div><strong>FPS:</strong> <span id="fps">-</span></div>
+            <div style="margin-top: 10px; font-size: 12px;">
+                <strong>Controles:</strong><br>
+                🖱️ Arraste: Rotacionar<br>
+                🖱️ Roda: Zoom<br>
+                ⌨️ WASD: Mover
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variáveis globais
+        let scene, camera, renderer, points, geometry, meshGroup;
+        let controls = {};
+        let animationId;
+        let isAnimating = false;
+        let showWireframe = false;
+        let mouseX = 0, mouseY = 0;
+        let frameCount = 0;
+        let lastTime = performance.now();
+        let currentData = null;
+        let visualizationMode = 'points'; // 'points', 'mesh', 'both'
+        let triangulationMode = '2d'; // '2d', '3d'
+        
+        // Inicializa com dados de exemplo
+        init();
+        
+        function init() {
+            console.log('Inicializando visualizador 3D...');
+            
+            // Cena
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x001122);
+            scene.fog = new THREE.Fog(0x001122, 50, 200);
+            
+            // Câmera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 500);
+            camera.position.set(80, 60, 80);
+            camera.lookAt(0, 0, 0);
+            
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ 
+                antialias: true, 
+                alpha: true,
+                powerPreference: "high-performance"
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            document.getElementById('container').appendChild(renderer.domElement);
+            
+            // Controles de câmera
+            setupCameraControls();
+            
+            // Grade de referência
+            const gridHelper = new THREE.GridHelper(200, 20, 0x404040, 0x202020);
+            gridHelper.position.y = -1;
+            scene.add(gridHelper);
+            
+            // Eixos
+            const axesHelper = new THREE.AxesHelper(50);
+            scene.add(axesHelper);
+            
+            // Iluminação
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(50, 50, 50);
+            scene.add(directionalLight);
+            
+            // Event listeners
+            setupEventListeners();
+            
+            // Carrega dados de exemplo
+            loadSampleData();
+            
+            // Inicia animação
+            animate();
+            
+            // Remove loading
+            document.getElementById('loading').style.display = 'none';
+            
+            console.log('Visualizador inicializado com sucesso!');
+        }
+        
+        function setupEventListeners() {
+            // File input
+            document.getElementById('fileInput').addEventListener('change', handleFileLoad);
+            
+            // Sliders
+            document.getElementById('threshold').addEventListener('input', (e) => {
+                document.getElementById('thresholdValue').textContent = e.target.value;
+                updateVisualization();
+            });
+            
+            document.getElementById('minAlt').addEventListener('input', (e) => {
+                document.getElementById('minAltValue').textContent = e.target.value;
+                updateVisualization();
+            });
+            
+            document.getElementById('maxAlt').addEventListener('input', (e) => {
+                document.getElementById('maxAltValue').textContent = e.target.value;
+                updateVisualization();
+            });
+            
+            document.getElementById('pointSize').addEventListener('input', (e) => {
+                document.getElementById('pointSizeValue').textContent = e.target.value;
+                updateVisualization();
+            });
+            
+            document.getElementById('opacity').addEventListener('input', (e) => {
+                document.getElementById('opacityValue').textContent = e.target.value;
+                updateVisualization();
+            });
+            
+            // Mesh controls
+            document.getElementById('meshResolution').addEventListener('input', (e) => {
+                document.getElementById('meshResolutionValue').textContent = e.target.value;
+                if (visualizationMode !== 'points') updateVisualization();
+            });
+            
+            document.getElementById('meshThreshold').addEventListener('input', (e) => {
+                document.getElementById('meshThresholdValue').textContent = e.target.value;
+                if (visualizationMode !== 'points') updateVisualization();
+            });
+            
+            document.getElementById('smoothing').addEventListener('input', (e) => {
+                document.getElementById('smoothingValue').textContent = e.target.value;
+                if (visualizationMode !== 'points') updateVisualization();
+            });
+            
+            // Resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+        
+        async function handleFileLoad(event) {
+            const files = event.target.files;
+            if (files.length === 0) return;
+            
+            showFileInfo('Carregando arquivo...', 'loading');
+            
+            try {
+                const file = files[0];
+                const fileName = file.name.toLowerCase();
+                let data = null;
+                
+                if (fileName.endsWith('.csv')) {
+                    data = await loadCSV(file);
+                } else if (fileName.endsWith('.las')) {
+                    data = await loadLAS(file);
+                } else if (fileName.endsWith('.ply')) {
+                    data = await loadPLY(file);
+                } else if (fileName.endsWith('.json')) {
+                    data = await loadJSON(file);
+                } else {
+                    throw new Error('Formato de arquivo não suportado');
+                }
+                
+                if (data && data.positions.length > 0) {
+                    currentData = data;
+                    updateVisualization();
+                    showFileInfo(`Arquivo carregado com sucesso! ${data.positions.length/3} pontos`, 'success');
+                    
+                    // Ajusta câmera para os novos dados
+                    fitCameraToData();
+                } else {
+                    throw new Error('Arquivo vazio ou formato inválido');
+                }
+                
+            } catch (error) {
+                console.error('Erro ao carregar arquivo:', error);
+                showFileInfo(`Erro: ${error.message}`, 'error');
+            }
+        }
+        
+        async function loadCSV(file) {
+            return new Promise((resolve, reject) => {
+                Papa.parse(file, {
+                    header: true,
+                    dynamicTyping: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        try {
+                            const data = { positions: [], colors: [], intensities: [] };
+                            
+                            results.data.forEach(row => {
+                                // Tenta diferentes nomes de colunas comuns
+                                const x = row.X || row.x || row.longitude || row.lon || 0;
+                                const y = row.Y || row.y || row.latitude || row.lat || 0;
+                                const z = row.Z || row.z || row.elevation || row.height || row.altitude || 0;
+                                const intensity = row.Intensity || row.intensity || row.reflectivity || 
+                                               row.dbz || row.value || row.magnitude || 20;
+                                
+                                if (typeof x === 'number' && typeof y === 'number' && typeof z === 'number') {
+                                    data.positions.push(x/1000, y/1000, z/1000); // Converte para km
+                                    data.intensities.push(intensity);
+                                    
+                                    // Gera cor baseada na intensidade
+                                    const color = getIntensityColor(intensity);
+                                    data.colors.push(color.r, color.g, color.b);
+                                }
+                            });
+                            
+                            resolve(data);
+                        } catch (error) {
+                            reject(error);
+                        }
+                    },
+                    error: function(error) {
+                        reject(error);
+                    }
+                });
+            });
+        }
+        
+        async function loadLAS(file) {
+            // Implementação básica para arquivos LAS
+            // Nota: Esta é uma implementação simplificada
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const buffer = e.target.result;
+                        const view = new DataView(buffer);
+                        
+                        // Lê header LAS básico
+                        const signature = new TextDecoder().decode(new Uint8Array(buffer, 0, 4));
+                        if (signature !== 'LASF') {
+                            throw new Error('Arquivo LAS inválido');
+                        }
+                        
+                        // Offset para dados de pontos (simplificado)
+                        const pointDataOffset = view.getUint32(96, true);
+                        const numberOfPoints = view.getUint32(107, true);
+                        const pointDataRecordLength = view.getUint16(105, true);
+                        
+                        const data = { positions: [], colors: [], intensities: [] };
+                        
+                        // Lê pontos (formato simplificado)
+                        for (let i = 0; i < Math.min(numberOfPoints, 100000); i++) {
+                            const offset = pointDataOffset + (i * pointDataRecordLength);
+                            
+                            if (offset + 20 > buffer.byteLength) break;
+                            
+                            const x = view.getInt32(offset, true) * 0.001; // Escala simplificada
+                            const y = view.getInt32(offset + 4, true) * 0.001;
+                            const z = view.getInt32(offset + 8, true) * 0.001;
+                            const intensity = view.getUint16(offset + 12, true);
+                            
+                            data.positions.push(x/1000, y/1000, z/1000);
+                            data.intensities.push(intensity);
+                            
+                            const color = getIntensityColor(intensity);
+                            data.colors.push(color.r, color.g, color.b);
+                        }
+                        
+                        resolve(data);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                reader.onerror = () => reject(new Error('Erro ao ler arquivo LAS'));
+                reader.readAsArrayBuffer(file);
+            });
+        }
+        
+        async function loadPLY(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const text = e.target.result;
+                        const lines = text.split('\n');
+                        
+                        let headerEnd = -1;
+                        let vertexCount = 0;
+                        let hasColors = false;
+                        let hasIntensity = false;
+                        
+                        // Parse header
+                        for (let i = 0; i < lines.length; i++) {
+                            const line = lines[i].trim();
+                            if (line === 'end_header') {
+                                headerEnd = i;
+                                break;
+                            }
+                            if (line.startsWith('element vertex')) {
+                                vertexCount = parseInt(line.split(' ')[2]);
+                            }
+                            if (line.includes('red') || line.includes('green') || line.includes('blue')) {
+                                hasColors = true;
+                            }
+                            if (line.includes('intensity') || line.includes('scalar')) {
+                                hasIntensity = true;
+                            }
+                        }
+                        
+                        const data = { positions: [], colors: [], intensities: [] };
+                        
+                        // Parse data
+                        for (let i = headerEnd + 1; i < Math.min(headerEnd + 1 + vertexCount, lines.length); i++) {
+                            const values = lines[i].trim().split(/\s+/).map(Number);
+                            if (values.length >= 3) {
+                                data.positions.push(values[0]/1000, values[1]/1000, values[2]/1000);
+                                
+                                if (hasColors && values.length >= 6) {
+                                    data.colors.push(values[3]/255, values[4]/255, values[5]/255);
+                                } else {
+                                    const color = getIntensityColor(values[3] || 20);
+                                    data.colors.push(color.r, color.g, color.b);
+                                }
+                                
+                                data.intensities.push(values[hasColors ? 6 : 3] || 20);
+                            }
+                        }
+                        
+                        resolve(data);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                reader.onerror = () => reject(new Error('Erro ao ler arquivo PLY'));
+                reader.readAsText(file);
+            });
+        }
+        
+        async function loadJSON(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const jsonData = JSON.parse(e.target.result);
+                        
+                        // Verifica estrutura do JSON
+                        if (!jsonData.positions || !Array.isArray(jsonData.positions)) {
+                            throw new Error('Formato JSON inválido - esperado: {positions: [...], colors: [...], intensities: [...]}');
+                        }
+                        
+                        const data = {
+                            positions: jsonData.positions,
+                            colors: jsonData.colors || [],
+                            intensities: jsonData.intensities || []
+                        };
+                        
+                        // Gera cores se não existirem
+                        if (data.colors.length === 0) {
+                            for (let i = 0; i < data.intensities.length; i++) {
+                                const color = getIntensityColor(data.intensities[i] || 20);
+                                data.colors.push(color.r, color.g, color.b);
+                            }
+                        }
+                        
+                        // Gera intensidades se não existirem
+                        if (data.intensities.length === 0) {
+                            for (let i = 0; i < data.positions.length / 3; i++) {
+                                data.intensities.push(20); // Valor padrão
+                            }
+                        }
+                        
+                        resolve(data);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                reader.onerror = () => reject(new Error('Erro ao ler arquivo JSON'));
+                reader.readAsText(file);
+            });
+        }
+        
+        function loadSampleData() {
+            console.log('Carregando dados de exemplo...');
+            currentData = generateSimulatedRadarData();
+            updateVisualization();
+            showFileInfo('Dados de exemplo carregados', 'success');
+        }
+        
+        function generateSimulatedRadarData() {
+            const data = { positions: [], colors: [], intensities: [] };
+            
+            // Simula dados volumétricos de radar meteorológico
+            const numScans = 13;
+            const raysPerScan = 360;
+            const gatesPerRay = 250;
+            
+            for (let scan = 0; scan < numScans; scan++) {
+                const elevation = (scan * 2) - 2;
+                
+                for (let ray = 0; ray < raysPerScan; ray += 2) {
+                    const azimuth = (ray * 360) / raysPerScan;
+                    
+                    for (let gate = 10; gate < gatesPerRay; gate += 3) {
+                        const range = gate * 1000;
+                        
+                        const azRad = (azimuth * Math.PI) / 180;
+                        const elRad = (elevation * Math.PI) / 180;
+                        
+                        const x = range * Math.cos(elRad) * Math.sin(azRad);
+                        const y = range * Math.cos(elRad) * Math.cos(azRad);
+                        const z = range * Math.sin(elRad);
+                        
+                        let intensity = simulateReflectivity(x, y, z, range);
+                        
+                        if (intensity > 5) {
+                            data.positions.push(x/1000, y/1000, z/1000);
+                            data.intensities.push(intensity);
+                            
+                            const color = getIntensityColor(intensity);
+                            data.colors.push(color.r, color.g, color.b);
+                        }
+                    }
+                }
+            }
+            
+            return data;
+        }
+        
+        function simulateReflectivity(x, y, z, range) {
+            const distance2D = Math.sqrt(x*x + y*y);
+            
+            const storm1 = { x: 30000, y: 20000, z: 3000, intensity: 55, radius: 15000 };
+            const storm2 = { x: -25000, y: -10000, z: 2000, intensity: 45, radius: 12000 };
+            const stratiform = { x: 0, y: 0, z: 1500, intensity: 25, radius: 80000 };
+            
+            let maxIntensity = 0;
+            
+            [storm1, storm2, stratiform].forEach(system => {
+                const dist = Math.sqrt(
+                    Math.pow(x - system.x, 2) + 
+                    Math.pow(y - system.y, 2) + 
+                    Math.pow(z - system.z, 2)
+                );
+                
+                if (dist < system.radius) {
+                    const factor = Math.pow(1 - dist/system.radius, 2);
+                    const intensity = system.intensity * factor;
+                    const heightFactor = Math.exp(-Math.abs(z - system.z) / 2000);
+                    const finalIntensity = intensity * heightFactor;
+                    maxIntensity = Math.max(maxIntensity, finalIntensity);
+                }
+            });
+            
+            maxIntensity += (Math.random() - 0.5) * 8;
+            maxIntensity *= Math.exp(-distance2D / 150000);
+            
+            return Math.max(0, maxIntensity);
+        }
+        
+        function getIntensityColor(intensity) {
+            // Paleta para diferentes tipos de dados
+            const colorMap = [
+                {min: 0, color: {r: 0.39, g: 0.39, b: 0.39}},   // Cinza
+                {min: 10, color: {r: 0.0, g: 0.0, b: 1.0}},     // Azul
+                {min: 20, color: {r: 0.0, g: 1.0, b: 1.0}},     // Ciano
+                {min: 30, color: {r: 0.0, g: 1.0, b: 0.0}},     // Verde
+                {min: 40, color: {r: 1.0, g: 1.0, b: 0.0}},     // Amarelo
+                {min: 50, color: {r: 1.0, g: 0.5, b: 0.0}},     // Laranja
+                {min: 60, color: {r: 1.0, g: 0.0, b: 0.0}},     // Vermelho
+                {min: 70, color: {r: 0.8, g: 0.0, b: 0.8}}      // Magenta
+            ];
+            
+            for (let i = colorMap.length - 1; i >= 0; i--) {
+                if (intensity >= colorMap[i].min) {
+                    return colorMap[i].color;
+                }
+            }
+            
+            return colorMap[0].color;
+        }
+        
+        function updateVisualization() {
+            if (!currentData) return;
+            
+            const threshold = parseFloat(document.getElementById('threshold').value);
+            const minAlt = parseFloat(document.getElementById('minAlt').value);
+            const maxAlt = parseFloat(document.getElementById('maxAlt').value);
+            const pointSize = parseFloat(document.getElementById('pointSize').value);
+            const opacity = parseFloat(document.getElementById('opacity').value) / 100;
+            
+            const filteredPositions = [];
+            const filteredColors = [];
+            const filteredIntensities = [];
+            let visiblePoints = 0;
+            
+            for (let i = 0; i < currentData.intensities.length; i++) {
+                const intensity = currentData.intensities[i];
+                const z = currentData.positions[i * 3 + 2];
+                
+                if (intensity >= threshold && z >= minAlt && z <= maxAlt) {
+                    filteredPositions.push(
+                        currentData.positions[i * 3],
+                        currentData.positions[i * 3 + 1],
+                        currentData.positions[i * 3 + 2]
+                    );
+                    filteredColors.push(
+                        currentData.colors[i * 3] || 1,
+                        currentData.colors[i * 3 + 1] || 1,
+                        currentData.colors[i * 3 + 2] || 1
+                    );
+                    filteredIntensities.push(intensity);
+                    visiblePoints++;
+                }
+            }
+            
+            // Remove objetos anteriores
+            if (points) {
+                scene.remove(points);
+                points = null;
+            }
+            if (meshGroup) {
+                scene.remove(meshGroup);
+                meshGroup = null;
+            }
+            
+            // Cria visualização baseada no modo selecionado
+            if (filteredPositions.length > 0) {
+                if (visualizationMode === 'points' || visualizationMode === 'both') {
+                    createPointVisualization(filteredPositions, filteredColors, pointSize, opacity);
+                }
+                
+                if (visualizationMode === 'mesh' || visualizationMode === 'both') {
+                    createMeshVisualization(filteredPositions, filteredColors, filteredIntensities, opacity);
+                }
+            }
+            
+            // Atualiza UI
+            document.getElementById('pointCount').textContent = visiblePoints.toLocaleString();
+            document.getElementById('totalPoints').textContent = (currentData.intensities.length).toLocaleString();
+        }
+        
+        function createPointVisualization(positions, colors, pointSize, opacity) {
+            geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+            
+            const material = new THREE.PointsMaterial({
+                size: pointSize,
+                vertexColors: true,
+                transparent: true,
+                opacity: opacity,
+                blending: THREE.AdditiveBlending,
+                sizeAttenuation: true
+            });
+            
+            points = new THREE.Points(geometry, material);
+            scene.add(points);
+        }
+        
+        function createMeshVisualization(positions, colors, intensities, opacity) {
+            const meshResolution = parseInt(document.getElementById('meshResolution').value);
+            const meshThreshold = parseFloat(document.getElementById('meshThreshold').value);
+            const smoothing = parseInt(document.getElementById('smoothing').value);
+            
+            meshGroup = new THREE.Group();
+            
+            if (triangulationMode === '2d') {
+                createLayeredMesh(positions, colors, intensities, meshResolution, meshThreshold, smoothing, opacity);
+            } else {
+                create3DMesh(positions, colors, intensities, meshResolution, meshThreshold, smoothing, opacity);
+            }
+            
+            scene.add(meshGroup);
+        }
+        
+        function createLayeredMesh(positions, colors, intensities, resolution, threshold, smoothing, opacity) {
+            // Agrupa pontos por camadas de altitude
+            const layers = {};
+            const layerHeight = 1.0; // km
+            
+            for (let i = 0; i < positions.length; i += 3) {
+                const x = positions[i];
+                const y = positions[i + 1];
+                const z = positions[i + 2];
+                const intensity = intensities[i / 3];
+                
+                if (intensity >= threshold) {
+                    const layerIndex = Math.floor(z / layerHeight);
+                    
+                    if (!layers[layerIndex]) {
+                        layers[layerIndex] = {
+                            points: [],
+                            colors: [],
+                            intensities: [],
+                            z: layerIndex * layerHeight
+                        };
+                    }
+                    
+                    layers[layerIndex].points.push(x, y);
+                    layers[layerIndex].colors.push(
+                        colors[i] || 1,
+                        colors[i + 1] || 1,
+                        colors[i + 2] || 1
+                    );
+                    layers[layerIndex].intensities.push(intensity);
+                }
+            }
+            
+            // Cria malha para cada camada
+            Object.values(layers).forEach(layer => {
+                if (layer.points.length >= 6) { // Mínimo 3 pontos para triangulação
+                    const mesh = triangulateLayer(layer, resolution, smoothing, opacity);
+                    if (mesh) meshGroup.add(mesh);
+                }
+            });
+        }
+        
+        function triangulateLayer(layer, resolution, smoothing, opacity) {
+            const points2D = [];
+            for (let i = 0; i < layer.points.length; i += 2) {
+                points2D.push([layer.points[i], layer.points[i + 1]]);
+            }
+            
+            // Triangulação de Delaunay 2D (implementação simples)
+            const triangles = delaunayTriangulation(points2D);
+            
+            if (triangles.length === 0) return null;
+            
+            // Cria geometria da malha
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            const colors = [];
+            const indices = [];
+            
+            // Adiciona vértices
+            for (let i = 0; i < points2D.length; i++) {
+                vertices.push(points2D[i][0], points2D[i][1], layer.z);
+                colors.push(
+                    layer.colors[i * 3] || 1,
+                    layer.colors[i * 3 + 1] || 1,
+                    layer.colors[i * 3 + 2] || 1
+                );
+            }
+            
+            // Adiciona triângulos
+            triangles.forEach(triangle => {
+                indices.push(triangle[0], triangle[1], triangle[2]);
+            });
+            
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+            geometry.setIndex(indices);
+            geometry.computeVertexNormals();
+            
+            // Aplica suavização
+            if (smoothing > 0) {
+                for (let s = 0; s < smoothing; s++) {
+                    laplacianSmoothing(geometry);
+                }
+            }
+            
+            const material = new THREE.MeshPhongMaterial({
+                vertexColors: true,
+                transparent: true,
+                opacity: opacity * 0.7,
+                side: THREE.DoubleSide,
+                wireframe: showWireframe
+            });
+            
+            return new THREE.Mesh(geometry, material);
+        }
+        
+        function create3DMesh(positions, colors, intensities, resolution, threshold, smoothing, opacity) {
+            // Implementação simplificada de triangulação 3D usando convex hull
+            const points3D = [];
+            const pointColors = [];
+            const pointIntensities = [];
+            
+            for (let i = 0; i < positions.length; i += 3) {
+                const intensity = intensities[i / 3];
+                if (intensity >= threshold) {
+                    points3D.push(new THREE.Vector3(positions[i], positions[i + 1], positions[i + 2]));
+                    pointColors.push([colors[i] || 1, colors[i + 1] || 1, colors[i + 2] || 1]);
+                    pointIntensities.push(intensity);
+                }
+            }
+            
+            if (points3D.length < 4) return; // Mínimo para tetrahedro
+            
+            // Cria malha envoltória (convex hull simplificado)
+            const hull = createConvexHull(points3D, pointColors, pointIntensities);
+            if (hull) meshGroup.add(hull);
+            
+            // Cria isosuperfícies volumétricas
+            createIsosurfaces(positions, colors, intensities, resolution, threshold, smoothing, opacity);
+        }
+        
+        function createIsosurfaces(positions, colors, intensities, resolution, threshold, smoothing, opacity) {
+            // Cria diferentes níveis de isosuperfícies
+            const isoLevels = [threshold, threshold + 15, threshold + 30];
+            const isoColors = [[0.3, 0.7, 1.0], [1.0, 0.7, 0.3], [1.0, 0.3, 0.3]];
+            const isoOpacities = [0.3, 0.5, 0.7];
+            
+            isoLevels.forEach((level, index) => {
+                const isoPoints = [];
+                const isoPointColors = [];
+                
+                for (let i = 0; i < positions.length; i += 3) {
+                    const intensity = intensities[i / 3];
+                    if (Math.abs(intensity - level) < 5) { // Tolerance
+                        isoPoints.push(positions[i], positions[i + 1], positions[i + 2]);
+                        isoPointColors.push(...isoColors[index]);
+                    }
+                }
+                
+                if (isoPoints.length >= 9) { // Mínimo 3 pontos
+                    const isoMesh = createPointCloudMesh(isoPoints, isoPointColors, 
+                                                       opacity * isoOpacities[index]);
+                    if (isoMesh) meshGroup.add(isoMesh);
+                }
+            });
+        }
+        
+        function createPointCloudMesh(points, colors, opacity) {
+            // Cria uma malha aproximada conectando pontos próximos
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            const vertexColors = [];
+            const indices = [];
+            
+            // Adiciona vértices
+            for (let i = 0; i < points.length; i += 3) {
+                vertices.push(points[i], points[i + 1], points[i + 2]);
+                vertexColors.push(colors[i], colors[i + 1], colors[i + 2]);
+            }
+            
+            // Conecta pontos próximos (triangulação aproximada)
+            const maxDistance = 5.0; // km
+            for (let i = 0; i < vertices.length; i += 3) {
+                const p1 = new THREE.Vector3(vertices[i], vertices[i + 1], vertices[i + 2]);
+                
+                for (let j = i + 3; j < vertices.length; j += 3) {
+                    const p2 = new THREE.Vector3(vertices[j], vertices[j + 1], vertices[j + 2]);
+                    
+                    for (let k = j + 3; k < vertices.length; k += 3) {
+                        const p3 = new THREE.Vector3(vertices[k], vertices[k + 1], vertices[k + 2]);
+                        
+                        // Verifica se os pontos estão próximos o suficiente
+                        if (p1.distanceTo(p2) < maxDistance && 
+                            p2.distanceTo(p3) < maxDistance && 
+                            p3.distanceTo(p1) < maxDistance) {
+                            indices.push(i / 3, j / 3, k / 3);
+                        }
+                    }
+                }
+            }
+            
+            if (indices.length === 0) return null;
+            
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(vertexColors, 3));
+            geometry.setIndex(indices);
+            geometry.computeVertexNormals();
+            
+            const material = new THREE.MeshPhongMaterial({
+                vertexColors: true,
+                transparent: true,
+                opacity: opacity,
+                side: THREE.DoubleSide,
+                wireframe: showWireframe
+            });
+            
+            return new THREE.Mesh(geometry, material);
+        }
+        
+        // Triangulação de Delaunay 2D (implementação simplificada)
+        function delaunayTriangulation(points) {
+            if (points.length < 3) return [];
+            
+            const triangles = [];
+            
+            // Implementação básica usando ear clipping para polígonos convexos
+            // Para uma implementação completa, seria melhor usar uma biblioteca como d3-delaunay
+            
+            // Ordena pontos por convex hull
+            const hull = convexHull2D(points);
+            
+            // Triangula o hull
+            for (let i = 1; i < hull.length - 1; i++) {
+                triangles.push([hull[0], hull[i], hull[i + 1]]);
+            }
+            
+            return triangles;
+        }
+        
+        function convexHull2D(points) {
+            const n = points.length;
+            if (n <= 1) return points.map((_, i) => i);
+            
+            // Ordena pontos lexicograficamente
+            const sorted = points.map((p, i) => ({point: p, index: i}))
+                                .sort((a, b) => a.point[0] - b.point[0] || a.point[1] - b.point[1]);
+            
+            // Algoritmo de Graham scan simplificado
+            const lower = [];
+            for (let i = 0; i < n; i++) {
+                while (lower.length >= 2 && 
+                       cross(points[lower[lower.length-2]], 
+                            points[lower[lower.length-1]], 
+                            sorted[i].point) <= 0) {
+                    lower.pop();
+                }
+                lower.push(sorted[i].index);
+            }
+            
+            const upper = [];
+            for (let i = n - 1; i >= 0; i--) {
+                while (upper.length >= 2 && 
+                       cross(points[upper[upper.length-2]], 
+                            points[upper[upper.length-1]], 
+                            sorted[i].point) <= 0) {
+                    upper.pop();
+                }
+                upper.push(sorted[i].index);
+            }
+            
+            upper.pop();
+            lower.pop();
+            return lower.concat(upper);
+        }
+        
+        function cross(o, a, b) {
+            return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+        }
+        
+        function createConvexHull(points, colors, intensities) {
+            // Implementação simplificada de convex hull 3D
+            // Para uma implementação completa, seria melhor usar uma biblioteca especializada
+            
+            if (points.length < 4) return null;
+            
+            const geometry = new THREE.ConvexGeometry(points);
+            
+            // Aplica cores baseadas na intensidade média
+            const avgIntensity = intensities.reduce((a, b) => a + b, 0) / intensities.length;
+            const color = getIntensityColor(avgIntensity);
+            
+            const material = new THREE.MeshPhongMaterial({
+                color: new THREE.Color(color.r, color.g, color.b),
+                transparent: true,
+                opacity: 0.4,
+                side: THREE.DoubleSide,
+                wireframe: showWireframe
+            });
+            
+            return new THREE.Mesh(geometry, material);
+        }
+        
+        function laplacianSmoothing(geometry) {
+            // Aplica suavização laplaciana aos vértices
+            const positions = geometry.attributes.position.array;
+            const smoothedPositions = new Float32Array(positions.length);
+            
+            // Copia posições originais
+            for (let i = 0; i < positions.length; i++) {
+                smoothedPositions[i] = positions[i];
+            }
+            
+            // Aplica suavização (versão simplificada)
+            const smoothingFactor = 0.1;
+            for (let i = 0; i < positions.length; i += 3) {
+                // Média com vizinhos próximos (implementação básica)
+                let sumX = 0, sumY = 0, sumZ = 0, count = 0;
+                
+                for (let j = 0; j < positions.length; j += 3) {
+                    if (i !== j) {
+                        const dx = positions[i] - positions[j];
+                        const dy = positions[i + 1] - positions[j + 1];
+                        const dz = positions[i + 2] - positions[j + 2];
+                        const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                        
+                        if (dist < 2.0) { // Vizinhos próximos
+                            sumX += positions[j];
+                            sumY += positions[j + 1];
+                            sumZ += positions[j + 2];
+                            count++;
+                        }
+                    }
+                }
+                
+                if (count > 0) {
+                    smoothedPositions[i] = positions[i] + smoothingFactor * (sumX/count - positions[i]);
+                    smoothedPositions[i + 1] = positions[i + 1] + smoothingFactor * (sumY/count - positions[i + 1]);
+                    smoothedPositions[i + 2] = positions[i + 2] + smoothingFactor * (sumZ/count - positions[i + 2]);
+                }
+            }
+            
+            geometry.attributes.position.array = smoothedPositions;
+            geometry.attributes.position.needsUpdate = true;
+        }
+        
+        function setVisualizationMode(mode) {
+            visualizationMode = mode;
+            
+            // Atualiza botões
+            document.querySelectorAll('#pointsBtn, #meshBtn, #bothBtn').forEach(btn => {
+                btn.style.background = 'linear-gradient(45deg, #4fc3f7, #29b6f6)';
+            });
+            
+            const activeBtn = mode === 'points' ? '#pointsBtn' : 
+                             mode === 'mesh' ? '#meshBtn' : '#bothBtn';
+            document.querySelector(activeBtn).style.background = 'linear-gradient(45deg, #4caf50, #66bb6a)';
+            
+            // Mostra/esconde controles de malha
+            const meshControls = document.getElementById('meshControls');
+            meshControls.style.display = (mode === 'mesh' || mode === 'both') ? 'block' : 'none';
+            
+            updateVisualization();
+        }
+        
+        function setTriangulationMode(mode) {
+            triangulationMode = mode;
+            
+            // Atualiza botões
+            document.querySelectorAll('#tri2dBtn, #tri3dBtn').forEach(btn => {
+                btn.style.background = 'linear-gradient(45deg, #4fc3f7, #29b6f6)';
+            });
+            
+            const activeBtn = mode === '2d' ? '#tri2dBtn' : '#tri3dBtn';
+            document.querySelector(activeBtn).style.background = 'linear-gradient(45deg, #4caf50, #66bb6a)';
+            
+            if (visualizationMode !== 'points') {
+                updateVisualization();
+            }
+        }
+        
+        function fitCameraToData() {
+            if (!currentData || currentData.positions.length === 0) return;
+            
+            // Calcula bounding box
+            let minX = Infinity, maxX = -Infinity;
+            let minY = Infinity, maxY = -Infinity;
+            let minZ = Infinity, maxZ = -Infinity;
+            
+            for (let i = 0; i < currentData.positions.length; i += 3) {
+                minX = Math.min(minX, currentData.positions[i]);
+                maxX = Math.max(maxX, currentData.positions[i]);
+                minY = Math.min(minY, currentData.positions[i + 1]);
+                maxY = Math.max(maxY, currentData.positions[i + 1]);
+                minZ = Math.min(minZ, currentData.positions[i + 2]);
+                maxZ = Math.max(maxZ, currentData.positions[i + 2]);
+            }
+            
+            // Calcula centro e tamanho
+            const centerX = (minX + maxX) / 2;
+            const centerY = (minY + maxY) / 2;
+            const centerZ = (minZ + maxZ) / 2;
+            
+            const sizeX = maxX - minX;
+            const sizeY = maxY - minY;
+            const sizeZ = maxZ - minZ;
+            const maxSize = Math.max(sizeX, sizeY, sizeZ);
+            
+            // Posiciona câmera
+            const distance = maxSize * 2;
+            camera.position.set(
+                centerX + distance * 0.7,
+                centerY + distance * 0.5,
+                centerZ + distance * 0.7
+            );
+            camera.lookAt(centerX, centerY, centerZ);
+            
+            // Atualiza ranges dos sliders
+            document.getElementById('minAlt').min = minZ - 1;
+            document.getElementById('minAlt').max = maxZ + 1;
+            document.getElementById('minAlt').value = minZ;
+            document.getElementById('minAltValue').textContent = minZ.toFixed(1);
+            
+            document.getElementById('maxAlt').min = minZ - 1;
+            document.getElementById('maxAlt').max = maxZ + 1;
+            document.getElementById('maxAlt').value = maxZ;
+            document.getElementById('maxAltValue').textContent = maxZ.toFixed(1);
+        }
+        
+        function setupCameraControls() {
+            let isDragging = false;
+            let previousMousePosition = { x: 0, y: 0 };
+            
+            // Mouse controls
+            renderer.domElement.addEventListener('mousedown', (event) => {
+                isDragging = true;
+                previousMousePosition = { x: event.clientX, y: event.clientY };
+            });
+            
+            renderer.domElement.addEventListener('mousemove', (event) => {
+                mouseX = event.clientX;
+                mouseY = event.clientY;
+                
+                if (isDragging) {
+                    const deltaX = event.clientX - previousMousePosition.x;
+                    const deltaY = event.clientY - previousMousePosition.y;
+                    
+                    // Rotação orbital
+                    const spherical = new THREE.Spherical();
+                    spherical.setFromVector3(camera.position);
+                    
+                    spherical.theta -= deltaX * 0.01;
+                    spherical.phi += deltaY * 0.01;
+                    spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
+                    
+                    camera.position.setFromSpherical(spherical);
+                    camera.lookAt(0, 0, 0);
+                    
+                    previousMousePosition = { x: event.clientX, y: event.clientY };
+                }
+                
+                updateCoordinatesDisplay();
+            });
+            
+            renderer.domElement.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+            
+            // Zoom com scroll
+            renderer.domElement.addEventListener('wheel', (event) => {
+                event.preventDefault();
+                const scale = event.deltaY > 0 ? 1.1 : 0.9;
+                camera.position.multiplyScalar(scale);
+            });
+            
+            // Controles de teclado
+            const keys = { w: false, a: false, s: false, d: false };
+            
+            document.addEventListener('keydown', (event) => {
+                const key = event.key.toLowerCase();
+                if (keys.hasOwnProperty(key)) {
+                    keys[key] = true;
+                }
+            });
+            
+            document.addEventListener('keyup', (event) => {
+                const key = event.key.toLowerCase();
+                if (keys.hasOwnProperty(key)) {
+                    keys[key] = false;
+                }
+            });
+            
+            // Movimento contínuo
+            function updateMovement() {
+                const speed = 2;
+                const direction = new THREE.Vector3();
+                
+                if (keys.w) direction.z -= speed;
+                if (keys.s) direction.z += speed;
+                if (keys.a) direction.x -= speed;
+                if (keys.d) direction.x += speed;
+                
+                if (direction.length() > 0) {
+                    direction.normalize();
+                    camera.translateX(direction.x);
+                    camera.translateZ(direction.z);
+                }
+                
+                requestAnimationFrame(updateMovement);
+            }
+            updateMovement();
+        }
+        
+        function updateCoordinatesDisplay() {
+            const coords = `X: ${camera.position.x.toFixed(1)}km, Y: ${camera.position.y.toFixed(1)}km, Z: ${camera.position.z.toFixed(1)}km`;
+            document.getElementById('coordinates').textContent = coords;
+        }
+        
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+            
+            // Calcula FPS
+            frameCount++;
+            const currentTime = performance.now();
+            if (currentTime - lastTime >= 1000) {
+                const fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
+                document.getElementById('fps').textContent = fps;
+                frameCount = 0;
+                lastTime = currentTime;
+            }
+            
+            // Animação automática
+            if (isAnimating) {
+                if (points) points.rotation.y += 0.005;
+                if (meshGroup) meshGroup.rotation.y += 0.005;
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        function resetView() {
+            if (currentData && currentData.positions.length > 0) {
+                fitCameraToData();
+            } else {
+                camera.position.set(80, 60, 80);
+                camera.lookAt(0, 0, 0);
+            }
+        }
+        
+        function toggleAnimation() {
+            isAnimating = !isAnimating;
+        }
+        
+        function toggleWireframe() {
+            showWireframe = !showWireframe;
+            
+            // Atualiza material dos pontos
+            if (points && points.material) {
+                points.material.wireframe = showWireframe;
+            }
+            
+            // Atualiza material das malhas
+            if (meshGroup) {
+                meshGroup.traverse((child) => {
+                    if (child.isMesh && child.material) {
+                        child.material.wireframe = showWireframe;
+                    }
+                });
+            }
+        }
+        
+        function showFileInfo(message, type) {
+            const infoDiv = document.getElementById('fileInfo');
+            infoDiv.innerHTML = `<div class="${type === 'error' ? 'error-info' : 'file-info'}">${message}</div>`;
+        }
+        
+        function exportCurrentView() {
+            if (!currentData) {
+                alert('Nenhum dado carregado para exportar');
+                return;
+            }
+            
+            // Exporta dados filtrados atuais
+            const threshold = parseFloat(document.getElementById('threshold').value);
+            const minAlt = parseFloat(document.getElementById('minAlt').value);
+            const maxAlt = parseFloat(document.getElementById('maxAlt').value);
+            
+            const exportData = {
+                positions: [],
+                colors: [],
+                intensities: [],
+                metadata: {
+                    threshold: threshold,
+                    minAltitude: minAlt,
+                    maxAltitude: maxAlt,
+                    totalPoints: 0,
+                    exportDate: new Date().toISOString()
+                }
+            };
+            
+            for (let i = 0; i < currentData.intensities.length; i++) {
+                const intensity = currentData.intensities[i];
+                const z = currentData.positions[i * 3 + 2];
+                
+                if (intensity >= threshold && z >= minAlt && z <= maxAlt) {
+                    exportData.positions.push(
+                        currentData.positions[i * 3],
+                        currentData.positions[i * 3 + 1],
+                        currentData.positions[i * 3 + 2]
+                    );
+                    exportData.colors.push(
+                        currentData.colors[i * 3] || 1,
+                        currentData.colors[i * 3 + 1] || 1,
+                        currentData.colors[i * 3 + 2] || 1
+                    );
+                    exportData.intensities.push(intensity);
+                    exportData.metadata.totalPoints++;
+                }
+            }
+            
+            // Cria e baixa arquivo
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+                type: 'application/json'
+            });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `radar_export_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showFileInfo(`Exportado: ${exportData.metadata.totalPoints} pontos`, 'success');
+        }
+    </script>
+</body>
+</html>
