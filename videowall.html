@@ -3,262 +3,313 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abridor de 8 Janelas Simultâneas</title>
+    <title>Videowall - 8 Sites Simultâneos</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #000;
+            overflow: hidden;
+        }
+        
+        .controls {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 5px;
             color: white;
-            min-height: 100vh;
         }
         
-        .container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-        
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        .controls.hidden {
+            display: none;
         }
         
         .url-input {
             display: flex;
             align-items: center;
-            margin-bottom: 15px;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 10px;
-            padding: 10px;
+            margin: 5px 0;
+            font-size: 12px;
         }
         
         .url-input label {
+            width: 40px;
+            margin-right: 5px;
             font-weight: bold;
-            width: 80px;
-            margin-right: 10px;
         }
         
         .url-input input {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            background: rgba(255, 255, 255, 0.9);
-            color: #333;
-            font-size: 14px;
-        }
-        
-        .controls {
-            text-align: center;
-            margin: 30px 0;
+            width: 300px;
+            padding: 3px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 11px;
         }
         
         button {
-            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
-            color: white;
+            padding: 5px 10px;
+            margin: 2px;
             border: none;
-            padding: 15px 30px;
-            border-radius: 25px;
-            font-size: 18px;
-            font-weight: bold;
+            border-radius: 3px;
             cursor: pointer;
-            margin: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            transition: all 0.3s ease;
+            font-size: 11px;
+            background: #007bff;
+            color: white;
         }
         
         button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            background: #0056b3;
         }
         
-        button:active {
-            transform: translateY(0);
-        }
-        
-        .warning {
-            background: rgba(255, 193, 7, 0.2);
-            border: 1px solid rgba(255, 193, 7, 0.5);
-            border-radius: 10px;
-            padding: 15px;
-            margin: 20px 0;
-            text-align: center;
-        }
-        
-        .status {
-            margin-top: 20px;
+        .toggle-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1001;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
             padding: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            text-align: center;
-            min-height: 30px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .videowall {
+            display: grid;
+            grid-template-columns: repeat(4, 25vw);
+            grid-template-rows: repeat(2, 50vh);
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        .iframe-container {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            transform-origin: top left;
+            transform: scale(1);
+        }
+        
+        .iframe-container.zoomed iframe {
+            transform: scale(1.2);
+        }
+        
+        .site-label {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 2px 5px;
+            font-size: 10px;
+            border-radius: 3px;
+            z-index: 10;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 14px;
+            z-index: 5;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🚀 Abridor de 8 Janelas</h1>
-        
-        <div class="warning">
-            ⚠️ <strong>Aviso:</strong> Certifique-se de permitir pop-ups no seu navegador para que as janelas sejam abertas corretamente.
-        </div>
-        
+    <button class="toggle-btn" onclick="toggleControls()">⚙️</button>
+    
+    <div class="controls" id="controls">
         <div class="url-input">
             <label>Site 1:</label>
-            <input type="url" id="url1" placeholder="https://www.google.com" value="https://www.google.com">
+            <input type="url" id="url1" value="https://www.google.com">
         </div>
-        
         <div class="url-input">
             <label>Site 2:</label>
-            <input type="url" id="url2" placeholder="https://www.youtube.com" value="https://www.youtube.com">
+            <input type="url" id="url2" value="https://www.youtube.com">
         </div>
-        
         <div class="url-input">
             <label>Site 3:</label>
-            <input type="url" id="url3" placeholder="https://www.github.com" value="https://www.github.com">
+            <input type="url" id="url3" value="https://www.github.com">
         </div>
-        
         <div class="url-input">
             <label>Site 4:</label>
-            <input type="url" id="url4" placeholder="https://www.wikipedia.org" value="https://www.wikipedia.org">
+            <input type="url" id="url4" value="https://www.wikipedia.org">
         </div>
-        
         <div class="url-input">
             <label>Site 5:</label>
-            <input type="url" id="url5" placeholder="https://www.reddit.com" value="https://www.reddit.com">
+            <input type="url" id="url5" value="https://www.reddit.com">
         </div>
-        
         <div class="url-input">
             <label>Site 6:</label>
-            <input type="url" id="url6" placeholder="https://www.stackoverflow.com" value="https://www.stackoverflow.com">
+            <input type="url" id="url6" value="https://www.stackoverflow.com">
         </div>
-        
         <div class="url-input">
             <label>Site 7:</label>
-            <input type="url" id="url7" placeholder="https://www.twitter.com" value="https://www.twitter.com">
+            <input type="url" id="url7" value="https://www.twitter.com">
         </div>
-        
         <div class="url-input">
             <label>Site 8:</label>
-            <input type="url" id="url8" placeholder="https://www.facebook.com" value="https://www.facebook.com">
+            <input type="url" id="url8" value="https://www.facebook.com">
         </div>
         
-        <div class="controls">
-            <button onclick="openAllWindows()">🌟 Abrir Todas as Janelas</button>
-            <button onclick="closeAllWindows()">❌ Fechar Todas</button>
-            <button onclick="resetUrls()">🔄 Resetar URLs</button>
+        <div style="margin-top: 10px;">
+            <button onclick="loadAllSites()">🚀 Carregar Sites</button>
+            <button onclick="toggleZoom()">🔍 Toggle Zoom</button>
+            <button onclick="refreshAll()">🔄 Atualizar Todos</button>
         </div>
-        
-        <div class="status" id="status">
-            Pronto para abrir as janelas. Clique no botão acima!
+    </div>
+    
+    <div class="videowall">
+        <div class="iframe-container" id="container1">
+            <div class="site-label">Site 1</div>
+            <div class="loading">Carregando...</div>
+            <iframe id="iframe1" src="about:blank"></iframe>
+        </div>
+        <div class="iframe-container" id="container2">
+            <div class="site-label">Site 2</div>
+            <div class="loading">Carregando...</div>
+            <iframe id="iframe2" src="about:blank"></iframe>
+        </div>
+        <div class="iframe-container" id="container3">
+            <div class="site-label">Site 3</div>
+            <div class="loading">Carregando...</div>
+            <iframe id="iframe3" src="about:blank"></iframe>
+        </div>
+        <div class="iframe-container" id="container4">
+            <div class="site-label">Site 4</div>
+            <div class="loading">Carregando...</div>
+            <iframe id="iframe4" src="about:blank"></iframe>
+        </div>
+        <div class="iframe-container" id="container5">
+            <div class="site-label">Site 5</div>
+            <div class="loading">Carregando...</div>
+            <iframe id="iframe5" src="about:blank"></iframe>
+        </div>
+        <div class="iframe-container" id="container6">
+            <div class="site-label">Site 6</div>
+            <div class="loading">Carregando...</div>
+            <iframe id="iframe6" src="about:blank"></iframe>
+        </div>
+        <div class="iframe-container" id="container7">
+            <div class="site-label">Site 7</div>
+            <div class="loading">Carregando...</div>
+            <iframe id="iframe7" src="about:blank"></iframe>
+        </div>
+        <div class="iframe-container" id="container8">
+            <div class="site-label">Site 8</div>
+            <div class="loading">Carregando...</div>
+            <iframe id="iframe8" src="about:blank"></iframe>
         </div>
     </div>
 
     <script>
-        let openedWindows = [];
+        let isZoomed = false;
         
-        function openAllWindows() {
-            // Fecha janelas anteriores se existirem
-            closeAllWindows();
-            
-            const statusDiv = document.getElementById('status');
-            statusDiv.innerHTML = '🚀 Abrindo janelas...';
-            
-            let successCount = 0;
-            let failCount = 0;
-            
-            // Abre cada janela com delay pequeno para evitar bloqueio
+        function loadAllSites() {
             for (let i = 1; i <= 8; i++) {
                 const url = document.getElementById(`url${i}`).value.trim();
+                const iframe = document.getElementById(`iframe${i}`);
+                const loading = document.querySelector(`#container${i} .loading`);
                 
-                if (url) {
+                if (url && url !== 'about:blank') {
+                    loading.style.display = 'block';
+                    iframe.src = url;
+                    
+                    // Remove loading quando carregar
+                    iframe.onload = function() {
+                        loading.style.display = 'none';
+                    };
+                    
+                    // Remove loading após timeout (caso não carregue)
                     setTimeout(() => {
-                        try {
-                            // Tenta abrir em tela cheia
-                            const newWindow = window.open(
-                                url, 
-                                `window${i}`, 
-                                'fullscreen=yes,scrollbars=yes,resizable=yes,status=yes,location=yes,toolbar=yes,menubar=yes'
-                            );
-                            
-                            if (newWindow) {
-                                openedWindows.push(newWindow);
-                                successCount++;
-                                
-                                // Tenta colocar em tela cheia após carregar
-                                newWindow.addEventListener('load', function() {
-                                    try {
-                                        if (newWindow.document.documentElement.requestFullscreen) {
-                                            newWindow.document.documentElement.requestFullscreen();
-                                        }
-                                    } catch(e) {
-                                        console.log('Não foi possível ativar tela cheia automaticamente');
-                                    }
-                                });
-                            } else {
-                                failCount++;
-                            }
-                            
-                            // Atualiza status após tentar abrir todas
-                            if (i === 8) {
-                                setTimeout(() => {
-                                    statusDiv.innerHTML = `✅ ${successCount} janelas abertas com sucesso! ${failCount > 0 ? `❌ ${failCount} falharam (verifique se pop-ups estão permitidos)` : ''}`;
-                                }, 1000);
-                            }
-                        } catch (error) {
-                            failCount++;
-                            console.error(`Erro ao abrir janela ${i}:`, error);
-                        }
-                    }, i * 500); // Delay de 500ms entre cada janela
+                        loading.style.display = 'none';
+                    }, 10000);
                 }
             }
         }
         
-        function closeAllWindows() {
-            openedWindows.forEach(window => {
-                try {
-                    if (window && !window.closed) {
-                        window.close();
-                    }
-                } catch (error) {
-                    console.error('Erro ao fechar janela:', error);
+        function toggleZoom() {
+            isZoomed = !isZoomed;
+            const containers = document.querySelectorAll('.iframe-container');
+            
+            containers.forEach(container => {
+                if (isZoomed) {
+                    container.classList.add('zoomed');
+                } else {
+                    container.classList.remove('zoomed');
                 }
             });
-            openedWindows = [];
-            document.getElementById('status').innerHTML = '❌ Todas as janelas foram fechadas.';
         }
         
-        function resetUrls() {
-            document.getElementById('url1').value = 'https://www.google.com';
-            document.getElementById('url2').value = 'https://www.youtube.com';
-            document.getElementById('url3').value = 'https://www.github.com';
-            document.getElementById('url4').value = 'https://www.wikipedia.org';
-            document.getElementById('url5').value = 'https://www.reddit.com';
-            document.getElementById('url6').value = 'https://www.stackoverflow.com';
-            document.getElementById('url7').value = 'https://www.twitter.com';
-            document.getElementById('url8').value = 'https://www.facebook.com';
-            document.getElementById('status').innerHTML = '🔄 URLs resetadas para os valores padrão.';
+        function refreshAll() {
+            for (let i = 1; i <= 8; i++) {
+                const iframe = document.getElementById(`iframe${i}`);
+                const currentSrc = iframe.src;
+                if (currentSrc && currentSrc !== 'about:blank') {
+                    iframe.src = currentSrc;
+                }
+            }
         }
         
-        // Detecta quando janelas são fechadas manualmente
-        setInterval(() => {
-            openedWindows = openedWindows.filter(window => window && !window.closed);
-        }, 2000);
+        function toggleControls() {
+            const controls = document.getElementById('controls');
+            controls.classList.toggle('hidden');
+        }
         
-        // Aviso sobre pop-ups ao carregar
+        // Carrega automaticamente ao iniciar
         window.addEventListener('load', function() {
+            setTimeout(loadAllSites, 1000);
+            
+            // Auto-hide controls após 5 segundos
             setTimeout(() => {
-                const status = document.getElementById('status');
-                status.innerHTML = '💡 Dica: Certifique-se de permitir pop-ups para este site nas configurações do navegador.';
-            }, 2000);
+                document.getElementById('controls').classList.add('hidden');
+            }, 5000);
         });
+        
+        // Atalhos de teclado
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F11') {
+                e.preventDefault();
+                if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                } else {
+                    document.documentElement.requestFullscreen();
+                }
+            } else if (e.key === 'Escape') {
+                document.getElementById('controls').classList.add('hidden');
+            } else if (e.key === 'c' || e.key === 'C') {
+                toggleControls();
+            } else if (e.key === 'z' || e.key === 'Z') {
+                toggleZoom();
+            } else if (e.key === 'r' || e.key === 'R') {
+                refreshAll();
+            }
+        });
+        
+        // Previne scroll acidental
+        document.addEventListener('wheel', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+        
+        document.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+        }, { passive: false });
     </script>
 </body>
 </html>
