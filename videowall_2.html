@@ -3,77 +3,166 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Videowall 8 Sites</title>
+<title>Videowall - 6 Sites Simultâneos</title>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family: Arial,sans-serif; background:#000; overflow:hidden; }
-.controls { position:fixed; top:10px; left:10px; background:rgba(0,0,0,0.8); padding:10px; border-radius:5px; color:white; z-index:1000; }
-.controls.hidden { display:none; }
-.url-input { display:flex; margin:5px 0; }
-.url-input label { width:50px; }
-.url-input input { flex:1; padding:3px; border-radius:3px; border:none; font-size:12px; }
-button { margin:2px; padding:5px 10px; cursor:pointer; border:none; border-radius:3px; background:#007bff; color:white; }
-button:hover { background:#0056b3; }
-.videowall { display:grid; grid-template-columns:repeat(4,25vw); grid-template-rows:repeat(2,50vh); width:100vw; height:100vh; }
-.iframe-container { position:relative; width:100%; height:100%; overflow:hidden; }
-.site-label { position:absolute; top:5px; left:5px; background:rgba(0,0,0,0.7); color:white; padding:2px 5px; font-size:10px; border-radius:3px; z-index:10; }
-.loading { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:white; z-index:5; }
-iframe { width:100%; height:100%; border:none; transform-origin:top left; transition: transform 0.2s ease; }
-.zoom-slider { position:absolute; bottom:5px; left:5px; width:80px; z-index:11; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: Arial, sans-serif; background: #000; overflow: hidden; }
+
+.controls {
+    position: fixed; top: 10px; left: 10px; z-index: 1000;
+    background: rgba(0,0,0,0.8); padding: 10px; border-radius: 5px; color: white;
+}
+.controls.hidden { display: none; }
+.url-input { display: flex; align-items: center; margin: 5px 0; font-size: 12px; }
+.url-input label { width: 50px; margin-right: 5px; font-weight: bold; }
+.url-input input { width: 250px; padding: 3px; border: 1px solid #ccc; border-radius: 3px; font-size: 11px; }
+
+button { padding: 5px 10px; margin: 2px; border: none; border-radius: 3px; cursor: pointer; font-size: 11px; background: #007bff; color: white; }
+button:hover { background: #0056b3; }
+.toggle-btn { position: fixed; top: 10px; right: 10px; z-index: 1001; background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
+
+.videowall { display: grid; grid-template-columns: repeat(3, 33.33vw); grid-template-rows: repeat(2, 50vh); width: 100vw; height: 100vh; }
+
+.iframe-container { width: 100%; height: 100%; overflow: hidden; position: relative; }
+.iframe-container iframe { width: 100%; height: 100%; border: none; transform-origin: top left; transform: scale(1); transition: transform 0.2s ease; }
+
+.site-label { position: absolute; top: 5px; left: 5px; background: rgba(0,0,0,0.7); color: white; padding: 2px 5px; font-size: 10px; border-radius: 3px; z-index: 10; }
+.zoom-slider { position: absolute; bottom: 5px; left: 5px; width: 80px; z-index: 11; }
+.loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: white; font-size: 14px; z-index: 5; }
+
+/* Estilo para iframes mesclados */
+.merged { display: flex; flex-direction: row; width: 100%; height: 100%; }
+.merged iframe { width: 50%; height: 100%; }
 </style>
 </head>
 <body>
 
+<button class="toggle-btn" onclick="toggleControls()">⚙️</button>
+
 <div class="controls" id="controls">
-    ${[...Array(8)].map((_,i)=>`
-    <div class="url-input"><label>Site ${i+1}:</label>
-        <input type="url" id="url${i+1}" value="https://example.com">
-    </div>`).join('')}
+    <div class="url-input"><label>Site 1+5:</label><input type="url" id="url1" value="http://divmet.crbe.sipam.gov.br/"></div>
+    <div class="url-input"><label>Site 2:</label><input type="url" id="url2" value="http://satelite.crbe.sipam.gov.br/GOES19/CH13/AME/"></div>
+    <div class="url-input"><label>Site 3:</label><input type="url" id="url3" value="https://hidro.sipam.gov.br/rios"></div>
+    <div class="url-input"><label>Site 4+8:</label><input type="url" id="url4" value="https://panorama.sipam.gov.br/painel-do-fogo/"></div>
+    <div class="url-input"><label>Site 6:</label><input type="url" id="url6" value="https://example.com"></div>
+    <div class="url-input"><label>Site 7:</label><input type="url" id="url7" value="https://example.com"></div>
     <div style="margin-top:10px;">
-        <button onclick="loadAllSites()">Carregar</button>
-        <button onclick="refreshAll()">Atualizar</button>
-        <button onclick="toggleControls()">Toggle</button>
+        <button onclick="loadAllSites()">🚀 Carregar Sites</button>
+        <button onclick="refreshAll()">🔄 Atualizar Todos</button>
     </div>
 </div>
 
 <div class="videowall">
-    ${[...Array(8)].map((_,i)=>`
-    <div class="iframe-container" id="container${i+1}">
-        <div class="site-label">Site ${i+1}</div>
+    <!-- Site 1+5 -->
+    <div class="iframe-container" id="container1">
+        <div class="site-label">Site 1 + 5</div>
         <div class="loading">Carregando...</div>
-        <iframe id="iframe${i+1}" src="https://example.com"></iframe>
-        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('iframe${i+1}', this.value)">
-    </div>`).join('')}
+        <div class="merged">
+            <iframe id="iframe1" src="https://example.com"></iframe>
+            <iframe id="iframe5" src="https://example.com"></iframe>
+        </div>
+    </div>
+
+    <!-- Site 2 -->
+    <div class="iframe-container" id="container2">
+        <div class="site-label">Site 2</div>
+        <div class="loading">Carregando...</div>
+        <iframe id="iframe2" src="https://example.com"></iframe>
+        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('iframe2', this.value)">
+    </div>
+
+    <!-- Site 3 -->
+    <div class="iframe-container" id="container3">
+        <div class="site-label">Site 3</div>
+        <div class="loading">Carregando...</div>
+        <iframe id="iframe3" src="https://example.com"></iframe>
+        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('iframe3', this.value)">
+    </div>
+
+    <!-- Site 4+8 -->
+    <div class="iframe-container" id="container4">
+        <div class="site-label">Site 4 + 8</div>
+        <div class="loading">Carregando...</div>
+        <div class="merged">
+            <iframe id="iframe4" src="https://example.com"></iframe>
+            <iframe id="iframe8" src="https://example.com"></iframe>
+        </div>
+    </div>
+
+    <!-- Site 6 -->
+    <div class="iframe-container" id="container6">
+        <div class="site-label">Site 6</div>
+        <div class="loading">Carregando...</div>
+        <iframe id="iframe6" src="https://example.com"></iframe>
+        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('iframe6', this.value)">
+    </div>
+
+    <!-- Site 7 -->
+    <div class="iframe-container" id="container7">
+        <div class="site-label">Site 7</div>
+        <div class="loading">Carregando...</div>
+        <iframe id="iframe7" src="https://example.com"></iframe>
+        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('iframe7', this.value)">
+    </div>
 </div>
 
 <script>
-function loadAllSites(){
-    for(let i=1;i<=8;i++){
+function loadAllSites() {
+    const mappings = [1,2,3,4,6,7]; // janelas ativas
+    for (let i of mappings){
         const url=document.getElementById(`url${i}`).value.trim();
         const iframe=document.getElementById(`iframe${i}`);
+        if(!iframe) continue;
         const loading=document.querySelector(`#container${i} .loading`);
-        if(url){
+        if(url && url!=='about:blank'){
             loading.style.display='block';
             loading.textContent='Carregando...';
             iframe.src=url;
-            iframe.onload=()=>{loading.style.display='none';};
-            iframe.onerror=()=>{loading.textContent='Erro: bloqueado'; loading.style.color='#ff6b6b';};
+            iframe.onload=function(){loading.style.display='none';};
+            iframe.onerror=function(){loading.textContent='Erro: Site bloqueia iframe';loading.style.color='#ff6b6b';};
+            setTimeout(()=>{
+                try{
+                    if(iframe.contentDocument===null){
+                        loading.textContent='Site bloqueia iframe';
+                        loading.style.color='#ff6b6b';
+                    } else {
+                        loading.style.display='none';
+                    }
+                }catch(e){
+                    loading.textContent='Site bloqueia iframe';
+                    loading.style.color='#ff6b6b';
+                }
+            },10000);
         }
     }
 }
 
+function setZoom(iframeId, value){
+    const iframe=document.getElementById(iframeId);
+    iframe.style.transform=`scale(${value})`;
+}
+
 function refreshAll(){
-    for(let i=1;i<=8;i++){
+    const mappings = [1,2,3,4,6,7];
+    for(let i of mappings){
         const iframe=document.getElementById(`iframe${i}`);
-        if(iframe.src) iframe.src=iframe.src;
+        if(iframe && iframe.src && iframe.src!=='about:blank'){iframe.src=iframe.src;}
     }
 }
 
-function toggleControls(){ document.getElementById('controls').classList.toggle('hidden'); }
-function setZoom(id,value){ document.getElementById(id).style.transform=`scale(${value})`; }
+function toggleControls(){document.getElementById('controls').classList.toggle('hidden');}
 
-window.addEventListener('load', loadAllSites);
+window.addEventListener('load',()=>{setTimeout(loadAllSites,1000); setTimeout(()=>{document.getElementById('controls').classList.add('hidden');},5000);});
+
+document.addEventListener('keydown',function(e){
+    if(e.key==='F11'){e.preventDefault(); if(document.fullscreenElement){document.exitFullscreen();}else{document.documentElement.requestFullscreen();}}
+    else if(e.key==='Escape'){document.getElementById('controls').classList.add('hidden');}
+    else if(e.key==='c'||e.key==='C'){toggleControls();}
+    else if(e.key==='r'||e.key==='R'){refreshAll();}
+});
+
+document.addEventListener('wheel', e=>e.preventDefault(),{passive:false});
+document.addEventListener('touchmove', e=>e.preventDefault(),{passive:false});
 </script>
-
 </body>
 </html>
