@@ -1,19 +1,29 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Gráficos de Dias Extremos</title>
+  <meta charset="UTF-8" />
+  <title>Dias Extremos - Belém</title>
+  <link rel="shortcut icon" href="../../principal/imagens/logo.ico" type="image/x-icon">
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    h2 { margin-top: 40px; }
-    .chart { margin-top: 20px; }
+    body {
+      background: white;
+      color: black;
+      text-align: center;
+      font-family: sans-serif;
+      margin: 20px;
+    }
+    h2 {
+      margin-top: 40px;
+    }
+    .chart {
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
-
-  <h1>Visualização de Dias Extremos</h1>
+  <h1>Visualização de Dias Extremos - Belém</h1>
 
   <h2>Heatmap de Dias Extremos (Ano × Mês)</h2>
   <div id="heatmap" class="chart"></div>
@@ -25,23 +35,28 @@
   <div id="line_2025" class="chart"></div>
 
   <script>
+    // --------------------------------------------------------
+    // 👉 Aqui você coloca o caminho para o seu CSV
+    // Exemplo: "../../ERA5_dias_extremos_99p_1970_2025_belem.csv"
+    // --------------------------------------------------------
+    const caminhoCSV = "../../ERA5_dias_extremos_99p_1970_2025_belem.csv";
+
     // Carregar o CSV
-    d3.csv("../../ERA5_dias_extremos_99p_1970_2025_belem.csv").then(function(data) {
+    d3.csv(caminhoCSV).then(function(data) {
       data.forEach(d => {
         d.year = +d.year;
         d.month = +d.month;
         d.dias_extremos = +d.dias_extremos;
       });
 
-      // ---------------------------------------------------------
-      // 1. Heatmap (Ano × Mês)
-      // ---------------------------------------------------------
+      // --------------------------------------------------------
+      // Heatmap (Ano × Mês)
+      // --------------------------------------------------------
       const anos = [...new Set(data.map(d => d.year))].sort((a,b)=>a-b);
       const meses = [1,2,3,4,5,6,7,8,9,10,11,12];
       const nomesMeses = ['Jan','Fev','Mar','Abr','Mai','Jun',
                           'Jul','Ago','Set','Out','Nov','Dez'];
 
-      // Matriz mês x ano
       const z = meses.map(m => 
         anos.map(a => {
           const row = data.find(d => d.year === a && d.month === m);
@@ -49,7 +64,7 @@
         })
       );
 
-      const heatmap = {
+      Plotly.newPlot('heatmap', [{
         z: z,
         x: anos,
         y: nomesMeses,
@@ -58,63 +73,59 @@
         zmin: 0,
         zmax: 31,
         colorbar: { title: 'Dias extremos' }
-      };
-
-      Plotly.newPlot('heatmap', [heatmap], {
+      }], {
         margin: { t: 40 },
         title: "Heatmap de Dias Extremos (Ano × Mês)",
         xaxis: { title: "Ano" },
         yaxis: { title: "Mês" }
       });
 
-      // ---------------------------------------------------------
-      // 2. Gráfico de linhas - Acumulado por ano
-      // ---------------------------------------------------------
-      const porAno = d3.rollups(data,
-        v => d3.sum(v, d => d.dias_extremos),
-        d => d.year
-      ).map(([year, total]) => ({year, total}));
+      // --------------------------------------------------------
+      // Gráfico de linhas - Acumulado por ano
+      // --------------------------------------------------------
+      const porAno = {};
+      data.forEach(d => {
+        porAno[d.year] = (porAno[d.year] || 0) + d.dias_extremos;
+      });
 
-      const lineAno = {
-        x: porAno.map(d => d.year),
-        y: porAno.map(d => d.total),
+      Plotly.newPlot('line_ano', [{
+        x: Object.keys(porAno),
+        y: Object.values(porAno),
         type: 'scatter',
         mode: 'lines+markers',
         line: { color: 'red' },
         marker: { size: 6 }
-      };
-
-      Plotly.newPlot('line_ano', [lineAno], {
+      }], {
         margin: { t: 40 },
         title: "Acumulado de Dias Extremos por Ano",
         xaxis: { title: "Ano" },
         yaxis: { title: "Número de dias extremos" }
       });
 
-      // ---------------------------------------------------------
-      // 3. Gráfico de linhas - Acumulado por mês de 2025
-      // ---------------------------------------------------------
+      // --------------------------------------------------------
+      // Gráfico de linhas - Acumulado por mês de 2025
+      // --------------------------------------------------------
       const dados2025 = data.filter(d => d.year === 2025)
                             .sort((a,b)=>a.month-b.month);
 
-      const line2025 = {
+      Plotly.newPlot('line_2025', [{
         x: dados2025.map(d => nomesMeses[d.month-1]),
         y: dados2025.map(d => d.dias_extremos),
         type: 'scatter',
         mode: 'lines+markers',
         line: { color: 'orange' },
         marker: { size: 6 }
-      };
-
-      Plotly.newPlot('line_2025', [line2025], {
+      }], {
         margin: { t: 40 },
         title: "Acumulado de Dias Extremos por Mês em 2025",
         xaxis: { title: "Mês" },
         yaxis: { title: "Número de dias extremos" }
       });
 
+    }).catch(error => {
+      console.error("Erro ao carregar o CSV:", error);
+      alert("Não foi possível carregar o arquivo CSV. Verifique o caminho.");
     });
   </script>
-
 </body>
 </html>
