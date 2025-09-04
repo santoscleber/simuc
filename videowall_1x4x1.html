@@ -13,9 +13,9 @@ body { font-family: Arial, sans-serif; background:#000; overflow:hidden; }
     background: rgba(0,0,0,0.8); padding: 10px; border-radius: 5px; color: white;
 }
 .controls.hidden { display:none; }
-.url-input { display:flex; align-items:center; margin:5px 0; font-size:12px; }
-.url-input label { width: 80px; margin-right:5px; font-weight:bold; }
-.url-input input { flex:1; padding:3px; border:1px solid #ccc; border-radius:3px; font-size:11px; }
+.url-input, .res-input { display:flex; align-items:center; margin:5px 0; font-size:12px; }
+.url-input label, .res-input label { width: 80px; margin-right:5px; font-weight:bold; }
+.url-input input, .res-input input { flex:1; padding:3px; border:1px solid #ccc; border-radius:3px; font-size:11px; }
 
 button { padding:5px 10px; margin:2px; border:none; border-radius:3px; cursor:pointer; font-size:11px; background:#007bff; color:white; }
 button:hover { background:#0056b3; }
@@ -48,12 +48,11 @@ button:hover { background:#0056b3; }
 }
 
 .iframe-inner iframe { 
-    width: 1920px;  /* resolução interna do iframe */
-    height: 1000px; 
     border: none; 
     object-fit: contain; /* mantém proporção sem distorção */
 }
 
+/* Labels e sliders */
 .site-label { position:absolute; top:5px; left:5px; background: rgba(0,0,0,0.7); color:white; padding:2px 5px; font-size:10px; border-radius:3px; z-index:10; }
 .zoom-slider { position:absolute; bottom:5px; left:5px; width:80px; z-index:11; }
 .loading { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:white; font-size:14px; z-index:5; }
@@ -61,11 +60,18 @@ button:hover { background:#0056b3; }
 /* Layout das janelas */
 #container1 { grid-column: 1 / 2; grid-row: 1 / 3; } /* Esquerda grande */
 #container4 { grid-column: 6 / 7; grid-row: 1 / 3; } /* Direita grande */
-
 #container2 { grid-column: 2 / 4; grid-row: 1 / 2; } /* Centro 1 */
 #container3 { grid-column: 4 / 6; grid-row: 1 / 2; } /* Centro 2 */
 #container6 { grid-column: 2 / 4; grid-row: 2 / 3; } /* Centro 3 */
 #container7 { grid-column: 4 / 6; grid-row: 2 / 3; } /* Centro 4 */
+
+/* Resolução individual inicial */
+#iframe1 { width:1920px; height:1080px; }
+#iframe2 { width:1920px; height:1080px; }
+#iframe3 { width:1920px; height:1080px; }
+#iframe4 { width:1920px; height:1080px; }
+#iframe6 { width:1920px; height:1080px; }
+#iframe7 { width:1920px; height:1080px; }
 </style>
 </head>
 <body>
@@ -73,12 +79,15 @@ button:hover { background:#0056b3; }
 <button class="toggle-btn" onclick="toggleControls()">⚙️</button>
 
 <div class="controls" id="controls">
+    <!-- URLs -->
     <div class="url-input"><label>Esquerda:</label><input type="url" id="url1" value="https://hidro.sipam.gov.br/rios"></div>
     <div class="url-input"><label>Centro1:</label><input type="url" id="url2" value="http://divmet.crbe.sipam.gov.br/"></div>
     <div class="url-input"><label>Centro2:</label><input type="url" id="url3" value="http://divmet.crbe.sipam.gov.br/"></div>
     <div class="url-input"><label>Direita:</label><input type="url" id="url4" value="https://panorama.sipam.gov.br/painel-do-fogo/"></div>
     <div class="url-input"><label>Centro3:</label><input type="url" id="url6" value="http://satelite.crbe.sipam.gov.br/GOES19/CH13/AME/"></div>
     <div class="url-input"><label>Centro4:</label><input type="url" id="url7" value="http://satelite.crbe.sipam.gov.br/GOES19/CH09/AME/"></div>
+    
+    <!-- Botões -->
     <div style="margin-top:10px;">
         <button onclick="loadAllSites()">🚀 Carregar Sites</button>
         <button onclick="refreshAll()">🔄 Atualizar Todos</button>
@@ -94,6 +103,10 @@ button:hover { background:#0056b3; }
             <iframe id="iframe1" src="https://example.com"></iframe>
         </div>
         <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('inner1', this.value)">
+        <div class="res-input">
+            <label>Largura:</label><input type="number" min="800" max="3840" value="1920" oninput="setResolution('iframe1', this.value, null)">
+            <label>Altura:</label><input type="number" min="600" max="2160" value="1080" oninput="setResolution('iframe1', null, this.value)">
+        </div>
     </div>
 
     <!-- Centro 1 -->
@@ -104,6 +117,10 @@ button:hover { background:#0056b3; }
             <iframe id="iframe2" src="https://example.com"></iframe>
         </div>
         <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('inner2', this.value)">
+        <div class="res-input">
+            <label>Largura:</label><input type="number" min="800" max="3840" value="1920" oninput="setResolution('iframe2', this.value, null)">
+            <label>Altura:</label><input type="number" min="600" max="2160" value="1080" oninput="setResolution('iframe2', null, this.value)">
+        </div>
     </div>
 
     <!-- Centro 2 -->
@@ -114,6 +131,10 @@ button:hover { background:#0056b3; }
             <iframe id="iframe3" src="https://example.com"></iframe>
         </div>
         <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('inner3', this.value)">
+        <div class="res-input">
+            <label>Largura:</label><input type="number" min="800" max="3840" value="1920" oninput="setResolution('iframe3', this.value, null)">
+            <label>Altura:</label><input type="number" min="600" max="2160" value="1080" oninput="setResolution('iframe3', null, this.value)">
+        </div>
     </div>
 
     <!-- Centro 3 -->
@@ -124,6 +145,10 @@ button:hover { background:#0056b3; }
             <iframe id="iframe6" src="https://example.com"></iframe>
         </div>
         <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('inner6', this.value)">
+        <div class="res-input">
+            <label>Largura:</label><input type="number" min="800" max="3840" value="1920" oninput="setResolution('iframe6', this.value, null)">
+            <label>Altura:</label><input type="number" min="600" max="2160" value="1080" oninput="setResolution('iframe6', null, this.value)">
+        </div>
     </div>
 
     <!-- Centro 4 -->
@@ -134,6 +159,10 @@ button:hover { background:#0056b3; }
             <iframe id="iframe7" src="https://example.com"></iframe>
         </div>
         <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('inner7', this.value)">
+        <div class="res-input">
+            <label>Largura:</label><input type="number" min="800" max="3840" value="1920" oninput="setResolution('iframe7', this.value, null)">
+            <label>Altura:</label><input type="number" min="600" max="2160" value="1080" oninput="setResolution('iframe7', null, this.value)">
+        </div>
     </div>
 
     <!-- Direita grande -->
@@ -144,6 +173,10 @@ button:hover { background:#0056b3; }
             <iframe id="iframe4" src="https://example.com"></iframe>
         </div>
         <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('inner4', this.value)">
+        <div class="res-input">
+            <label>Largura:</label><input type="number" min="800" max="3840" value="1920" oninput="setResolution('iframe4', this.value, null)">
+            <label>Altura:</label><input type="number" min="600" max="2160" value="1080" oninput="setResolution('iframe4', null, this.value)">
+        </div>
     </div>
 </div>
 
@@ -187,6 +220,13 @@ function refreshAll(){
 function setZoom(innerId, value){
     const inner = document.getElementById(innerId);
     inner.style.transform = `scale(${value})`;
+}
+
+// Alterar resolução individual
+function setResolution(iframeId, width, height){
+    const iframe = document.getElementById(iframeId);
+    if(width) iframe.style.width = width + 'px';
+    if(height) iframe.style.height = height + 'px';
 }
 
 function toggleControls(){document.getElementById('controls').classList.toggle('hidden');}
