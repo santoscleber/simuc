@@ -30,8 +30,28 @@ button:hover { background:#0056b3; }
     gap:2px;
 }
 
-.iframe-container { position: relative; overflow:hidden; background:#111; }
-.iframe-container iframe { width:100%; height:100%; border:none; transform-origin:top left; transition: transform 0.2s ease; }
+.iframe-container { 
+    position: relative; 
+    overflow: hidden; 
+    background:#111; 
+}
+
+.iframe-inner { 
+    width: 100%; 
+    height: 100%; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    transform-origin: center center; 
+    transition: transform 0.2s ease; 
+}
+
+.iframe-inner iframe { 
+    width: 100%; 
+    height: 100%; 
+    border: none; 
+    object-fit: contain; 
+}
 
 .site-label { position:absolute; top:5px; left:5px; background: rgba(0,0,0,0.7); color:white; padding:2px 5px; font-size:10px; border-radius:3px; z-index:10; }
 .zoom-slider { position:absolute; bottom:5px; left:5px; width:80px; z-index:11; }
@@ -67,46 +87,64 @@ button:hover { background:#0056b3; }
 </div>
 
 <div class="videowall">
+    <!-- Esquerda grande -->
     <div class="iframe-container" id="container1">
         <div class="site-label">Esquerda (1+5)</div>
         <div class="loading">Carregando...</div>
-        <iframe id="iframe1" src="https://example.com"></iframe>
-        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('iframe1', this.value)">
+        <div class="iframe-inner" id="inner1">
+            <iframe id="iframe1" src="https://example.com"></iframe>
+        </div>
+        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('inner1', this.value)">
     </div>
 
+    <!-- Centro 1 -->
     <div class="iframe-container" id="container2">
         <div class="site-label">Centro 1</div>
         <div class="loading">Carregando...</div>
-        <iframe id="iframe2" src="https://example.com"></iframe>
-        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('iframe2', this.value)">
+        <div class="iframe-inner" id="inner2">
+            <iframe id="iframe2" src="https://example.com"></iframe>
+        </div>
+        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('inner2', this.value)">
     </div>
 
+    <!-- Centro 2 -->
     <div class="iframe-container" id="container3">
         <div class="site-label">Centro 2</div>
         <div class="loading">Carregando...</div>
-        <iframe id="iframe3" src="https://example.com"></iframe>
-        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('iframe3', this.value)">
+        <div class="iframe-inner" id="inner3">
+            <iframe id="iframe3" src="https://example.com"></iframe>
+        </div>
+        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('inner3', this.value)">
     </div>
 
+    <!-- Centro 3 -->
     <div class="iframe-container" id="container6">
         <div class="site-label">Centro 3</div>
         <div class="loading">Carregando...</div>
-        <iframe id="iframe6" src="https://example.com"></iframe>
-        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('iframe6', this.value)">
+        <div class="iframe-inner" id="inner6">
+            <iframe id="iframe6" src="https://example.com"></iframe>
+        </div>
+        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('inner6', this.value)">
     </div>
 
+    <!-- Centro 4 -->
     <div class="iframe-container" id="container7">
         <div class="site-label">Centro 4</div>
         <div class="loading">Carregando...</div>
-        <iframe id="iframe7" src="https://example.com"></iframe>
-        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('iframe7', this.value)">
+        <div class="iframe-inner" id="inner7">
+            <iframe id="iframe7" src="https://example.com"></iframe>
+        </div>
+        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('inner7', this.value)">
     </div>
 
+    <!-- Direita grande -->
     <div class="iframe-container" id="container4">
         <div class="site-label">Direita (4+8)</div>
         <div class="loading">Carregando...</div>
-        <iframe id="iframe4" src="https://example.com"></iframe>
-        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('iframe4', this.value)">
+        <div class="iframe-inner" id="inner4">
+            <iframe id="iframe4" src="https://example.com"></iframe>
+        </div>
+        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('inner4', this.value)">
     </div>
 </div>
 
@@ -147,13 +185,18 @@ function refreshAll(){
     });
 }
 
-function setZoom(iframeId, value){
-    const iframe=document.getElementById(iframeId);
-    iframe.style.transform=`scale(${value})`;
+function setZoom(innerId, value){
+    const inner = document.getElementById(innerId);
+    inner.style.transform = `scale(${value})`;
 }
 
 function toggleControls(){document.getElementById('controls').classList.toggle('hidden');}
-window.addEventListener('load',()=>{setTimeout(loadAllSites,1000); setTimeout(()=>{document.getElementById('controls').classList.add('hidden');},5000);});
+
+window.addEventListener('load',()=>{
+    setTimeout(loadAllSites,1000); 
+    setTimeout(()=>{document.getElementById('controls').classList.add('hidden');},5000);
+});
+
 document.addEventListener('keydown',function(e){
     if(e.key==='F11'){e.preventDefault(); if(document.fullscreenElement){document.exitFullscreen();}else{document.documentElement.requestFullscreen();}}
     else if(e.key==='Escape'){document.getElementById('controls').classList.add('hidden');}
