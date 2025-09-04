@@ -102,7 +102,6 @@
             border: none;
             transform-origin: top left;
             transform: scale(1);
-            transition: transform 0.3s ease;
         }
         
         .iframe-container.zoomed iframe {
@@ -119,20 +118,6 @@
             font-size: 10px;
             border-radius: 3px;
             z-index: 10;
-        }
-        
-        .zoom-btn {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: none;
-            padding: 2px 5px;
-            font-size: 10px;
-            border-radius: 3px;
-            cursor: pointer;
-            z-index: 11;
         }
         
         .loading {
@@ -185,22 +170,57 @@
         
         <div style="margin-top: 10px;">
             <button onclick="loadAllSites()">🚀 Carregar Sites</button>
+            <button onclick="toggleZoom()">🔍 Toggle Zoom</button>
             <button onclick="refreshAll()">🔄 Atualizar Todos</button>
         </div>
     </div>
     
     <div class="videowall">
-        ${[...Array(8)].map((_, i) => `
-        <div class="iframe-container" id="container${i+1}">
-            <div class="site-label">Site ${i+1}</div>
-            <button class="zoom-btn" onclick="toggleZoomContainer('container${i+1}')">🔍</button>
+        <div class="iframe-container" id="container1">
+            <div class="site-label">Site 1</div>
             <div class="loading">Carregando...</div>
-            <iframe id="iframe${i+1}" src="about:blank"></iframe>
+            <iframe id="iframe1" src="about:blank"></iframe>
         </div>
-        `).join('')}
+        <div class="iframe-container" id="container2">
+            <div class="site-label">Site 2</div>
+            <div class="loading">Carregando...</div>
+            <iframe id="iframe2" src="about:blank"></iframe>
+        </div>
+        <div class="iframe-container" id="container3">
+            <div class="site-label">Site 3</div>
+            <div class="loading">Carregando...</div>
+            <iframe id="iframe3" src="about:blank"></iframe>
+        </div>
+        <div class="iframe-container" id="container4">
+            <div class="site-label">Site 4</div>
+            <div class="loading">Carregando...</div>
+            <iframe id="iframe4" src="about:blank"></iframe>
+        </div>
+        <div class="iframe-container" id="container5">
+            <div class="site-label">Site 5</div>
+            <div class="loading">Carregando...</div>
+            <iframe id="iframe5" src="about:blank"></iframe>
+        </div>
+        <div class="iframe-container" id="container6">
+            <div class="site-label">Site 6</div>
+            <div class="loading">Carregando...</div>
+            <iframe id="iframe6" src="about:blank"></iframe>
+        </div>
+        <div class="iframe-container" id="container7">
+            <div class="site-label">Site 7</div>
+            <div class="loading">Carregando...</div>
+            <iframe id="iframe7" src="about:blank"></iframe>
+        </div>
+        <div class="iframe-container" id="container8">
+            <div class="site-label">Site 8</div>
+            <div class="loading">Carregando...</div>
+            <iframe id="iframe8" src="about:blank"></iframe>
+        </div>
     </div>
 
     <script>
+        let isZoomed = false;
+        
         function loadAllSites() {
             for (let i = 1; i <= 8; i++) {
                 const url = document.getElementById(`url${i}`).value.trim();
@@ -212,16 +232,20 @@
                     loading.textContent = 'Carregando...';
                     iframe.src = url;
                     
+                    // Remove loading quando carregar
                     iframe.onload = function() {
                         loading.style.display = 'none';
                     };
                     
+                    // Detecta erro de carregamento
                     iframe.onerror = function() {
                         loading.textContent = 'Erro: Site bloqueia iframe';
                         loading.style.color = '#ff6b6b';
                     };
                     
+                    // Remove loading após timeout (caso não carregue)
                     setTimeout(() => {
+                        // Verifica se ainda está com src em branco (indica bloqueio)
                         try {
                             if (iframe.contentDocument === null) {
                                 loading.textContent = 'Site bloqueia iframe';
@@ -237,12 +261,20 @@
                 }
             }
         }
-
-        function toggleZoomContainer(containerId) {
-            const container = document.getElementById(containerId);
-            container.classList.toggle('zoomed');
+        
+        function toggleZoom() {
+            isZoomed = !isZoomed;
+            const containers = document.querySelectorAll('.iframe-container');
+            
+            containers.forEach(container => {
+                if (isZoomed) {
+                    container.classList.add('zoomed');
+                } else {
+                    container.classList.remove('zoomed');
+                }
+            });
         }
-
+        
         function refreshAll() {
             for (let i = 1; i <= 8; i++) {
                 const iframe = document.getElementById(`iframe${i}`);
@@ -252,19 +284,23 @@
                 }
             }
         }
-
+        
         function toggleControls() {
             const controls = document.getElementById('controls');
             controls.classList.toggle('hidden');
         }
-
+        
+        // Carrega automaticamente ao iniciar
         window.addEventListener('load', function() {
             setTimeout(loadAllSites, 1000);
+            
+            // Auto-hide controls após 5 segundos
             setTimeout(() => {
                 document.getElementById('controls').classList.add('hidden');
             }, 5000);
         });
-
+        
+        // Atalhos de teclado
         document.addEventListener('keydown', function(e) {
             if (e.key === 'F11') {
                 e.preventDefault();
@@ -277,11 +313,14 @@
                 document.getElementById('controls').classList.add('hidden');
             } else if (e.key === 'c' || e.key === 'C') {
                 toggleControls();
+            } else if (e.key === 'z' || e.key === 'Z') {
+                toggleZoom();
             } else if (e.key === 'r' || e.key === 'R') {
                 refreshAll();
             }
         });
-
+        
+        // Previne scroll acidental
         document.addEventListener('wheel', function(e) {
             e.preventDefault();
         }, { passive: false });
