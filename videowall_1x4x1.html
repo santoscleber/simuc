@@ -22,12 +22,12 @@ button:hover { background:#0056b3; }
 .toggle-btn { position: fixed; top:10px; right:10px; z-index:1001; background:rgba(255,255,255,0.2); color:white; border:none; padding:10px; border-radius:5px; cursor:pointer; }
 
 .videowall {
-    display: grid;
-    grid-template-columns: repeat(4, 40px); /* 4 colunas de 3840px */
-    grid-template-rows: repeat(2, 160px);    /* 2 linhas de 2160px */
-    gap: 2px; /* Espaço entre as telas, pode ajustar */
-    width: auto;   /* não força a ocupar 100% da tela */
-    height: auto;  /* idem */
+    display:grid;
+    grid-template-columns: 4fr 2fr 2fr 2fr 2fr 4fr; /* Lados menores, centro maior */
+    grid-template-rows: 1fr 1fr; /* Duas linhas */
+    width:100vw;
+    height:100vh;
+    gap:5px;
 }
 
 .iframe-container { 
