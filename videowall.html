@@ -14,8 +14,8 @@ body { font-family: Arial, sans-serif; background: #000; overflow: hidden; }
 }
 .controls.hidden { display: none; }
 .url-input { display: flex; align-items: center; margin: 5px 0; font-size: 12px; }
-.url-input label { width: 40px; margin-right: 5px; font-weight: bold; }
-.url-input input { width: 300px; padding: 3px; border: 1px solid #ccc; border-radius: 3px; font-size: 11px; }
+.url-input label { width: 50px; margin-right: 5px; font-weight: bold; }
+.url-input input { width: 250px; padding: 3px; border: 1px solid #ccc; border-radius: 3px; font-size: 11px; }
 
 button { padding: 5px 10px; margin: 2px; border: none; border-radius: 3px; cursor: pointer; font-size: 11px; background: #007bff; color: white; }
 button:hover { background: #0056b3; }
@@ -51,15 +51,62 @@ button:hover { background: #0056b3; }
 </div>
 
 <div class="videowall">
-    ${[...Array(8)].map((_,i) => `
-    <div class="iframe-container" id="container${i+1}">
-        <div class="site-label">Site ${i+1}</div>
+    <div class="iframe-container" id="container1">
+        <div class="site-label">Site 1</div>
         <div class="loading">Carregando...</div>
-        <iframe id="iframe${i+1}" src="https://example.com"></iframe>
-        <input type="range" min="0.5" max="2" step="0.05" value="1" class="zoom-slider" 
-            oninput="setZoom('iframe${i+1}', this.value)">
+        <iframe id="iframe1" src="https://example.com"></iframe>
+        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" 
+            oninput="setZoom('iframe1', this.value)">
     </div>
-    `).join('')}
+    <div class="iframe-container" id="container2">
+        <div class="site-label">Site 2</div>
+        <div class="loading">Carregando...</div>
+        <iframe id="iframe2" src="https://example.com"></iframe>
+        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" 
+            oninput="setZoom('iframe2', this.value)">
+    </div>
+    <div class="iframe-container" id="container3">
+        <div class="site-label">Site 3</div>
+        <div class="loading">Carregando...</div>
+        <iframe id="iframe3" src="https://example.com"></iframe>
+        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" 
+            oninput="setZoom('iframe3', this.value)">
+    </div>
+    <div class="iframe-container" id="container4">
+        <div class="site-label">Site 4</div>
+        <div class="loading">Carregando...</div>
+        <iframe id="iframe4" src="https://example.com"></iframe>
+        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" 
+            oninput="setZoom('iframe4', this.value)">
+    </div>
+    <div class="iframe-container" id="container5">
+        <div class="site-label">Site 5</div>
+        <div class="loading">Carregando...</div>
+        <iframe id="iframe5" src="https://example.com"></iframe>
+        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" 
+            oninput="setZoom('iframe5', this.value)">
+    </div>
+    <div class="iframe-container" id="container6">
+        <div class="site-label">Site 6</div>
+        <div class="loading">Carregando...</div>
+        <iframe id="iframe6" src="https://example.com"></iframe>
+        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" 
+            oninput="setZoom('iframe6', this.value)">
+    </div>
+    <div class="iframe-container" id="container7">
+        <div class="site-label">Site 7</div>
+        <div class="loading">Carregando...</div>
+        <iframe id="iframe7" src="https://example.com"></iframe>
+        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" 
+            oninput="setZoom('iframe7', this.value)">
+    </div>
+    <div class="iframe-container" id="container8">
+        <div class="site-label">Site 8</div>
+        <div class="loading">Carregando...</div>
+        <iframe id="iframe8" src="https://example.com"></iframe>
+        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" 
+            oninput="setZoom('iframe8', this.value)">
+    </div>
 </div>
 
 <script>
@@ -75,8 +122,17 @@ function loadAllSites() {
             iframe.onload=function(){loading.style.display='none';};
             iframe.onerror=function(){loading.textContent='Erro: Site bloqueia iframe';loading.style.color='#ff6b6b';};
             setTimeout(()=>{
-                try{if(iframe.contentDocument===null){loading.textContent='Site bloqueia iframe';loading.style.color='#ff6b6b';}
-                else{loading.style.display='none';}}catch(e){loading.textContent='Site bloqueia iframe';loading.style.color='#ff6b6b';}
+                try{
+                    if(iframe.contentDocument===null){
+                        loading.textContent='Site bloqueia iframe';
+                        loading.style.color='#ff6b6b';
+                    } else {
+                        loading.style.display='none';
+                    }
+                }catch(e){
+                    loading.textContent='Site bloqueia iframe';
+                    loading.style.color='#ff6b6b';
+                }
             },10000);
         }
     }
