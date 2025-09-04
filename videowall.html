@@ -137,7 +137,7 @@
     <div class="controls" id="controls">
         <div class="url-input">
             <label>Site 1:</label>
-            <input type="url" id="url1" value="https://www.windy.com/pt/-Sat%C3%A9lite-satellite?satellite,-1.101,-47.078,5">
+            <input type="url" id="url1" value="https://www.google.com">
         </div>
         <div class="url-input">
             <label>Site 2:</label>
@@ -229,6 +229,7 @@
                 
                 if (url && url !== 'about:blank') {
                     loading.style.display = 'block';
+                    loading.textContent = 'Carregando...';
                     iframe.src = url;
                     
                     // Remove loading quando carregar
@@ -236,9 +237,26 @@
                         loading.style.display = 'none';
                     };
                     
+                    // Detecta erro de carregamento
+                    iframe.onerror = function() {
+                        loading.textContent = 'Erro: Site bloqueia iframe';
+                        loading.style.color = '#ff6b6b';
+                    };
+                    
                     // Remove loading após timeout (caso não carregue)
                     setTimeout(() => {
-                        loading.style.display = 'none';
+                        // Verifica se ainda está com src em branco (indica bloqueio)
+                        try {
+                            if (iframe.contentDocument === null) {
+                                loading.textContent = 'Site bloqueia iframe';
+                                loading.style.color = '#ff6b6b';
+                            } else {
+                                loading.style.display = 'none';
+                            }
+                        } catch (e) {
+                            loading.textContent = 'Site bloqueia iframe';
+                            loading.style.color = '#ff6b6b';
+                        }
                     }, 10000);
                 }
             }
