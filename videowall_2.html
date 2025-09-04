@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Videowall - Layout Custom</title>
+<title>Videowall - Layout Custom com Zoom</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family: Arial, sans-serif; background:#000; overflow:hidden; }
@@ -23,7 +23,7 @@ button:hover { background:#0056b3; }
 
 .videowall {
     display:grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr 1fr 2fr;
+    grid-template-columns: 2fr repeat(2, 1fr) 2fr;
     grid-template-rows: repeat(2, 50vh);
     width:100vw;
     height:100vh;
@@ -39,16 +39,13 @@ button:hover { background:#0056b3; }
 
 /* Ajustando spans grandes para esquerda e direita */
 #container1 { grid-column: 1 / 2; grid-row: 1 / 3; }
-#container4 { grid-column: 6 / 7; grid-row: 1 / 3; }
+#container4 { grid-column: 4 / 5; grid-row: 1 / 3; }
 
-/* Centro: quatro janelas médias */
+/* Centro: quatro janelas médias ocupando todo o espaço central */
 #container2 { grid-column: 2 / 3; grid-row: 1 / 2; }
 #container3 { grid-column: 3 / 4; grid-row: 1 / 2; }
 #container6 { grid-column: 2 / 3; grid-row: 2 / 3; }
 #container7 { grid-column: 3 / 4; grid-row: 2 / 3; }
-
-/* Ajuste visual */
-.iframe-container iframe { background:#222; }
 </style>
 </head>
 <body>
@@ -69,35 +66,52 @@ button:hover { background:#0056b3; }
 </div>
 
 <div class="videowall">
+    <!-- Esquerda grande -->
     <div class="iframe-container" id="container1">
         <div class="site-label">Esquerda (1+5)</div>
         <div class="loading">Carregando...</div>
         <iframe id="iframe1" src="https://example.com"></iframe>
+        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('iframe1', this.value)">
     </div>
+
+    <!-- Centro 1 -->
     <div class="iframe-container" id="container2">
         <div class="site-label">Centro 1</div>
         <div class="loading">Carregando...</div>
         <iframe id="iframe2" src="https://example.com"></iframe>
+        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('iframe2', this.value)">
     </div>
+
+    <!-- Centro 2 -->
     <div class="iframe-container" id="container3">
         <div class="site-label">Centro 2</div>
         <div class="loading">Carregando...</div>
         <iframe id="iframe3" src="https://example.com"></iframe>
+        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('iframe3', this.value)">
     </div>
+
+    <!-- Centro 3 -->
     <div class="iframe-container" id="container6">
         <div class="site-label">Centro 3</div>
         <div class="loading">Carregando...</div>
         <iframe id="iframe6" src="https://example.com"></iframe>
+        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('iframe6', this.value)">
     </div>
+
+    <!-- Centro 4 -->
     <div class="iframe-container" id="container7">
         <div class="site-label">Centro 4</div>
         <div class="loading">Carregando...</div>
         <iframe id="iframe7" src="https://example.com"></iframe>
+        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('iframe7', this.value)">
     </div>
+
+    <!-- Direita grande -->
     <div class="iframe-container" id="container4">
         <div class="site-label">Direita (4+8)</div>
         <div class="loading">Carregando...</div>
         <iframe id="iframe4" src="https://example.com"></iframe>
+        <input type="range" min="0.25" max="3" step="0.05" value="1" class="zoom-slider" oninput="setZoom('iframe4', this.value)">
     </div>
 </div>
 
@@ -136,6 +150,11 @@ function refreshAll(){
         const iframe=document.getElementById(`iframe${i}`);
         if(iframe && iframe.src && iframe.src!=='about:blank'){iframe.src=iframe.src;}
     });
+}
+
+function setZoom(iframeId, value){
+    const iframe=document.getElementById(iframeId);
+    iframe.style.transform=`scale(${value})`;
 }
 
 function toggleControls(){document.getElementById('controls').classList.toggle('hidden');}
