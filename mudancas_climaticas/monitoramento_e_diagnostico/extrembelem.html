@@ -36,8 +36,7 @@
 
   <script>
     // --------------------------------------------------------
-    // 👉 Aqui você coloca o caminho para o seu CSV
-    // Exemplo: "../../ERA5_dias_extremos_99p_1970_2025_belem.csv"
+    // 👉 Caminho do CSV
     // --------------------------------------------------------
     const caminhoCSV = "../../principal/base_de_dados/ERA5_dias_extremos_99p_1970_2025_belem.csv";
 
@@ -57,6 +56,7 @@
       const nomesMeses = ['Jan','Fev','Mar','Abr','Mai','Jun',
                           'Jul','Ago','Set','Out','Nov','Dez'];
 
+      // Montar matriz z (Janeiro no topo → Dezembro embaixo)
       const z = meses.map(m => 
         anos.map(a => {
           const row = data.find(d => d.year === a && d.month === m);
@@ -67,7 +67,7 @@
       Plotly.newPlot('heatmap', [{
         z: z,
         x: anos,
-        y: nomesMeses,
+        y: nomesMeses,   // Agora a ordem já corresponde (Jan no topo, Dez embaixo)
         type: 'heatmap',
         colorscale: 'Reds',
         zmin: 0,
@@ -77,7 +77,7 @@
         margin: { t: 40 },
         title: "Heatmap de Dias Extremos (Ano × Mês)",
         xaxis: { title: "Ano" },
-        yaxis: { title: "Mês" }
+        yaxis: { title: "Mês" }  // Não precisa mais do autorange: "reversed"
       });
 
       // --------------------------------------------------------
