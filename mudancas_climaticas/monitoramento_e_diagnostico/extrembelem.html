@@ -149,8 +149,7 @@
       font: { family: 'Inter, sans-serif', color: 'black', size: 12 },
       paper_bgcolor: 'rgba(0,0,0,0)',
       plot_bgcolor: 'rgba(0,0,0,0)',
-      margin: { l: 60, r: 30, t: 50, b: 60 },
-      title: { x: 0.5, xanchor: 'center' } // centraliza o título
+      margin: { l: 60, r: 30, t: 50, b: 60 }
     };
 
     function updateStats(data) {
@@ -285,7 +284,6 @@
         showscale: true
       }], {
         ...commonLayout,
-        title: { text: 'Mapa de Calor de Eventos Extremos de Temperatura do ar', x: 0.5, xanchor: 'center' },
         xaxis: { ...eixoPreto, title: { text: 'Ano', font: { size: 14, color: 'black' } }, side: 'bottom' },
         yaxis: { ...eixoPreto, title: { text: 'Número de Dias Extremos', font: { size: 14, color: 'black' } }, side: 'left', autorange: 'reversed', tickvals: nomesMeses.map((_, i) => i), ticktext: nomesMeses }
       }, plotConfig);
@@ -304,7 +302,6 @@
         hovertemplate: '<b>Ano %{x}</b><br>Dias extremos: %{y}<extra></extra>'
       }], {
         ...commonLayout,
-        title: { text: 'Número de Eventos Extremos de Temperatura do ar', x: 0.5, xanchor: 'center' },
         xaxis: { ...eixoPreto, title: { text: 'Ano', font: { size: 14, color: 'black' } }, side: 'bottom' },
         yaxis: { ...eixoPreto, title: { text: 'Número de Dias Extremos', font: { size: 14, color: 'black' } }, side: 'left' },
         showlegend: false
