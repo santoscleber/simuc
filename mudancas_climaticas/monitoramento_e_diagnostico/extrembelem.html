@@ -159,11 +159,12 @@
         return row ? row.dias_extremos : 0;
       }));
 
+      // Eixos apenas na parte inferior e esquerda
       const eixoPreto = {
         showgrid: false,
         linecolor: 'black',
         linewidth: 2,
-        mirror: 'ticks',
+        mirror: false,
         ticks: 'outside',
         tickcolor: 'black',
         ticklen: 6,
@@ -180,8 +181,8 @@
         showscale:true
       }],{
         ...commonLayout,
-        xaxis:{...eixoPreto, title:{text:'Ano', font:{size:14,color:'black'}}},
-        yaxis:{...eixoPreto, title:{text:'Mês', font:{size:14,color:'black'}}, autorange:'reversed'}
+        xaxis:{...eixoPreto, title:{text:'Ano', font:{size:14,color:'black'}}, side: 'bottom'},
+        yaxis:{...eixoPreto, title:{text:'Mês', font:{size:14,color:'black'}}, side: 'left', autorange:'reversed'}
       }, plotConfig);
 
       // Linha anual
@@ -198,8 +199,8 @@
         hovertemplate:'<b>Ano %{x}</b><br>Dias extremos: %{y}<extra></extra>'
       }],{
         ...commonLayout,
-        xaxis:{...eixoPreto, title:{text:'Ano', font:{size:14,color:'black'}}},
-        yaxis:{...eixoPreto, title:{text:'Número de Dias Extremos', font:{size:14,color:'black'}}},
+        xaxis:{...eixoPreto, title:{text:'Ano', font:{size:14,color:'black'}}, side:'bottom'},
+        yaxis:{...eixoPreto, title:{text:'Número de Dias Extremos', font:{size:14,color:'black'}}, side:'left'},
         showlegend:false
       }, plotConfig);
 
@@ -214,8 +215,8 @@
           hovertemplate:'<b>%{x}</b><br>Dias extremos: %{y}<extra></extra>'
         }],{
           ...commonLayout,
-          xaxis:{...eixoPreto, title:{text:'Mês', font:{size:14,color:'black'}}},
-          yaxis:{...eixoPreto, title:{text:'Número de Dias Extremos', font:{size:14,color:'black'}}},
+          xaxis:{...eixoPreto, title:{text:'Mês', font:{size:14,color:'black'}}, side:'bottom'},
+          yaxis:{...eixoPreto, title:{text:'Número de Dias Extremos', font:{size:14,color:'black'}}, side:'left'},
           showlegend:false
         }, plotConfig);
       } else {
