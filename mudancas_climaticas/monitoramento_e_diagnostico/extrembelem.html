@@ -170,8 +170,8 @@
         showscale:true
       }],{
         ...commonLayout,
-        xaxis:{title:{text:'Ano', font:{size:14,color:'black'}},gridcolor:'rgba(0,0,0,0.1)',showgrid:true},
-        yaxis:{autorange:"reversed", showgrid:false}
+        xaxis:{title:{text:'Ano', font:{size:14,color:'black'}}, showgrid:false, zeroline:true, zerolinecolor:'black', zerolinewidth:2},
+        yaxis:{autorange:"reversed", showgrid:false, zeroline:true, zerolinecolor:'black', zerolinewidth:2}
       }, plotConfig);
 
       const porAno = {};
@@ -188,8 +188,8 @@
         hovertemplate:'<b>Ano %{x}</b><br>Dias extremos: %{y}<extra></extra>'
       }],{
         ...commonLayout,
-        xaxis:{title:{text:'Ano', font:{size:14,color:'black'}}, gridcolor:'rgba(0,0,0,0.1)', showgrid:true},
-        yaxis:{title:{text:'Número de Dias Extremos', font:{size:14,color:'black'}}, gridcolor:'rgba(0,0,0,0.1)', showgrid:true},
+        xaxis:{title:{text:'Ano', font:{size:14,color:'black'}}, showgrid:false, zeroline:true, zerolinecolor:'black', zerolinewidth:2},
+        yaxis:{title:{text:'Número de Dias Extremos', font:{size:14,color:'black'}}, showgrid:false, zeroline:true, zerolinecolor:'black', zerolinewidth:2},
         showlegend:false
       }, plotConfig);
 
@@ -203,8 +203,8 @@
           hovertemplate:'<b>%{x}</b><br>Dias extremos: %{y}<extra></extra>'
         }],{
           ...commonLayout,
-          xaxis:{title:{text:'Mês', font:{size:14,color:'black'}}, showgrid:false},
-          yaxis:{title:{text:'Número de Dias Extremos', font:{size:14,color:'black'}}, gridcolor:'rgba(0,0,0,0.1)', showgrid:true},
+          xaxis:{title:{text:'Mês', font:{size:14,color:'black'}}, showgrid:false, zeroline:true, zerolinecolor:'black', zerolinewidth:2},
+          yaxis:{title:{text:'Número de Dias Extremos', font:{size:14,color:'black'}}, showgrid:false, zeroline:true, zerolinecolor:'black', zerolinewidth:2},
           showlegend:false
         }, plotConfig);
       } else {
