@@ -233,7 +233,6 @@
   <script>
     const caminhoCSV = "../../principal/base_de_dados/ERA5_dias_extremos_99p_1970_2025_belem.csv";
 
-    // Configurações de tema profissional
     const plotConfig = {
       displayModeBar: true,
       modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
@@ -279,7 +278,6 @@
 
       updateStats(data);
 
-      // Heatmap profissional
       const anos = [...new Set(data.map(d => d.year))].sort((a,b)=>a-b);
       const meses = [1,2,3,4,5,6,7,8,9,10,11,12];
       const nomesMeses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
@@ -316,20 +314,17 @@
         showscale: true
       }], {
         ...commonLayout,
-        title: { text: '', font: { size: 16 } },
         xaxis: { 
           title: { text: 'Ano', font: { size: 14, color: '#4a5568' } },
           gridcolor: 'rgba(0,0,0,0.1)',
           showgrid: true
         },
         yaxis: { 
-          title: { text: '', font: { size: 14, color: '#4a5568' } },
           autorange: "reversed",
           showgrid: false
         }
       }, plotConfig);
 
-      // Gráfico de linhas por ano
       const porAno = {};
       data.forEach(d => {
         porAno[d.year] = (porAno[d.year] || 0) + d.dias_extremos;
@@ -340,39 +335,20 @@
         y: Object.values(porAno),
         type: 'scatter',
         mode: 'lines+markers',
-        line: { 
-          color: '#667eea',
-          width: 3,
-          shape: 'spline'
-        },
-        marker: { 
-          size: 8,
-          color: '#667eea',
-          line: { color: 'white', width: 2 }
-        },
+        line: { color: '#667eea', width: 3, shape: 'spline' },
+        marker: { size: 8, color: '#667eea', line: { color: 'white', width: 2 } },
         fill: 'tonexty',
         fillcolor: 'rgba(102, 126, 234, 0.1)',
         hovertemplate: '<b>Ano %{x}</b><br>Dias extremos: %{y}<extra></extra>',
         name: 'Dias Extremos'
       }], {
         ...commonLayout,
-        title: { text: '', font: { size: 16 } },
-        xaxis: { 
-          title: { text: 'Ano', font: { size: 14, color: '#4a5568' } },
-          gridcolor: 'rgba(0,0,0,0.1)',
-          showgrid: true
-        },
-        yaxis: { 
-          title: { text: 'Número de Dias Extremos', font: { size: 14, color: '#4a5568' } },
-          gridcolor: 'rgba(0,0,0,0.1)',
-          showgrid: true
-        },
+        xaxis: { title: { text: 'Ano', font: { size: 14, color: '#4a5568' } }, gridcolor: 'rgba(0,0,0,0.1)', showgrid: true },
+        yaxis: { title: { text: 'Número de Dias Extremos', font: { size: 14, color: '#4a5568' } }, gridcolor: 'rgba(0,0,0,0.1)', showgrid: true },
         showlegend: false
       }, plotConfig);
 
-      // Gráfico 2025
-      const dados2025 = data.filter(d => d.year === 2025)
-                            .sort((a,b)=>a.month-b.month);
+      const dados2025 = data.filter(d => d.year === 2025).sort((a,b)=>a.month-b.month);
 
       if (dados2025.length > 0) {
         Plotly.newPlot('line_2025', [{
@@ -381,38 +357,24 @@
           type: 'bar',
           marker: { 
             color: dados2025.map(d => d.dias_extremos),
-            colorscale: [
-              [0, '#fed7d7'],
-              [1, '#c53030']
-            ],
+            colorscale: [[0, '#fed7d7'], [1, '#c53030']],
             line: { color: 'white', width: 2 }
           },
           hovertemplate: '<b>%{x}</b><br>Dias extremos: %{y}<extra></extra>',
           name: '2025'
         }], {
           ...commonLayout,
-          title: { text: '', font: { size: 16 } },
-          xaxis: { 
-            title: { text: 'Mês', font: { size: 14, color: '#4a5568' } },
-            showgrid: false
-          },
-          yaxis: { 
-            title: { text: 'Número de Dias Extremos', font: { size: 14, color: '#4a5568' } },
-            gridcolor: 'rgba(0,0,0,0.1)',
-            showgrid: true
-          },
+          xaxis: { title: { text: 'Mês', font: { size: 14, color: '#4a5568' } }, showgrid: false },
+          yaxis: { title: { text: 'Número de Dias Extremos', font: { size: 14, color: '#4a5568' } }, gridcolor: 'rgba(0,0,0,0.1)', showgrid: true },
           showlegend: false
         }, plotConfig);
       } else {
-        document.getElementById('line_2025').innerHTML = 
-          '<div class="error">Dados de 2025 não disponíveis</div>';
+        document.getElementById('line_2025').innerHTML = '<div class="error">Dados de 2025 não disponíveis</div>';
       }
 
     }).catch(error => {
       console.error("Erro ao carregar o CSV:", error);
-      
       const errorDiv = '<div class="error">⚠️ Não foi possível carregar os dados. Verifique se o arquivo CSV está no caminho correto.</div>';
-      
       document.getElementById('heatmap').innerHTML = errorDiv;
       document.getElementById('line_ano').innerHTML = errorDiv;
       document.getElementById('line_2025').innerHTML = errorDiv;
