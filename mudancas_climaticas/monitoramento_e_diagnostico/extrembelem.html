@@ -159,6 +159,17 @@
         return row ? row.dias_extremos : 0;
       }));
 
+      const eixoPreto = {
+        showgrid: false,
+        zeroline: true,
+        zerolinecolor: 'black',
+        zerolinewidth: 2,
+        ticks: 'outside',
+        tickcolor: 'black',
+        ticklen: 6,
+        tickwidth: 2
+      };
+
       // Heatmap
       Plotly.newPlot('heatmap', [{
         z, x: anos, y: nomesMeses, type: 'heatmap',
@@ -169,8 +180,8 @@
         showscale:true
       }],{
         ...commonLayout,
-        xaxis:{title:{text:'Ano', font:{size:14,color:'black'}}, showgrid:false, zeroline:true, zerolinecolor:'black', zerolinewidth:2},
-        yaxis:{autorange:"reversed", showgrid:false, zeroline:true, zerolinecolor:'black', zerolinewidth:2, zerolinemode:'first'} // linha preta apenas no mínimo
+        xaxis:{...eixoPreto, title:{text:'Ano', font:{size:14,color:'black'}}},
+        yaxis:{...eixoPreto, title:{text:'Mês', font:{size:14,color:'black'}}, autorange:'reversed'}
       }, plotConfig);
 
       // Linha anual
@@ -187,8 +198,8 @@
         hovertemplate:'<b>Ano %{x}</b><br>Dias extremos: %{y}<extra></extra>'
       }],{
         ...commonLayout,
-        xaxis:{title:{text:'Ano', font:{size:14,color:'black'}}, showgrid:false, zeroline:true, zerolinecolor:'black', zerolinewidth:2},
-        yaxis:{title:{text:'Número de Dias Extremos', font:{size:14,color:'black'}}, showgrid:false, zeroline:true, zerolinecolor:'black', zerolinewidth:2, zerolinemode:'first'},
+        xaxis:{...eixoPreto, title:{text:'Ano', font:{size:14,color:'black'}}},
+        yaxis:{...eixoPreto, title:{text:'Número de Dias Extremos', font:{size:14,color:'black'}}},
         showlegend:false
       }, plotConfig);
 
@@ -203,8 +214,8 @@
           hovertemplate:'<b>%{x}</b><br>Dias extremos: %{y}<extra></extra>'
         }],{
           ...commonLayout,
-          xaxis:{title:{text:'Mês', font:{size:14,color:'black'}}, showgrid:false, zeroline:true, zerolinecolor:'black', zerolinewidth:2},
-          yaxis:{title:{text:'Número de Dias Extremos', font:{size:14,color:'black'}}, showgrid:false, zeroline:true, zerolinecolor:'black', zerolinewidth:2, zerolinemode:'first'},
+          xaxis:{...eixoPreto, title:{text:'Mês', font:{size:14,color:'black'}}},
+          yaxis:{...eixoPreto, title:{text:'Número de Dias Extremos', font:{size:14,color:'black'}}},
           showlegend:false
         }, plotConfig);
       } else {
