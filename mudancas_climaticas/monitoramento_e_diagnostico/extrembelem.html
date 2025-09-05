@@ -9,13 +9,13 @@
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { margin: 0; padding: 0; box-sizing: border-box; color: black; }
     body {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: #2d3748;
+      background-color: rgb(128, 194, 218);
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       min-height: 100vh;
       line-height: 1.6;
+      color: black;
     }
     .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
     .header {
@@ -27,17 +27,18 @@
       margin-bottom: 30px;
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
       border: 1px solid rgba(255, 255, 255, 0.2);
+      color: black;
     }
     .header h1 {
       font-size: 2.5rem;
       font-weight: 700;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      background: none;
+      -webkit-background-clip: unset;
+      -webkit-text-fill-color: black;
       margin-bottom: 10px;
       letter-spacing: -0.025em;
     }
-    .header p { font-size: 1.1rem; color: #64748b; font-weight: 400; }
+    .header p { font-size: 1.1rem; font-weight: 400; color: black; }
     .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 30px; }
     .chart-card {
       background: rgba(255, 255, 255, 0.95);
@@ -49,6 +50,7 @@
       transition: all 0.3s ease;
       position: relative;
       overflow: hidden;
+      color: black;
     }
     .chart-card::before {
       content: '';
@@ -64,7 +66,7 @@
     .chart-title {
       font-size: 1.5rem;
       font-weight: 600;
-      color: #1a202c;
+      color: black;
       margin-bottom: 20px;
       display: flex;
       align-items: center;
@@ -93,23 +95,11 @@
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
       border: 1px solid rgba(255, 255, 255, 0.2);
       transition: all 0.3s ease;
+      color: black;
     }
     .stat-card:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15); }
-    .stat-number {
-      font-size: 2.2rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 8px;
-    }
-    .stat-label {
-      font-size: 0.9rem;
-      color: #64748b;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
+    .stat-number { font-size: 2.2rem; font-weight: 700; background: none; -webkit-text-fill-color: black; margin-bottom: 8px; color: black; }
+    .stat-label { font-size: 0.9rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: black; }
     .error {
       background: #fed7d7;
       color: #c53030;
@@ -174,11 +164,10 @@
   <script>
     const caminhoCSV = "../../principal/base_de_dados/ERA5_dias_extremos_99p_1970_2025_belem.csv";
 
-    // Agora a modebar aparece apenas ao passar o mouse
     const plotConfig = { displayModeBar: 'hover', displaylogo: false, responsive: true };
 
     const commonLayout = {
-      font: { family: 'Inter, sans-serif', size: 12 },
+      font: { family: 'Inter, sans-serif', color: 'black', size: 12 },
       paper_bgcolor: 'rgba(0,0,0,0)',
       plot_bgcolor: 'rgba(0,0,0,0)',
       margin: { l: 60, r: 30, t: 50, b: 60 }
@@ -202,37 +191,24 @@
       data.forEach(d => { d.year = +d.year; d.month = +d.month; d.dias_extremos = +d.dias_extremos; });
       updateStats(data);
 
-      // Heatmap
       const anos = [...new Set(data.map(d => d.year))].sort((a,b)=>a-b);
       const meses = [1,2,3,4,5,6,7,8,9,10,11,12];
-      const nomesMeses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
-                          'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+      const nomesMeses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
       const z = meses.map(m => anos.map(a => {
         const row = data.find(d => d.year === a && d.month === m);
         return row ? row.dias_extremos : 0;
       }));
 
       Plotly.newPlot('heatmap', [{
-        z: z,
-        x: anos,
-        y: nomesMeses,
-        type: 'heatmap',
-        colorscale: [
-          [0, '#f7fafc'],
-          [0.2, '#fed7d7'],
-          [0.4, '#fc8181'],
-          [0.6, '#e53e3e'],
-          [0.8, '#c53030'],
-          [1, '#742a2a']
-        ],
-        zmin: 0,
-        zmax: Math.max(...data.map(d => d.dias_extremos)),
-        colorbar: { title: { text: 'Dias Extremos', font: { size: 14 } }, thickness: 20, len: 0.8 },
+        z, x: anos, y: nomesMeses, type: 'heatmap',
+        colorscale: [[0, '#f7fafc'],[0.2, '#fed7d7'],[0.4, '#fc8181'],[0.6, '#e53e3e'],[0.8, '#c53030'],[1, '#742a2a']],
+        zmin: 0, zmax: Math.max(...data.map(d => d.dias_extremos)),
+        colorbar: { title: { text: 'Dias Extremos', font: { size: 14, color: 'black' } }, thickness: 20, len: 0.8 },
         hovertemplate: '<b>%{y}</b><br>Ano: %{x}<br>Dias extremos: %{z}<extra></extra>',
         showscale: true
       }], {
         ...commonLayout,
-        xaxis: { title: { text: 'Ano', font: { size: 14, color: '#4a5568' } }, gridcolor: 'rgba(0,0,0,0.1)', showgrid: true },
+        xaxis: { title: { text: 'Ano', font: { size: 14, color: 'black' } }, gridcolor: 'rgba(0,0,0,0.1)', showgrid: true },
         yaxis: { autorange: "reversed", showgrid: false }
       }, plotConfig);
 
@@ -253,8 +229,8 @@
         name: 'Dias Extremos'
       }], {
         ...commonLayout,
-        xaxis: { title: { text: 'Ano', font: { size: 14, color: '#4a5568' } }, gridcolor: 'rgba(0,0,0,0.1)', showgrid: true },
-        yaxis: { title: { text: 'Número de Dias Extremos', font: { size: 14, color: '#4a5568' } }, gridcolor: 'rgba(0,0,0,0.1)', showgrid: true },
+        xaxis: { title: { text: 'Ano', font: { size: 14, color: 'black' } }, gridcolor: 'rgba(0,0,0,0.1)', showgrid: true },
+        yaxis: { title: { text: 'Número de Dias Extremos', font: { size: 14, color: 'black' } }, gridcolor: 'rgba(0,0,0,0.1)', showgrid: true },
         showlegend: false
       }, plotConfig);
 
@@ -265,17 +241,13 @@
           x: dados2025.map(d => nomesMeses[d.month-1]),
           y: dados2025.map(d => d.dias_extremos),
           type: 'bar',
-          marker: { 
-            color: dados2025.map(d => d.dias_extremos),
-            colorscale: [[0, '#fed7d7'], [1, '#c53030']],
-            line: { color: 'white', width: 2 }
-          },
+          marker: { color: dados2025.map(d => d.dias_extremos), colorscale: [[0, '#fed7d7'], [1, '#c53030']], line: { color: 'white', width: 2 } },
           hovertemplate: '<b>%{x}</b><br>Dias extremos: %{y}<extra></extra>',
           name: '2025'
         }], {
           ...commonLayout,
-          xaxis: { title: { text: 'Mês', font: { size: 14, color: '#4a5568' } }, showgrid: false },
-          yaxis: { title: { text: 'Número de Dias Extremos', font: { size: 14, color: '#4a5568' } }, gridcolor: 'rgba(0,0,0,0.1)', showgrid: true },
+          xaxis: { title: { text: 'Mês', font: { size: 14, color: 'black' } }, showgrid: false },
+          yaxis: { title: { text: 'Número de Dias Extremos', font: { size: 14, color: 'black' } }, gridcolor: 'rgba(0,0,0,0.1)', showgrid: true },
           showlegend: false
         }, plotConfig);
       } else {
