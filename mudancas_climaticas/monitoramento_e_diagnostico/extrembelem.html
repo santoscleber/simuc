@@ -238,7 +238,8 @@
           ticklen: 6,
           tickwidth: 2,
           title: { text: 'Número de Dias Extremos', font: { size: 14, color: 'black' } },
-          side: 'left'
+          side: 'left',
+          dtick: 1   // <--- esta linha força os números inteiros
         },
         showlegend: true,
         barmode: 'group'
