@@ -177,12 +177,15 @@
       const totalDays = data.reduce((sum, d) => sum + d.dias_extremos, 0);
       const porAno = {};
       data.forEach(d => { porAno[d.year] = (porAno[d.year] || 0) + d.dias_extremos; });
+
       const peakYear = Object.keys(porAno).reduce((a, b) => porAno[a] > porAno[b] ? a : b);
+      const peakYearValue = porAno[peakYear];
+
       const avgYear = Math.round(totalDays / Object.keys(porAno).length);
       const days2025 = porAno[2025] || 0;
 
       document.getElementById('total-days').textContent = totalDays.toLocaleString('pt-BR');
-      document.getElementById('peak-year').textContent = peakYear;
+      document.getElementById('peak-year').textContent = `${peakYear} (${peakYearValue} dias)`;
       document.getElementById('avg-year').textContent = avgYear;
       document.getElementById('days-2025').textContent = days2025;
     }
@@ -212,7 +215,6 @@
         yaxis: { autorange: "reversed", showgrid: false }
       }, plotConfig);
 
-      // Gráfico de linhas por ano (linha reta e vermelha)
       const porAno = {};
       data.forEach(d => { porAno[d.year] = (porAno[d.year] || 0) + d.dias_extremos; });
 
@@ -234,7 +236,6 @@
         showlegend: false
       }, plotConfig);
 
-      // Gráfico 2025
       const dados2025 = data.filter(d => d.year === 2025).sort((a,b)=>a.month-b.month);
       if (dados2025.length > 0) {
         Plotly.newPlot('line_2025', [{
