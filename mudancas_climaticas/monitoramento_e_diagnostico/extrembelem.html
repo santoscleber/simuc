@@ -155,7 +155,7 @@
 
       const anos = [...new Set(data.map(d=>d.year))].sort((a,b)=>a-b);
       const meses = [1,2,3,4,5,6,7,8,9,10,11,12];
-      const nomesMeses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+      const nomesMeses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
       const z = meses.map(m => anos.map(a => {
         const row = data.find(d => d.year===a && d.month===m);
         return row ? row.dias_extremos : 0;
