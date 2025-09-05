@@ -174,7 +174,8 @@
   <script>
     const caminhoCSV = "../../principal/base_de_dados/ERA5_dias_extremos_99p_1970_2025_belem.csv";
 
-    const plotConfig = { displayModeBar: false, displaylogo: false, responsive: true };
+    // Agora a modebar aparece apenas ao passar o mouse
+    const plotConfig = { displayModeBar: 'hover', displaylogo: false, responsive: true };
 
     const commonLayout = {
       font: { family: 'Inter, sans-serif', size: 12 },
