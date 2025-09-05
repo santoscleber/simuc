@@ -77,8 +77,11 @@
         margin: { t: 40 },
         title: "Heatmap de Dias Extremos (Ano × Mês)",
         xaxis: { title: "Ano" },
-        yaxis: { title: "Mês" }  // Não precisa mais do autorange: "reversed"
-      });
+        yaxis: { 
+            title: "Mês",
+            autorange: "reversed"   // ✅ Janeiro em cima, Dezembro embaixo
+  }
+});
 
       // --------------------------------------------------------
       // Gráfico de linhas - Acumulado por ano
