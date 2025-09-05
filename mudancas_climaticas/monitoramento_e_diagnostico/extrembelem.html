@@ -279,7 +279,7 @@
         z, x: anos, y: nomesMeses, type: 'heatmap',
         colorscale: [[0,'#f7fafc'],[0.2,'#fed7d7'],[0.4,'#fc8181'],[0.6,'#e53e3e'],[0.8,'#c53030'],[1,'#742a2a']],
         zmin: 0, zmax: Math.max(...data.map(d => d.dias_extremos)),
-        colorbar: { title: { text: 'Dias Extremos', font: { size: 14, color: 'black' } }, thickness: 20, len: 0.8 },
+        colorbar: { title: { text: 'Número de Dias Extremos', font: { size: 14, color: 'black' } }, thickness: 20, len: 0.8 },
         hovertemplate: '<b>%{y}</b><br>Ano: %{x}<br>Dias extremos: %{z}<extra></extra>',
         showscale: true
       }], {
