@@ -170,7 +170,7 @@
       }],{
         ...commonLayout,
         xaxis:{title:{text:'Ano', font:{size:14,color:'black'}}, showgrid:false, zeroline:true, zerolinecolor:'black', zerolinewidth:2},
-        yaxis:{autorange:"reversed", showgrid:false, zeroline:true, zerolinecolor:'black', zerolinewidth:2}
+        yaxis:{autorange:"reversed", showgrid:false, zeroline:true, zerolinecolor:'black', zerolinewidth:2, zerolinemode:'first'} // linha preta apenas no mínimo
       }, plotConfig);
 
       // Linha anual
@@ -188,7 +188,7 @@
       }],{
         ...commonLayout,
         xaxis:{title:{text:'Ano', font:{size:14,color:'black'}}, showgrid:false, zeroline:true, zerolinecolor:'black', zerolinewidth:2},
-        yaxis:{title:{text:'Número de Dias Extremos', font:{size:14,color:'black'}}, showgrid:false, zeroline:true, zerolinecolor:'black', zerolinewidth:2},
+        yaxis:{title:{text:'Número de Dias Extremos', font:{size:14,color:'black'}}, showgrid:false, zeroline:true, zerolinecolor:'black', zerolinewidth:2, zerolinemode:'first'},
         showlegend:false
       }, plotConfig);
 
@@ -204,7 +204,7 @@
         }],{
           ...commonLayout,
           xaxis:{title:{text:'Mês', font:{size:14,color:'black'}}, showgrid:false, zeroline:true, zerolinecolor:'black', zerolinewidth:2},
-          yaxis:{title:{text:'Número de Dias Extremos', font:{size:14,color:'black'}}, showgrid:false, zeroline:true, zerolinecolor:'black', zerolinewidth:2},
+          yaxis:{title:{text:'Número de Dias Extremos', font:{size:14,color:'black'}}, showgrid:false, zeroline:true, zerolinecolor:'black', zerolinewidth:2, zerolinemode:'first'},
           showlegend:false
         }, plotConfig);
       } else {
