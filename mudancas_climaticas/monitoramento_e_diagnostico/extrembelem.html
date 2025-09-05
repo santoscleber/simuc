@@ -42,7 +42,7 @@
       color: black;
     }
     .chart-card:hover { transform: translateY(-5px); box-shadow: 0 30px 60px rgba(0,0,0,0.15); }
-    .chart-title { font-size: 1.5rem; font-weight: 600; color: black; margin-bottom: 20px; }
+    .chart-title { font-size: 1.5rem; font-weight: 600; color: black; margin-bottom: 20px; text-align: center; }
     .chart-content { height: 500px; border-radius: 12px; overflow: hidden; }
     .stats-grid {
       display: grid;
@@ -149,7 +149,8 @@
       font: { family: 'Inter, sans-serif', color: 'black', size: 12 },
       paper_bgcolor: 'rgba(0,0,0,0)',
       plot_bgcolor: 'rgba(0,0,0,0)',
-      margin: { l: 60, r: 30, t: 50, b: 60 }
+      margin: { l: 60, r: 30, t: 50, b: 60 },
+      title: { x: 0.5, xanchor: 'center' } // centraliza o título
     };
 
     function updateStats(data) {
@@ -239,7 +240,7 @@
           tickwidth: 2,
           title: { text: 'Número de Dias Extremos', font: { size: 14, color: 'black' } },
           side: 'left',
-          dtick: 1   // <--- esta linha força os números inteiros
+          dtick: 1
         },
         showlegend: true,
         barmode: 'group'
@@ -263,7 +264,6 @@
         return row ? row.dias_extremos : 0;
       }));
 
-      // Eixos apenas na parte inferior e esquerda
       const eixoPreto = {
         showgrid: false,
         linecolor: 'black',
@@ -280,11 +280,12 @@
         z, x: anos, y: nomesMeses, type: 'heatmap',
         colorscale: [[0,'#f7fafc'],[0.2,'#fed7d7'],[0.4,'#fc8181'],[0.6,'#e53e3e'],[0.8,'#c53030'],[1,'#742a2a']],
         zmin: 0, zmax: Math.max(...data.map(d => d.dias_extremos)),
-        colorbar: { thickness: 20, len: 0.8 }, // Removido o título da barra de cores
+        colorbar: { thickness: 20, len: 0.8 },
         hovertemplate: '<b>%{y}</b><br>Ano: %{x}<br>Dias extremos: %{z}<extra></extra>',
         showscale: true
       }], {
         ...commonLayout,
+        title: { text: 'Mapa de Calor de Eventos Extremos de Temperatura do ar', x: 0.5, xanchor: 'center' },
         xaxis: { ...eixoPreto, title: { text: 'Ano', font: { size: 14, color: 'black' } }, side: 'bottom' },
         yaxis: { ...eixoPreto, title: { text: 'Número de Dias Extremos', font: { size: 14, color: 'black' } }, side: 'left', autorange: 'reversed', tickvals: nomesMeses.map((_, i) => i), ticktext: nomesMeses }
       }, plotConfig);
@@ -303,18 +304,15 @@
         hovertemplate: '<b>Ano %{x}</b><br>Dias extremos: %{y}<extra></extra>'
       }], {
         ...commonLayout,
+        title: { text: 'Número de Eventos Extremos de Temperatura do ar', x: 0.5, xanchor: 'center' },
         xaxis: { ...eixoPreto, title: { text: 'Ano', font: { size: 14, color: 'black' } }, side: 'bottom' },
         yaxis: { ...eixoPreto, title: { text: 'Número de Dias Extremos', font: { size: 14, color: 'black' } }, side: 'left' },
         showlegend: false
       }, plotConfig);
 
-      // Preencher o menu suspenso com os anos disponíveis
       populateYearSelect(anos);
-
-      // Inicializar o gráfico de comparação com 2025 (sem ano selecionado inicialmente)
       updateComparisonChart(data, null);
 
-      // Atualizar o gráfico quando o ano for selecionado
       document.getElementById('year-select').addEventListener('change', function() {
         const selectedYear = this.value;
         updateComparisonChart(data, selectedYear);
