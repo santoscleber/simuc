@@ -71,6 +71,20 @@
       text-align: center;
       border: 1px solid #feb2b2;
     }
+    .select-container {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    select {
+      padding: 10px;
+      font-size: 1rem;
+      font-family: 'Inter', sans-serif;
+      border-radius: 8px;
+      border: 1px solid rgba(0,0,0,0.3);
+      background: rgba(255,255,255,0.95);
+      cursor: pointer;
+    }
+    select:focus { outline: none; border-color: #e53e3e; }
     @media (max-width: 768px) {
       .container { padding: 15px; }
       .header { padding: 25px 20px; }
@@ -117,7 +131,12 @@
       </div>
 
       <div class="chart-card">
-        <h2 class="chart-title">Número de Eventos Extremos de Temperatura do ar em 2025</h2>
+        <h2 class="chart-title">Comparação de Eventos Extremos de Temperatura do ar</h2>
+        <div class="select-container">
+          <select id="year-select">
+            <option value="">Selecione um ano para comparar com 2025</option>
+          </select>
+        </div>
         <div id="line_2025" class="chart-content"></div>
       </div>
     </div>
@@ -148,14 +167,98 @@
       document.getElementById('days-2025').textContent = days2025;
     }
 
+    function populateYearSelect(anos) {
+      const select = document.getElementById('year-select');
+      anos.filter(ano => ano !== 2025).forEach(ano => {
+        const option = document.createElement('option');
+        option.value = ano;
+        option.textContent = ano;
+        select.appendChild(option);
+      });
+    }
+
+    function updateComparisonChart(data, selectedYear) {
+      const nomesMeses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+      const dados2025 = data.filter(d => d.year === 2025).sort((a, b) => a.month - b.month);
+      const dadosSelectedYear = selectedYear ? data.filter(d => d.year === +selectedYear).sort((a, b) => a.month - b.month) : [];
+
+      const meses = nomesMeses.map((_, i) => i + 1);
+      const valores2025 = meses.map(m => {
+        const row = dados2025.find(d => d.month === m);
+        return row ? row.dias_extremos : 0;
+      });
+      const valoresSelectedYear = meses.map(m => {
+        const row = dadosSelectedYear.find(d => d.month === m);
+        return row ? row.dias_extremos : 0;
+      });
+
+      const traces = [
+        {
+          x: nomesMeses,
+          y: valores2025,
+          type: 'bar',
+          name: '2025',
+          marker: { color: 'red', line: { color: 'white', width: 2 } },
+          hovertemplate: '<b>%{x}</b> 2025<br>Dias extremos: %{y}<extra></extra>'
+        }
+      ];
+
+      if (selectedYear) {
+        traces.push({
+          x: nomesMeses,
+          y: valoresSelectedYear,
+          type: 'bar',
+          name: selectedYear,
+          marker: { color: 'blue', line: { color: 'white', width: 2 } },
+          hovertemplate: `<b>%{x}</b> ${selectedYear}<br>Dias extremos: %{y}<extra></extra>`
+        });
+      }
+
+      const layout = {
+        ...commonLayout,
+        xaxis: {
+          showgrid: false,
+          linecolor: 'black',
+          linewidth: 2,
+          mirror: false,
+          ticks: 'outside',
+          tickcolor: 'black',
+          ticklen: 6,
+          tickwidth: 2,
+          title: { text: 'Mês', font: { size: 14, color: 'black' } },
+          side: 'bottom'
+        },
+        yaxis: {
+          showgrid: false,
+          linecolor: 'black',
+          linewidth: 2,
+          mirror: false,
+          ticks: 'outside',
+          tickcolor: 'black',
+          ticklen: 6,
+          tickwidth: 2,
+          title: { text: 'Número de Dias Extremos', font: { size: 14, color: 'black' } },
+          side: 'left'
+        },
+        showlegend: true,
+        barmode: 'group'
+      };
+
+      if (dados2025.length > 0 || dadosSelectedYear.length > 0) {
+        Plotly.newPlot('line_2025', traces, layout, plotConfig);
+      } else {
+        document.getElementById('line_2025').innerHTML = '<div class="error">Dados não disponíveis para os anos selecionados</div>';
+      }
+    }
+
     d3.csv(caminhoCSV).then(function(data) {
       data.forEach(d => { d.year = +d.year; d.month = +d.month; d.dias_extremos = +d.dias_extremos; });
       updateStats(data);
 
-      const anos = [...new Set(data.map(d=>d.year))].sort((a,b)=>a-b);
+      const anos = [...new Set(data.map(d => d.year))].sort((a, b) => a - b);
       const nomesMeses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
       const z = nomesMeses.map((_, m) => anos.map(a => {
-        const row = data.find(d => d.year===a && d.month===m+1);
+        const row = data.find(d => d.year === a && d.month === m + 1);
         return row ? row.dias_extremos : 0;
       }));
 
@@ -175,60 +278,53 @@
       Plotly.newPlot('heatmap', [{
         z, x: anos, y: nomesMeses, type: 'heatmap',
         colorscale: [[0,'#f7fafc'],[0.2,'#fed7d7'],[0.4,'#fc8181'],[0.6,'#e53e3e'],[0.8,'#c53030'],[1,'#742a2a']],
-        zmin:0, zmax:Math.max(...data.map(d=>d.dias_extremos)),
-        colorbar:{title:{text:'Dias Extremos', font:{size:14,color:'black'}}, thickness:20,len:0.8},
-        hovertemplate:'<b>%{y}</b><br>Ano: %{x}<br>Dias extremos: %{z}<extra></extra>',
-        showscale:true
-      }],{
+        zmin: 0, zmax: Math.max(...data.map(d => d.dias_extremos)),
+        colorbar: { title: { text: 'Dias Extremos', font: { size: 14, color: 'black' } }, thickness: 20, len: 0.8 },
+        hovertemplate: '<b>%{y}</b><br>Ano: %{x}<br>Dias extremos: %{z}<extra></extra>',
+        showscale: true
+      }], {
         ...commonLayout,
-        xaxis:{...eixoPreto, title:{text:'Ano', font:{size:14,color:'black'}}, side: 'bottom'},
-        yaxis:{...eixoPreto, title:{text:'Mês', font:{size:14,color:'black'}}, side: 'left', autorange:'reversed'}
+        xaxis: { ...eixoPreto, title: { text: 'Ano', font: { size: 14, color: 'black' } }, side: 'bottom' },
+        yaxis: { ...eixoPreto, title: { text: 'Mês', font: { size: 14, color: 'black' } }, side: 'left', autorange: 'reversed' }
       }, plotConfig);
 
       // Linha anual
       const porAno = {};
-      data.forEach(d => { porAno[d.year] = (porAno[d.year]||0) + d.dias_extremos; });
-      Plotly.newPlot('line_ano',[{
-        x:Object.keys(porAno),
-        y:Object.values(porAno),
-        type:'scatter',
-        mode:'lines+markers',
-        line:{color:'red', width:3, shape:'linear'},
-        marker:{size:8, color:'red', line:{color:'white', width:2}},
-        fill:'tonexty', fillcolor:'rgba(255,0,0,0.1)',
-        hovertemplate:'<b>Ano %{x}</b><br>Dias extremos: %{y}<extra></extra>'
-      }],{
+      data.forEach(d => { porAno[d.year] = (porAno[d.year] || 0) + d.dias_extremos; });
+      Plotly.newPlot('line_ano', [{
+        x: Object.keys(porAno),
+        y: Object.values(porAno),
+        type: 'scatter',
+        mode: 'lines+markers',
+        line: { color: 'red', width: 3, shape: 'linear' },
+        marker: { size: 8, color: 'red', line: { color: 'white', width: 2 } },
+        fill: 'tonexty', fillcolor: 'rgba(255,0,0,0.1)',
+        hovertemplate: '<b>Ano %{x}</b><br>Dias extremos: %{y}<extra></extra>'
+      }], {
         ...commonLayout,
-        xaxis:{...eixoPreto, title:{text:'Ano', font:{size:14,color:'black'}}, side:'bottom'},
-        yaxis:{...eixoPreto, title:{text:'Número de Dias Extremos', font:{size:14,color:'black'}}, side:'left'},
-        showlegend:false
+        xaxis: { ...eixoPreto, title: { text: 'Ano', font: { size: 14, color: 'black' } }, side: 'bottom' },
+        yaxis: { ...eixoPreto, title: { text: 'Número de Dias Extremos', font: { size: 14, color: 'black' } }, side: 'left' },
+        showlegend: false
       }, plotConfig);
 
-      // Linha 2025
-      const dados2025 = data.filter(d=>d.year===2025).sort((a,b)=>a.month-b.month);
-      if(dados2025.length>0){
-        Plotly.newPlot('line_2025',[{
-          x:dados2025.map(d=>nomesMeses[d.month-1]),
-          y:dados2025.map(d=>d.dias_extremos),
-          type:'bar',
-          marker:{color:'red', line:{color:'white', width:2}},
-          hovertemplate:'<b>%{x}</b><br>Dias extremos: %{y}<extra></extra>'
-        }],{
-          ...commonLayout,
-          xaxis:{...eixoPreto, title:{text:'Mês', font:{size:14,color:'black'}}, side:'bottom'},
-          yaxis:{...eixoPreto, title:{text:'Número de Dias Extremos', font:{size:14,color:'black'}}, side:'left'},
-          showlegend:false
-        }, plotConfig);
-      } else {
-        document.getElementById('line_2025').innerHTML='<div class="error">Dados de 2025 não disponíveis</div>';
-      }
+      // Preencher o menu suspenso com os anos disponíveis
+      populateYearSelect(anos);
 
-    }).catch(error=>{
-      console.error("Erro ao carregar o CSV:",error);
-      const errorDiv='<div class="error">⚠️ Não foi possível carregar os dados. Verifique se o arquivo CSV está no caminho correto.</div>';
-      document.getElementById('heatmap').innerHTML=errorDiv;
-      document.getElementById('line_ano').innerHTML=errorDiv;
-      document.getElementById('line_2025').innerHTML=errorDiv;
+      // Inicializar o gráfico de comparação com 2025 (sem ano selecionado inicialmente)
+      updateComparisonChart(data, null);
+
+      // Atualizar o gráfico quando o ano for selecionado
+      document.getElementById('year-select').addEventListener('change', function() {
+        const selectedYear = this.value;
+        updateComparisonChart(data, selectedYear);
+      });
+
+    }).catch(error => {
+      console.error("Erro ao carregar o CSV:", error);
+      const errorDiv = '<div class="error">⚠️ Não foi possível carregar os dados. Verifique se o arquivo CSV está no caminho correto.</div>';
+      document.getElementById('heatmap').innerHTML = errorDiv;
+      document.getElementById('line_ano').innerHTML = errorDiv;
+      document.getElementById('line_2025').innerHTML = errorDiv;
     });
   </script>
 </body>
