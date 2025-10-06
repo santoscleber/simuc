@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Painel de TV - Previsão do Tempo Pará</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(45deg, rgb(37,74,145), rgb(50,90,160), rgb(37,74,145), rgb(50,90,160));
+    background-size: 400% 400%;
+    animation: gradientShift 10s ease infinite;
+    height: 100vh;
+    overflow: hidden;
+    color: white;
+}
+@keyframes gradientShift {0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
+.container {
+    width: 100vw;
+    height: 100vh;
+    display: grid;
+    grid-template-areas: "header header header" "slideshow slideshow sidebar" "news news news";
+    grid-template-rows: 80px 1fr 120px;
+    grid-template-columns: 1fr 1fr 300px;
+    gap: 20px;
+    padding: 20px;
+}
+.header { grid-area: header; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); border-radius: 15px; padding: 0 30px; backdrop-filter: blur(10px); }
+.logo { font-size: 28px; font-weight: bold; color: #FFD700; text-shadow: 2px 2px 4px rgba(0,0,0,.5); }
+.clock { font-size: 32px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,.5); letter-spacing: 2px; }
+.slideshow-container { grid-area: slideshow; position: relative; background: rgba(0,0,0,0.2); border-radius: 15px; overflow: hidden; backdrop-filter: blur(5px); }
+.slide { position: absolute; width: 100%; height: 100%; object-fit: cover; border-radius: 15px; opacity: 0; transition: opacity 1s ease-in-out; }
+.slide.active { opacity: 1; }
+.sidebar { grid-area: sidebar; background: rgba(0,0,0,0.3); border-radius: 15px; padding: 20px; backdrop-filter: blur(10px); display:flex; flex-direction:column; justify-content:center; align-items:center; }
+.sidebar h2 { font-size: 24px; margin-bottom: 20px; color: #FFD700; text-align:center; }
+.weather-info { text-align:center; line-height:1.6; }
+.news-ticker { grid-area: news; background: rgba(0,0,0,0.4); border-radius: 15px; overflow: hidden; position: relative; backdrop-filter: blur(10px); }
+.ticker-content { position:absolute; white-space:nowrap; font-size:18px; line-height:120px; font-weight:bold; color:#FFD700; will-change: transform; }
+.weather-item { display:inline-block; margin-right:50px; padding:0 20px; }
+.city-name { color:#80C2DA; font-weight:bold; }
+.temp { color:#FFD700; }
+.condition { color:#3c9334; font-size:16px; }
+.pulse { animation: pulse 2s infinite; }
+@keyframes pulse { 0%{opacity:1;} 50%{opacity:.7;} 100%{opacity:1;} }
+.fade-in { animation: fadeIn 1s ease-in; }
+@keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+
+/* Rosa dos Ventos */
+.wind-rose-container {
+    margin: 15px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.wind-rose {
+    width: 120px;
+    height: 120px;
+    position: relative;
+    margin-bottom: 10px;
+}
+.wind-rose svg {
+    width: 100%;
+    height: 100%;
+}
+.wind-direction-text {
+    font-size: 12px;
+    color: #ADD8E6;
+    text-align: center;
+}
+
+@media (max-width:1200px){ .container { grid-template-columns: 1fr 1fr 250px; } }
+@media (max-width:768px){
+  .container { grid-template-areas: "header" "slideshow" "sidebar" "news"; grid-template-rows: 80px 300px 200px 120px; grid-template-columns: 1fr; }
+  .clock{font-size:24px;} .logo{font-size:20px;}
+  .wind-rose { width: 100px; height: 100px; }
+}
+</style>
+</head>
+<body>
+<div class="container fade-in">
+  <div class="header">
+    <!-- Logo à esquerda -->
+    <div class="logo">
+      <img src="LogoCensipam.png" alt="Logo Censipam" style="height:60px; vertical-align:middle;">
+    </div>
+
+    <!-- Texto centralizado -->
+    <div class="logo-text" style="flex:1; text-align:center; font-size:28px; font-weight:bold; color:#FFD700; text-shadow:2px 2px 4px rgba(0,0,0,.5);">
+      SALA DE MONITORAMENTO - COP30
+    </div>
+
+    <!-- Clock à direita -->
+    <div class="clock" id="clock"></div>
+</div>
+
+  <div class="slideshow-container">
+    <img class="slide active" src="1.jpg" alt="Paisagens do Pará">
+    <img class="slide" src="2.jpg" alt="Rio Araguaia - Pará">
+    <img class="slide" src="3.png" alt="Forte do Presépio - Belém">
+    <img class="slide" src="4.png" alt="Turismo na Amazônia">
+    <img class="slide" src="5.png" alt="Pontos Turísticos Amazonas">
+    <img class="slide" src="6.png" alt="Lugares Incríveis na Amazônia">
+    <img class="slide" src="9.png" alt="Belém a Santarém">
+    <img class="slide" src="10.png" alt="Turismo no Pará">
+  </div>
+
+  <div class="sidebar">
+    <h2>🌤️ Tempo Amanhã</h2>
+    <div class="weather-info">
+      <div style="font-size:20px; margin-bottom:10px;">
+        <span class="city-name" id="current-city">---</span>
+      </div>
+      <div style="font-size:36px; margin-bottom:10px;">
+        <span class="temp" id="current-temp">--°C</span>
+      </div>
+      <div class="condition" id="current-condition">---</div>
+      <div style="margin-top:15px; font-size:14px;" id="current-range"></div>
+      
+      <!-- Rosa dos Ventos -->
+      <div class="wind-rose-container">
+        <div class="wind-rose">
+          <svg viewBox="0 0 120 120" id="wind-rose-svg">
+            <circle cx="60" cy="60" r="55" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+            <circle cx="60" cy="60" r="40" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+            <circle cx="60" cy="60" r="25" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+            <line x1="60" y1="5" x2="60" y2="115" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+            <line x1="5" y1="60" x2="115" y2="60" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+            <line x1="17.5" y1="17.5" x2="102.5" y2="102.5" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+            <line x1="102.5" y1="17.5" x2="17.5" y2="102.5" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+            <text x="60" y="12" text-anchor="middle" fill="white" font-size="12" font-weight="bold">N</text>
+            <text x="108" y="65" text-anchor="middle" fill="white" font-size="12" font-weight="bold">E</text>
+            <text x="60" y="112" text-anchor="middle" fill="white" font-size="12" font-weight="bold">S</text>
+            <text x="12" y="65" text-anchor="middle" fill="white" font-size="12" font-weight="bold">O</text>
+            <g id="wind-arrow" transform="rotate(0 60 60)">
+              <line x1="60" y1="10" x2="60" y2="50" stroke="#FFD700" stroke-width="3"/>
+              <polygon points="60,55 65,40 55,40" fill="#FFD700" stroke="#FFA500" stroke-width="1"/>
+            </g>
+          </svg>
+        </div>
+        <div class="wind-direction-text" id="wind-direction-text">Direção: ---</div>
+      </div>
+      
+      <div style="margin-top:10px; font-size:12px; color:#ADD8E6;" id="current-wind"></div>
+    </div>
+  </div>
+
+  <div class="news-ticker">
+    <div class="ticker-content" id="ticker"></div>
+  </div>
+</div>
+
+<script>
+const tickerSpeed = 80;
+
+// Clock
+function updateClock(){
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('pt-BR');
+}
+setInterval(updateClock,1000);
+updateClock();
+
+// Slideshow
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+function showSlide(i){ slides.forEach((s,idx)=> s.classList.toggle('active', idx===i)); }
+function nextSlide(){ currentSlide = (currentSlide+1)%slides.length; showSlide(currentSlide); }
+setInterval(nextSlide,5000);
+
+// CSV parser simples
+function parseCSV(text){
+  const lines=text.split('\n').filter(l=>l.trim()!=='');
+  const headers=lines[0].split(',').map(h=>h.trim());
+  const data=lines.slice(1).map(l=>l.split(',').map(c=>c.trim()));
+  return {headers,data};
+}
+
+function normalizeDateDDMMYYYY(s){
+  if(!s) return '';
+  const parts=s.includes('/')? s.split('/') : s.split('-').reverse();
+  return `${parts[0].padStart(2,'0')}/${parts[1].padStart(2,'0')}/${parts[2]}`;
+}
+
+function getTomorrowBR_DDMMYYYY(){
+  const tz='America/Sao_Paulo';
+  const now=new Date();
+  const dtf=new Intl.DateTimeFormat('en-CA',{timeZone:tz});
+  const todayYMD=dtf.format(now);
+  const [y,m,d]=todayYMD.split('-').map(x=>parseInt(x,10));
+  const todayInTZ=new Date(Date.UTC(y,m-1,d));
+  const tomorrow=new Date(todayInTZ.getTime()+24*60*60*1000);
+  const parts=new Intl.DateTimeFormat('pt-BR',{timeZone:tz}).formatToParts(tomorrow);
+  const day=parts.find(p=>p.type==='day').value.padStart(2,'0');
+  const month=parts.find(p=>p.type==='month').value.padStart(2,'0');
+  const year=parts.find(p=>p.type==='year').value;
+  return `${day}/${month}/${year}`;
+}
+
+// Funções vento
+function getWindDirectionDegrees(direction){
+  if(!direction||direction==='---'||direction==='—') return 0;
+  const dir = direction.toUpperCase().trim();
+  const directions = {'N':0,'NORTE':0,'NNE':22.5,'NOR-NORDESTE':22.5,'NE':45,'NORDESTE':45,'ENE':67.5,'LES-NORDESTE':67.5,'E':90,'LESTE':90,'ESE':112.5,'LES-SUDESTE':112.5,'SE':135,'SUDESTE':135,'SSE':157.5,'SUL-SUDESTE':157.5,'S':180,'SUL':180,'SSW':202.5,'SSO':202.5,'SUL-SUDOESTE':202.5,'SW':225,'SO':225,'SUDOESTE':225,'WSW':247.5,'OSO':247.5,'OES-SUDOESTE':247.5,'W':270,'O':270,'OESTE':270,'WNW':292.5,'ONO':292.5,'OES-NOROESTE':292.5,'NW':315,'NO':315,'NOROESTE':315,'NNW':337.5,'NNO':337.5,'NOR-NOROESTE':337.5};
+  if(directions.hasOwnProperty(dir)) return directions[dir];
+  const numericValue = parseFloat(dir);
+  if(!isNaN(numericValue)) return numericValue % 360;
+  for(const [key,value] of Object.entries(directions)){ if(dir.includes(key)) return value; }
+  return 0;
+}
+function getWindDirectionName(degrees){
+  const dirs = [{name:'Norte',min:348.75,max:360},{name:'Norte',min:0,max:11.25},{name:'Nor-Nordeste',min:11.25,max:33.75},{name:'Nordeste',min:33.75,max:56.25},{name:'Les-Nordeste',min:56.25,max:78.75},{name:'Leste',min:78.75,max:101.25},{name:'Les-Sudeste',min:101.25,max:123.75},{name:'Sudeste',min:123.75,max:146.25},{name:'Sul-Sudeste',min:146.25,max:168.75},{name:'Sul',min:168.75,max:191.25},{name:'Sul-Sudoeste',min:191.25,max:213.75},{name:'Sudoeste',min:213.75,max:236.25},{name:'Oes-Sudoeste',min:236.25,max:258.75},{name:'Oeste',min:258.75,max:281.25},{name:'Oes-Noroeste',min:281.25,max:303.75},{name:'Noroeste',min:303.75,max:326.25},{name:'Nor-Noroeste',min:326.25,max:348.75}];
+  for(const d of dirs){ if(degrees>=d.min && degrees<d.max) return d.name; }
+  return 'Norte';
+}
+function updateWindRose(windDirection){
+  const deg = getWindDirectionDegrees(windDirection);
+  const dirName = getWindDirectionName(deg);
+  const windArrow = document.getElementById('wind-arrow');
+  if(windArrow) windArrow.setAttribute('transform', `rotate(${deg} 60 60)`);
+  const windDirectionText = document.getElementById('wind-direction-text');
+  if(windDirectionText) windDirectionText.textContent = `Direção: ${dirName}`;
+}
+
+// Carregar CSV e renderizar
+async function loadAndRender(){
+  let text;
+  try{
+    const res = await fetch('previsao.csv',{cache:"no-store"});
+    text = await res.text();
+  } catch(e){
+    document.getElementById('ticker').innerHTML="<span style='color:#f88'>Erro ao carregar CSV</span>";
+    return;
+  }
+
+  const {headers,data} = parseCSV(text);
+  const tomorrow = getTomorrowBR_DDMMYYYY();
+
+  const cityCol=headers.findIndex(h=>/cidade/i.test(h));
+  const condCol=headers.findIndex(h=>/condicao/i.test(h));
+  const tminCol=headers.findIndex(h=>/min/i.test(h));
+  const tmaxCol=headers.findIndex(h=>/max/i.test(h));
+  const windMinCol=headers.findIndex(h=>/vento.*min/i.test(h));
+  const windMaxCol=headers.findIndex(h=>/vento.*max/i.test(h));
+  const windDirCol=headers.findIndex(h=>/dire[cç][aã]o.*vento|vento.*dire[cç][aã]o/i.test(h));
+  const windIntCol=headers.findIndex(h=>/vento_intensidade/i.test(h));
+  const dateCol=headers.findIndex(h=>/data/i.test(h));
+
+  const forecastData=[];
+  for(const row of data){
+    if(!row[dateCol]) continue;
+    const rowDate=normalizeDateDDMMYYYY(row[dateCol]);
+    if(rowDate===tomorrow && row[cityCol].includes(' - PA')){
+      forecastData.push({
+        cidade: row[cityCol]||'',
+        condicao: row[condCol]||'',
+        min: row[tminCol]||'',
+        max: row[tmaxCol]||'',
+        ventoMin: row[windMinCol]||'',
+        ventoMax: row[windMaxCol]||'',
+        direcao: row[windDirCol]||'---',
+        ventoIntensidade: row[windIntCol]||'---'
+      });
+    }
+  }
+
+  const ticker=document.getElementById('ticker');
+  if(forecastData.length===0){
+    ticker.innerHTML="<span style='color:#f88'>Nenhuma previsão encontrada para amanhã</span>";
+    return;
+  }
+
+  ticker.innerHTML = forecastData.map(f=>{
+    return `<span class="weather-item"><span class="city-name">${f.cidade}</span>: 
+            <span class="temp">Máx ${f.max}°C / Mín ${f.min}°C</span> - 
+            <span class="condition">${f.condicao}</span></span>`;
+  }).join(" ");
+
+  let tickerWidth=ticker.offsetWidth;
+  let containerWidth=document.querySelector('.news-ticker').offsetWidth;
+  let start=null;
+  function step(ts){
+    if(!start) start=ts;
+    let progress=(ts-start)/1000;
+    let distance=progress*tickerSpeed;
+    let x=-distance% (tickerWidth+containerWidth);
+    ticker.style.transform=`translateX(${x+containerWidth}px)`;
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+
+  let idx=0;
+  function updateSidebar() {
+      const f = forecastData[idx];
+
+      // Atualiza o nome da cidade
+      document.getElementById('current-city').textContent = f.cidade;
+
+      // Calcula a temperatura média
+      const tempMax = parseFloat(f.max) || 0;
+      const tempMin = parseFloat(f.min) || 0;
+      const tempMedia = ((tempMax + tempMin) / 2).toFixed(1);
+      document.getElementById('current-temp').textContent = `${tempMedia}°C`;
+
+      // Atualiza condição e faixa de temperatura
+      document.getElementById('current-condition').textContent = f.condicao;
+      document.getElementById('current-range').textContent = `Máx: ${f.max}°C | Mín: ${f.min}°C`;
+
+      // Exibe intensidade do vento
+      document.getElementById('current-wind').textContent = `Vento: ${f.ventoIntensidade}`;
+
+      // Atualiza a rosa dos ventos
+      updateWindRose(f.direcao);
+
+      // Avança para a próxima cidade
+      idx = (idx + 1) % forecastData.length;
+  }
+  updateSidebar();
+  setInterval(updateSidebar,8000);
+}
+
+loadAndRender();
+</script>
+</body>
+</html>

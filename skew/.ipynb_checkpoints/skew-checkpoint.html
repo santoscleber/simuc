@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagrama Skew-T Log-P - Sondagem Atmosférica</title>
+    <!-- Incluindo D3.js v3 (compatível com skewt.js) -->
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        #skewt {
+            width: 800px;
+            height: 600px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            margin: 0 auto;
+        }
+        .info-panel {
+            margin-top: 200px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+        .error {
+            color: #d32f2f;
+            background-color: #ffebee;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            color: #2e7d32;
+            background-color: #e8f5e8;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        /* CSS fornecido pelo usuário */
+        .axis path,
+        .axis line {
+          fill: none;
+          stroke: #000;
+          stroke-width: 1px;
+          shape-rendering: crispEdges;
+        }
+        .x.axis path {  }
+        .y.axis path {  }
+        .axis { fill: #000; }
+        .y.axis { font-size: 13px; }
+        .y.axis.hght { font-size: 9px; fill: red;}
+        .x.axis { font-size: 13px; }
+        .y.axis.ticks text { display: none; }
+
+        .temp {
+          fill: none;
+          stroke: red;
+          stroke-width: 3px;
+        }
+        .dwpt {
+          fill: none;
+          stroke: green;
+          stroke-width: 3px;
+        }
+        .skline   { stroke-width: 1.8px; opacity: 0.8;}
+        .mean     { stroke-width: 2.5px; }
+
+        .gridline, .tempzero {
+           stroke: #dfdfdf;
+           stroke-width: 0.75px;
+           fill: none;
+        }
+        .tempzero { stroke: #aaa; stroke-width: 1.25px; }
+
+        .windbarb { stroke: #000; stroke-width: 0.75px; fill: none;}
+        .flag { fill: #000; }
+
+        .overlay {
+          fill: none;
+          pointer-events: all;
+        }
+
+        .focus.tmpc circle { fill: red;   stroke: none; }
+        .focus.dwpc circle { fill: green; stroke: none; }
+        .focus text { font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Diagrama Skew-T Log-P - Dados de Sondagem Atmosférica</h1>
+        
+        <div id="status" class="loading">Carregando dados de sondagem...</div>
+        
+        <!-- Contêiner para o diagrama -->
+        <div id="skewt"></div>
+        
+        <div class="info-panel">
+            <h3>Informações sobre os Dados</h3>
+            <p><strong>Arquivo:</strong> sondagem.csv</p>
+            <p><strong>Formato:</strong> Dados de sondagem atmosférica com pressão, altura, temperatura, ponto de orvalho, direção e velocidade do vento</p>
+            <p><strong>Níveis:</strong> <span id="data-levels">-</span></p>
+        </div>
+    </div>
+
+    <script>
+        // Código SkewT v1.1.0
+        var SkewT = function(div) {
+            var wrapper = d3.select(div);
+            var width = parseInt(wrapper.style('width'), 10);
+            var height = width; 
+            var margin = {top: 30, right: 40, bottom: 20, left: 35}; 
+            var deg2rad = (Math.PI/180);
+            var tan = Math.tan(55*deg2rad);
+            var basep = 1050;
+            var topp = 100;
+            var plines = [1000,850,700,500,300,200,100];
+            var pticks = [950,900,800,750,650,600,550,450,400,350,250,150];
+            var barbsize = 25;
+            var r = d3.scale.linear().range([0,300]).domain([0,150]);
+            var y2 = d3.scale.linear();
+            var bisectTemp = d3.bisector(function(d) { return d.press; }).left; 
+            var w, h, x, y, xAxis, yAxis, yAxis2;
+            var data = [];
+            var unit = "kt"; 
+
+            var svg = wrapper.append("svg").attr("id", "svg");	 
+            var container = svg.append("g").attr("id", "container"); 
+            var skewtbg = container.append("g").attr("id", "skewtbg").attr("class", "skewtbg");
+            var skewtgroup = container.append("g").attr("class", "skewt"); 
+            var barbgroup  = container.append("g").attr("class", "windbarb"); 	
+            
+            function setVariables() {
+                width = parseInt(wrapper.style('width'), 10) -10; 
+                height = width; 
+                w = width - margin.left - margin.right;
+                h = width - margin.top - margin.bottom;		
+                x = d3.scale.linear().range([0, w]).domain([-45,50]);
+                y = d3.scale.log().range([0, h]).domain([topp, basep]);
+                xAxis = d3.svg.axis().scale(x).tickSize(0,0).ticks(10).orient("bottom");
+                yAxis = d3.svg.axis().scale(y).tickSize(0,0).tickValues(plines).tickFormat(d3.format(".0d")).orient("left");
+                yAxis2 = d3.svg.axis().scale(y).tickSize(5,0).tickValues(pticks).orient("right");
+            }
+            
+            function convert(msvalue, unit)
+            {
+                switch(unit) {
+                    case "kt":
+                        return msvalue*1.943844492;
+                    break;
+                    case "kmh":
+                        return msvalue*3.6;
+                    break;
+                    default:
+                        return msvalue;
+                }		
+            }
+
+            d3.select(window).on('resize', resize);	
+
+            function resize() {
+                skewtbg.selectAll("*").remove(); 
+                setVariables();
+                svg.attr("width", w + margin.right + margin.left).attr("height", h + margin.top + margin.bottom);				
+                container.attr("transform", "translate(" + margin.left + "," + margin.top + ")");		
+                drawBackground();
+                makeBarbTemplates();
+                plot(data);
+            }
+            
+            var drawBackground = function() {
+                skewtbg.append("clipPath")
+                .attr("id", "clipper")
+                .append("rect")
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("width", w)
+                .attr("height", h);
+
+                skewtbg.selectAll("templine")
+                .data(d3.range(-100,45,10))
+                .enter().append("line")
+                .attr("x1", function(d) { return x(d)-0.5 + (y(basep)-y(100))/tan; })
+                .attr("x2", function(d) { return x(d)-0.5; })
+                .attr("y1", 0)
+                .attr("y2", h)
+                .attr("class", function(d) { if (d == 0) { return "tempzero"; } else { return "gridline"}})
+                .attr("clip-path", "url(#clipper)");
+                
+                skewtbg.selectAll("pressureline")
+                .data(plines)
+                .enter().append("line")
+                .attr("x1", 0)
+                .attr("x2", w)
+                .attr("y1", function(d) { return y(d); })
+                .attr("y2", function(d) { return y(d); })
+                .attr("class", "gridline");
+
+                var pp = d3.range(topp,basep+1,10);
+                var dryad = d3.range(-30,240,20);
+                var all = [];
+                for (var i=0; i<dryad.length; i++) { 
+                    var z = [];
+                    for (var j=0; j<pp.length; j++) { z.push(dryad[i]); }
+                        all.push(z);
+                }
+
+                var dryline = d3.svg.line()
+                    .interpolate("linear")
+                    .x(function(d,i) { return x( ( 273.15 + d ) / Math.pow( (1000/pp[i]), 0.286) -273.15) + (y(basep)-y(pp[i]))/tan;})
+                    .y(function(d,i) { return y(pp[i])} );		
+                
+                skewtbg.selectAll("dryadiabatline")
+                .data(all)
+                .enter().append("path")
+                .attr("class", "gridline")
+                .attr("clip-path", "url(#clipper)")
+                .attr("d", dryline);
+
+                skewtbg.append("line")
+                .attr("x1", w-0.5)
+                .attr("x2", w-0.5)
+                .attr("y1", 0)
+                .attr("y2", h)
+                .attr("class", "gridline");
+
+                skewtbg.append("g").attr("class", "x axis").attr("transform", "translate(0," + (h-0.5) + ")").call(xAxis);
+                skewtbg.append("g").attr("class", "y axis").attr("transform", "translate(-0.5,0)").call(yAxis);
+                skewtbg.append("g").attr("class", "y axis ticks").attr("transform", "translate(-0.5,0)").call(yAxis2);		
+            }
+            
+            var makeBarbTemplates = function(){
+                var speeds = d3.range(5,105,5);
+                var barbdef = container.append('defs')
+                speeds.forEach(function(d) {
+                    var thisbarb = barbdef.append('g').attr('id', 'barb'+d);
+                    var flags = Math.floor(d/50);
+                    var pennants = Math.floor((d - flags*50)/10);
+                    var halfpennants = Math.floor((d - flags*50 - pennants*10)/5);
+                    var px = barbsize;
+                    thisbarb.append("line").attr("x1", 0).attr("x2", 0).attr("y1", 0).attr("y2", barbsize);
+                    for (var i=0; i<flags; i++) {
+                        thisbarb.append("polyline")
+                            .attr("points", "0,"+px+" -10,"+(px)+" 0,"+(px-4))
+                            .attr("class", "flag");
+                        px -= 7;
+                    }
+                    for (i=0; i<pennants; i++) {
+                        thisbarb.append("line")
+                            .attr("x1", 0)
+                            .attr("x2", -10)
+                            .attr("y1", px)
+                            .attr("y2", px+4)
+                        px -= 3;
+                    }
+                    for (i=0; i<halfpennants; i++) {
+                        thisbarb.append("line")
+                            .attr("x1", 0)
+                            .attr("x2", -5)
+                            .attr("y1", px)
+                            .attr("y2", px+2)
+                        px -= 3;
+                    }
+                });		
+            }
+            
+            var drawToolTips = function(skewtlines) {
+                var lines = skewtlines.reverse();
+                var tmpcfocus = skewtgroup.append("g").attr("class", "focus tmpc").style("display", "none");
+                tmpcfocus.append("circle").attr("r", 4);
+                tmpcfocus.append("text").attr("x", 9).attr("dy", ".35em");
+                
+                var dwpcfocus = skewtgroup.append("g").attr("class", "focus dwpc").style("display", "none");
+                dwpcfocus.append("circle").attr("r", 4);
+                dwpcfocus.append("text").attr("x", -9).attr("text-anchor", "end").attr("dy", ".35em");
+
+                var hghtfocus = skewtgroup.append("g").attr("class", "focus").style("display", "none");
+                hghtfocus.append("text").attr("x", 0).attr("text-anchor", "start").attr("dy", ".35em");
+
+                var wspdfocus = skewtgroup.append("g").attr("class", "focus windspeed").style("display", "none");
+                wspdfocus.append("text").attr("x", 0).attr("text-anchor", "start").attr("dy", ".35em");	  
+            
+                container.append("rect")
+                    .attr("class", "overlay")
+                    .attr("width", w)
+                    .attr("height", h)
+                    .on("mouseover", function() { tmpcfocus.style("display", null); dwpcfocus.style("display", null); hghtfocus.style("display", null); wspdfocus.style("display", null);})
+                    .on("mouseout", function() { tmpcfocus.style("display", "none"); dwpcfocus.style("display", "none"); hghtfocus.style("display", "none"); wspdfocus.style("display", "none");})
+                    .on("mousemove", function () {		  
+                        var y0 = y.invert(d3.mouse(this)[1]); 
+                        var i = bisectTemp(lines, y0, 1, lines.length-1);
+                        var d0 = lines[i - 1];
+                        var d1 = lines[i];
+                        var d = y0 - d0.press > d1.press - y0 ? d1 : d0;
+                        tmpcfocus.attr("transform", "translate(" + (x(d.temp) + (y(basep)-y(d.press))/tan)+ "," + y(d.press) + ")");
+                        dwpcfocus.attr("transform", "translate(" + (x(d.dwpt) + (y(basep)-y(d.press))/tan)+ "," + y(d.press) + ")");
+                        hghtfocus.attr("transform", "translate(0," + y(d.press) + ")");
+                        tmpcfocus.select("text").text(Math.round(d.temp)+"°C");
+                        dwpcfocus.select("text").text(Math.round(d.dwpt)+"°C");
+                        hghtfocus.select("text").text("-- "+Math.round(d.hght)+" m"); 
+                        wspdfocus.attr("transform", "translate(" + (w-65)  + "," + y(d.press) + ")");
+                        wspdfocus.select("text").text(Math.round(convert(d.wspd, unit)*10)/10 + " " + unit);
+                    });
+            }
+            
+            var plot = function(s){		
+                data = s;
+                skewtgroup.selectAll("path").remove(); 
+                barbgroup.selectAll("use").remove(); 
+                
+                if(data.length==0) return;
+
+                var skewtline = data.filter(function(d) { return (d.temp > -1000 && d.dwpt > -1000); });
+                var skewtlines = [];
+                skewtlines.push(skewtline);
+                
+                var templine = d3.svg.line().interpolate("linear").x(function(d,i) { return x(d.temp) + (y(basep)-y(d.press))/tan; }).y(function(d,i) { return y(d.press); });
+                var tempLines = skewtgroup.selectAll("templines")
+                    .data(skewtlines).enter().append("path")
+                    .attr("class", function(d,i) { return (i<10) ? "temp skline" : "temp mean" })
+                    .attr("clip-path", "url(#clipper)")
+                    .attr("d", templine);
+
+                var tempdewline = d3.svg.line().interpolate("linear").x(function(d,i) { return x(d.dwpt) + (y(basep)-y(d.press))/tan; }).y(function(d,i) { return y(d.press); });
+                var tempDewlines = skewtgroup.selectAll("tempdewlines")
+                    .data(skewtlines).enter().append("path")
+                    .attr("class", function(d,i) { return (i<10) ? "dwpt skline" : "dwpt mean" })
+                    .attr("clip-path", "url(#clipper)")
+                    .attr("d", tempdewline);
+
+                var barbs = skewtline.filter(function(d) { return (d.wdir >= 0 && d.wspd >= 0 && d.press >= topp); });
+                var allbarbs = barbgroup.selectAll("barbs")
+                    .data(barbs).enter().append("use")
+                    .attr("xlink:href", function (d) { return "#barb"+Math.round(convert(d.wspd, "kt")/5)*5; }) 
+                    .attr("transform", function(d,i) { return "translate("+w+","+y(d.press)+") rotate("+(d.wdir+180)+")"; });			
+
+                drawToolTips(skewtlines[0]);
+            }
+
+            var clear = function(s){
+                skewtgroup.selectAll("path").remove(); 
+                barbgroup.selectAll("use").remove(); 
+                container.append("rect")
+                    .attr("class", "overlay")
+                    .attr("width", w)
+                    .attr("height", h)
+                    .on("mouseover", function(){ return false;})
+                    .on("mouseout", function() { return false;})
+                    .on("mousemove",function() { return false;});
+            }
+            
+            this.drawBackground = drawBackground;
+            this.plot = plot;
+            this.clear = clear;
+            
+            setVariables();
+            resize();
+        };
+
+        // Função para converter dados CSV para o formato esperado pelo SkewT
+        function parseCSVData(csvText) {
+            const lines = csvText.trim().split('\n');
+            const headers = lines[0].split(',');
+            const data = [];
+            
+            const pressIndex = headers.findIndex(h => h.trim() === 'PRES');
+            const heightIndex = headers.findIndex(h => h.trim() === 'HGHT');
+            const tempIndex = headers.findIndex(h => h.trim() === 'TEMP');
+            const dewptIndex = headers.findIndex(h => h.trim() === 'DWPT');
+            const wdirIndex = headers.findIndex(h => h.trim() === 'DRCT');
+            const wspdIndex = headers.findIndex(h => h.trim() === 'SKNT');
+            
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',');
+                
+                if (values.length < headers.length) continue;
+                
+                const press = parseFloat(values[pressIndex]);
+                const height = parseFloat(values[heightIndex]);
+                const temp = parseFloat(values[tempIndex]);
+                const dewpt = parseFloat(values[dewptIndex]);
+                const wdir = parseFloat(values[wdirIndex]);
+                const wspd = parseFloat(values[wspdIndex]);
+                
+                if (!isNaN(press) && !isNaN(temp) && !isNaN(dewpt)) {
+                    data.push({
+                        press: press,
+                        hght: height || 0,
+                        temp: temp,
+                        dwpt: dewpt,
+                        wdir: wdir || 0,
+                        wspd: wspd || 0
+                    });
+                }
+            }
+            
+            return data;
+        }
+        
+        // Função para carregar e processar o arquivo CSV
+        function loadSoundingData() {
+            const csvData = `﻿,PRES,HGHT,TEMP,DWPT,FRPT,RELH,RELI,MIXR,DRCT,SKNT,THTA,THTE,THTV
+,1011.0,16,27.8,22.8,22.8,74,74,17.63,170,2,300.0,351.9,303.2
+,1000.0,119,27.0,22.0,22.0,74,74,16.96,170,2,300.1,350.1,303.2
+,979.1,305,25.7,21.4,21.4,77,77,16.69,60,22,300.7,349.9,303.7
+,945.8,610,23.6,20.4,20.4,83,83,16.26,70,25,301.5,349.6,304.4
+,925.0,806,22.2,19.8,19.8,86,86,15.98,75,23,302.0,349.4,304.9
+,913.5,914,21.5,19.5,19.5,88,88,15.84,75,22,302.4,349.4,305.2
+,881.9,1219,19.6,18.5,18.5,93,93,15.45,85,11,303.5,349.5,306.3
+,851.4,1524,17.7,17.5,17.5,99,99,15.05,130,12,304.5,349.6,307.3
+,850.0,1538,17.6,17.5,17.5,99,99,15.04,130,12,304.6,349.6,307.3
+,846.0,1578,17.2,17.0,17.0,99,99,14.63,130,12,304.6,348.4,307.2
+,792.5,2134,15.4,11.1,11.1,76,76,10.59,130,15,308.3,340.7,310.3
+,764.6,2438,14.3,7.9,7.9,65,65,8.81,110,16,310.4,337.7,312.1
+,734.0,2786,13.2,4.2,4.2,54,54,7.09,101,22,312.8,335.2,314.1
+,700.0,3183,10.4,3.4,3.4,62,62,7.03,90,28,314.0,336.3,315.3
+,687.0,3339,9.6,-1.4,-1.2,46,46,5.05,90,28,314.8,331.1,315.7
+,685.8,3353,9.5,-1.4,-1.2,47,47,5.06,90,28,314.8,331.1,315.7
+,660.9,3658,6.8,-1.6,-1.4,55,55,5.17,70,23,315.1,331.8,316.1
+,638.0,3947,4.2,-1.8,-1.6,65,65,5.28,84,22,315.4,332.4,316.4
+,625.0,4115,3.4,-5.6,-5.0,52,52,4.05,92,22,316.3,329.6,317.1
+,621.0,4167,2.8,-0.6,-0.5,78,78,5.93,95,21,316.2,335.3,317.3
+,613.4,4267,2.5,-4.7,-4.2,59,59,4.42,100,21,317.0,331.4,317.8
+,600.0,4445,2.0,-12.0,-10.7,35,35,2.55,91,22,318.4,327.0,318.9
+,596.0,4499,1.6,-4.4,-3.9,64,64,4.66,89,22,318.5,333.8,319.4
+,591.0,4567,2.4,-18.6,-16.6,20,20,1.50,85,22,320.2,325.5,320.5
+,582.0,4691,2.6,-29.4,-26.6,7,7,0.58,79,22,321.9,324.0,322.0
+,568.6,4877,1.4,-25.5,-23.0,11,11,0.85,70,23,322.6,325.8,322.8
+,541.0,5277,-1.1,-17.1,-15.3,29,29,1.86,93,18,324.2,330.8,324.6
+,526.9,5486,-2.5,-22.9,-20.6,19,20,1.16,105,15,325.0,329.2,325.2
+,506.9,5791,-4.6,-31.3,-28.3,10,11,0.56,70,17,326.1,328.2,326.2
+,500.0,5900,-5.3,-34.3,-31.1,8,9,0.42,70,18,326.5,328.1,326.6
+,487.6,6096,-6.7,-35.7,-32.5,8,8,0.38,70,17,327.1,328.6,327.2
+,474.0,6317,-8.3,-37.3,-34.0,8,8,0.33,70,19,327.8,329.1,327.9
+,450.7,6706,-10.6,-31.8,-28.9,16,17,0.59,70,22,329.6,331.9,329.8
+,433.3,7010,-12.5,-27.6,-24.9,27,31,0.92,85,10,331.0,334.5,331.2
+,433.0,7015,-12.5,-27.5,-24.8,27,31,0.93,85,10,331.1,334.6,331.3
+,419.0,7267,-12.9,-36.9,-33.6,11,13,0.39,72,22,333.7,335.2,333.8
+,416.4,7315,-13.2,-31.9,-28.9,19,22,0.64,70,24,333.9,336.4,334.1
+,413.0,7377,-13.5,-25.5,-23.0,36,41,1.17,67,21,334.3,338.7,334.5
+,406.0,7507,-13.9,-35.9,-32.6,14,16,0.44,61,16,335.4,337.2,335.5
+,400.0,7620,-14.9,-38.9,-35.5,11,13,0.33,55,11,335.5,336.9,335.6
+,383.9,7925,-17.5,-41.1,-37.6,11,13,0.27,45,12,336.1,337.2,336.2
+,368.4,8230,-20.1,-43.4,-39.7,11,13,0.22,50,17,336.7,337.6,336.7
+,352.0,8568,-22.9,-45.9,-42.1,10,13,0.18,50,16,337.2,338.0,337.3
+,339.1,8839,-24.0,-49.4,-45.5,8,10,0.12,50,16,339.3,339.9,339.3
+,336.0,8907,-24.3,-50.3,-46.4,7,9,0.11,46,17,339.8,340.3,339.9
+,325.2,9144,-25.6,-47.5,-43.6,11,14,0.16,30,21,341.2,341.9,341.2
+,323.0,9192,-25.9,-46.9,-43.1,12,16,0.17,30,20,341.5,342.2,341.5
+,311.6,9449,-28.1,-46.3,-42.5,16,21,0.19,30,15,341.9,342.7,341.9
+,303.0,9649,-29.9,-45.9,-42.1,20,26,0.21,56,10,342.1,343.0,342.2
+,300.0,9720,-30.5,-44.5,-40.8,24,33,0.24,65,8,342.3,343.3,342.3
+,298.6,9754,-30.8,-44.2,-40.5,26,35,0.25,60,10,342.3,343.4,342.4
+,277.0,10283,-35.5,-39.0,-35.6,70,99,0.47,345,7,342.9,344.9,343.1
+,251.0,10963,-40.9,-43.2,-39.5,78,117,0.34,247,2,344.7,346.1,344.8
+,250.6,10973,-40.9,-43.5,-39.8,76,114,0.33,245,2,344.9,346.2,344.9
+,250.0,10990,-40.9,-43.9,-40.2,73,108,0.31,255,7,345.1,346.4,345.2
+,239.4,11278,-43.4,-46.8,-43.0,69,106,0.24,250,10,345.6,346.6,345.7
+,200.0,12470,-53.9,-58.6,-54.4,56,94,0.07,215,13,347.2,347.6,347.3
+,197.0,12567,-54.7,-59.3,-55.1,57,95,0.07,215,13,347.5,347.8,347.5
+,189.8,12802,-56.2,-64.4,-60.1,35,59,0.04,215,13,348.9,349.0,348.9
+,177.0,13243,-58.9,-73.9,-69.6,13,22,0.01,229,19,351.4,351.4,351.4
+,172.2,13411,-60.2,-73.9,-69.6,15,26,0.01,235,21,352.0,352.0,352.0
+,150.0,14260,-66.9,-73.9,-69.6,37,67,0.01,215,31,354.6,354.7,354.6
+,148.3,14326,-67.5,-74.2,-69.9,38,70,0.01,215,31,354.8,354.9,354.8
+,133.0,14975,-72.9,-76.9,-72.6,55,104,0.01,222,31,356.4,356.4,356.4
+,131.0,15063,-73.5,-78.3,-74.0,48,92,0.01,223,31,356.8,356.9,356.8
+,127.1,15240,-74.2,-80.7,-76.5,36,69,0.00,225,31,358.8,358.8,358.8
+,124.0,15383,-74.7,-82.7,-78.5,28,54,0.00,228,30,360.3,360.3,360.3
+,114.3,15850,-76.0,-84.0,-79.8,28,53,0.00,240,25,366.4,366.4,366.4
+,108.4,16154,-76.8,-84.8,-80.7,27,53,0.00,230,14,370.4,370.4,370.4
+,101.0,16563,-77.9,-85.9,-81.8,27,52,0.00,309,18,375.9,375.9,375.9
+,100.0,16620,-77.9,-85.9,-81.8,27,52,0.00,320,18,377.0,377.0,377.0
+,97.5,16764,-78.6,-86.2,-82.1,28,55,0.00,320,18,378.4,378.4,378.4
+,92.4,17069,-80.0,-86.8,-82.7,32,63,0.00,345,22,381.4,381.4,381.4
+,88.0,17345,-81.3,-87.3,-83.3,36,71,0.00,25,20,384.2,384.2,384.2
+,87.5,17374,-81.3,-87.3,-83.3,36,71,0.00,5,17,384.7,384.8,384.7
+,87.2,17397,-81.3,-87.3,-83.3,36,71,0.00,7,17,385.2,385.2,385.2
+,84.9,17547,-80.5,-87.5,-83.5,31,60,0.00,17,15,389.8,389.8,389.8
+,83.5,17643,-75.7,-85.7,-81.6,20,38,0.00,23,14,401.4,401.4,401.4
+,79.1,17960,-70.7,-86.7,-82.6,8,15,0.00,44,11,417.9,418.0,417.9
+,78.8,17983,-70.8,-86.8,-82.7,8,15,0.00,45,11,418.2,418.2,418.2
+,74.8,18288,-72.2,-87.6,-83.6,8,16,0.00,130,10,421.6,421.6,421.6
+,71.1,18588,-73.5,-88.5,-84.5,9,17,0.00,273,10,424.9,424.9,424.9
+,71.0,18593,-73.4,-88.5,-84.5,9,16,0.00,275,10,425.2,425.2,425.2
+,70.0,18680,-72.1,-88.1,-84.1,8,14,0.00,210,16,429.8,429.8,429.8
+,67.5,18898,-70.7,-88.7,-84.7,6,10,0.00,210,16,437.3,437.3,437.3
+,67.4,18903,-70.7,-88.7,-84.7,6,10,0.00,210,16,437.5,437.5,437.5
+,64.1,19202,-71.6,-89.3,-85.3,6,11,0.00,230,23,441.8,441.9,441.8
+,58.6,19726,-73.3,-90.3,-86.4,6,12,0.00,230,28,449.5,449.5,449.5
+,57.8,19812,-73.0,-90.4,-86.5,6,11,0.00,230,29,452.1,452.1,452.1
+,54.8,20117,-72.0,-90.6,-86.7,5,9,0.00,215,21,461.2,461.2,461.2
+,50.0,20660,-70.1,-91.1,-87.2,3,6,0.00,100,18,477.9,477.9,477.9
+,47.0,21031,-69.5,-91.2,-87.3,3,6,0.00,100,18,488.0,488.0,488.0
+,44.6,21336,-68.9,-91.2,-87.3,3,5,0.00,70,33,496.5,496.5,496.5
+,42.4,21641,-68.4,-91.3,-87.4,2,5,0.00,90,33,505.1,505.1,505.1
+,42.1,21687,-68.3,-91.3,-87.4,2,5,0.00,89,33,506.4,506.4,506.4
+,40.6,21904,-69.1,-91.1,-87.2,3,5,0.00,84,36,509.7,509.7,509.7
+,36.5,22555,-64.0,-90.7,-86.8,2,3,0.00,70,42,538.6,538.6,538.6
+,36.2,22599,-63.7,-90.7,-86.8,1,3,0.00,72,42,540.6,540.6,540.6
+,31.4,23470,-61.3,-89.0,-85.1,1,3,0.00,105,47,569.3,569.3,569.3
+,30.0,23760,-60.5,-88.5,-84.5,1,3,0.01,90,55,579.1,579.2,579.1
+,25.9,24689,-60.1,-88.8,-84.8,1,2,0.01,70,58,605.6,605.6,605.6
+,24.4,25048,-59.9,-88.9,-84.9,1,2,0.01,80,67,616.1,616.1,616.1
+,23.5,25298,-58.4,-88.3,-84.3,1,2,0.01,80,67,627.3,627.4,627.3
+,20.2,26246,-52.9,-85.9,-81.8,1,1,0.01,94,52,671.6,671.7,671.6
+,20.0,26310,-52.7,-85.7,-81.6,1,1,0.01,95,51,674.1,674.2,674.1
+,19.4,26518,-52.3,-85.4,-81.3,1,1,0.01,100,50,681.6,681.8,681.6
+,17.6,27127,-51.0,-84.7,-80.6,1,1,0.02,90,50,704.0,704.2,704.0
+,16.4,27598,-50.1,-84.1,-80.0,1,1,0.02,90,63,721.9,722.1,721.9
+,16.1,27737,-49.4,-83.8,-79.7,1,1,0.02,90,67,728.5,728.7,728.5
+,14.0,28643,-44.9,-81.9,-77.7,1,1,0.04,90,67,772.8,773.2,772.9`;
+            
+            try {
+                const soundingData = parseCSVData(csvData);
+                
+                if (soundingData.length === 0) {
+                    throw new Error('Nenhum dado válido encontrado no arquivo CSV');
+                }
+                
+                document.getElementById('data-levels').textContent = soundingData.length + ' níveis';
+                document.getElementById('status').innerHTML = '<div class="success">Dados carregados com sucesso! Gerando diagrama...</div>';
+                
+                const skewt = new SkewT('#skewt');
+                skewt.plot(soundingData);
+                
+                setTimeout(() => {
+                    document.getElementById('status').innerHTML = '<div class="success">Diagrama Skew-T Log-P gerado com sucesso!</div>';
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Erro ao processar dados:', error);
+                document.getElementById('status').innerHTML = '<div class="error">Erro ao carregar dados: ' + error.message + '</div>';
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(loadSoundingData, 500);
+        });
+    </script>
+</body>
+</html>
+

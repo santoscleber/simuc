@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagrama Skew-T Log-P - Sondagem Atmosférica</title>
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        #skewt {
+            width: 800px;
+            height: 600px;
+            background-color: #fff;
+            margin: 0 auto;
+        }
+        .info-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .thermo-panel {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #e3f2fd;
+            border-radius: 5px;
+            border: 2px solid #2196F3;
+        }
+        .thermo-panel h3 {
+            margin-top: 0;
+            color: #1976D2;
+        }
+        .thermo-value {
+            display: inline-block;
+            margin: 5px 15px 5px 0;
+            font-weight: bold;
+        }
+        .cape-value { color: #d32f2f; }
+        .cin-value { color: #1976d2; }
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+        .error {
+            color: #d32f2f;
+            background-color: #ffebee;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            color: #2e7d32;
+            background-color: #e8f5e8;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .axis path, .axis line {
+            fill: none;
+            stroke: #000;
+            stroke-width: 1px;
+            shape-rendering: crispEdges;
+        }
+        .y.axis path {
+            stroke: black;
+            stroke-width: 1.5px;
+            fill: none;
+        }
+        .gridline {
+            stroke: black;
+            stroke-width: 1.5px;
+            fill: none;
+        }
+        .axis { fill: #000; }
+        .y.axis { font-size: 13px; }
+        .y.axis.hght { font-size: 9px; fill: red;}
+        .x.axis { font-size: 13px; }
+        .y.axis.ticks text { display: none; }
+        .temp {
+            fill: none;
+            stroke: red;
+            stroke-width: 3px;
+        }
+        .dwpt {
+            fill: none;
+            stroke: blue;
+            stroke-width: 3px;
+        }
+        .parcel-path {
+            fill: none;
+            stroke: black;
+            stroke-width: 2px;
+            stroke-dasharray: 5,5;
+        }
+        .cape-area {
+            fill: rgba(255, 0, 0, 0.3);
+            stroke: none;
+        }
+        .cin-area {
+            fill: rgba(0, 0, 255, 0.3);
+            stroke: none;
+        }
+        .skline { stroke-width: 1.8px; opacity: 0.8;}
+        .mean { stroke-width: 2.5px; }
+        .dry-adiabat-line {
+            stroke: rgb(200, 200, 20);
+            stroke-width: 0.75px;
+            fill: none;
+        }
+        .mixing-ratio-line {
+            stroke: #228B22;
+            stroke-width: 0.75px;
+            stroke-dasharray: 5,5;
+            fill: none;
+        }
+        .temp-zero-line {
+            stroke: black;
+            stroke-width: 1.25px;
+        }
+        .isotherm-line {
+            stroke: black;
+            stroke-width: 0.75px;
+            fill: none;
+        }
+        .pressure-line {
+            stroke: rgb(211, 211, 211);
+            stroke-width: 0.75px;
+            fill: none;
+        }
+        .windbarb { stroke: #000; stroke-width: 0.75px; fill: none;}
+        .flag { fill: #000; }
+        .overlay {
+            fill: none;
+            pointer-events: all;
+        }
+        .focus.tmpc circle { fill: red; stroke: none; }
+        .focus.dwpc circle { fill: green; stroke: none; }
+        .focus text { font-size: 12px; }
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .controls button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .controls button:hover {
+            background-color: #0056b3;
+        }
+        .controls button.active {
+            background-color: #28a745;
+        }
+        .moist-adiabat-line {
+            stroke: #ff7f50;
+            stroke-width: 0.85px;
+            fill: none;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Diagrama Skew-T Log-P - Dados de Sondagem Atmosférica</h1>
+        
+        <div id="status" class="loading">Carregando dados de sondagem...</div>
+        
+        <div class="controls">
+            <button id="toggle-isotherms" class="active">Isotermas</button>
+            <button id="toggle-dry-adiabats" class="active">Adiabáticas Secas</button>
+            <button id="toggle-moist-adiabats" class="active">Adiabáticas Úmidas</button>
+            <button id="toggle-mixing-ratio" class="active">Razão de Mistura</button>
+            <button id="toggle-isobars" class="active">Isobaras</button>
+            <button id="toggle-parcel" class="active">Trajetória da Parcela</button>
+        </div>
+
+        <div id="skewt"></div>
+        
+        <div class="thermo-panel" id="thermo-results" style="display:none;">
+            <h3>Índices Termodinâmicos</h3>
+            <div>
+                <span class="thermo-value cape-value">sbCAPE: <span id="sbcape-value">-</span> J/kg</span>
+                <span class="thermo-value cin-value">sbCIN: <span id="sbcin-value">-</span> J/kg</span>
+            </div>
+            <div style="margin-top: 10px;">
+                <span class="thermo-value">LCL: <span id="lcl-value">-</span> hPa</span>
+                <span class="thermo-value">LFC: <span id="lfc-value">-</span> hPa</span>
+                <span class="thermo-value">EL: <span id="el-value">-</span> hPa</span>
+            </div>
+        </div>
+        
+        <div class="info-panel">
+            <h3>Informações sobre os Dados</h3>
+            <p><strong>Arquivo:</strong> sondagem.csv</p>
+            <p><strong>Formato:</strong> Dados de sondagem atmosférica com pressão, altura, temperatura, ponto de orvalho, direção e velocidade do vento</p>
+            <p><strong>Níveis:</strong> <span id="data-levels">-</span></p>
+        </div>
+    </div>
+
+    <script>
+        var SkewT = function(div) {
+            var wrapper = d3.select(div);
+            var width = parseInt(wrapper.style('width'), 10);
+            var height = width; 
+            var margin = {top: 30, right: 40, bottom: 20, left: 35}; 
+            var deg2rad = (Math.PI/180);
+            var tan = Math.tan(55*deg2rad);
+            var basep = 1050;
+            var topp = 100;
+            var plines = [1000,850,700,500,300,200,100];
+            var pticks = [950,900,800,750,650,600,550,450,400,350,250,150];
+            var barbsize = 25;
+            var w, h, x, y, xAxis, yAxis, yAxis2;
+            var data = [];
+            var unit = "kt"; 
+            var bisectTemp = d3.bisector(function(d) { return d.press; }).left;
+
+            var svg = wrapper.append("svg").attr("id", "svg");	 
+            var container = svg.append("g").attr("id", "container"); 
+            var skewtbg = container.append("g").attr("id", "skewtbg").attr("class", "skewtbg");
+            var skewtgroup = container.append("g").attr("class", "skewt"); 
+            var barbgroup = container.append("g").attr("class", "windbarb");
+
+            // Constantes termodinâmicas
+            var Rd = 287.05;
+            var Rv = 461.5;
+            var cp = 1004.0;
+            var Lv = 2.5e6;
+            var g = 9.81;
+            
+            function setVariables() {
+                width = parseInt(wrapper.style('width'), 10) -10; 
+                height = width; 
+                w = width - margin.left - margin.right;
+                h = width - margin.top - margin.bottom;		
+                x = d3.scale.linear().range([0, w]).domain([-45,50]);
+                y = d3.scale.log().range([0, h]).domain([topp, basep]);
+                xAxis = d3.svg.axis().scale(x).tickSize(0,0).ticks(10).orient("bottom");
+                yAxis = d3.svg.axis().scale(y).tickSize(6,0).tickValues(plines).tickFormat(d3.format(".0d")).orient("left");
+                yAxis2 = d3.svg.axis().scale(y).tickSize(5,0).tickValues(pticks).orient("right");
+            }
+            
+            function convert(msvalue, unit) {
+                switch(unit) {
+                    case "kt":
+                        return msvalue*1.943844492;
+                    case "kmh":
+                        return msvalue*3.6;
+                    default:
+                        return msvalue;
+                }		
+            }
+
+            d3.select(window).on('resize', resize);	
+
+            function resize() {
+                skewtbg.selectAll("*").remove(); 
+                setVariables();
+                svg.attr("width", w + margin.right + margin.left).attr("height", h + margin.top + margin.bottom);				
+                container.attr("transform", "translate(" + margin.left + "," + margin.top + ")");		
+                drawBackground();
+                makeBarbTemplates();
+                plot(data);
+            }
+            
+            // Funções termodinâmicas
+            function es_pa_from_T(Tk) {
+                var Tc = Tk - 273.15;
+                var es_hPa = 6.112 * Math.exp((17.67 * Tc) / (Tc + 243.5));
+                return es_hPa * 100.0;
+            }
+            
+            function qs_from_p_T(p_pa, Tk) {
+                var e_s = es_pa_from_T(Tk);
+                return 0.622 * e_s / Math.max(1.0, (p_pa - e_s));
+            }
+
+            function dTdp_moist(p_pa, Tk) {
+                var q_s = qs_from_p_T(p_pa, Tk);
+                var num = (Rd * Tk / p_pa) * (1.0 + (Lv * q_s) / (Rd * Tk));
+                var den = cp + (Lv * Lv * q_s) / (Rv * Tk * Tk);
+                return num / den;
+            }
+
+            function integrateMoistAdiabatRK4(T0_K, p0_pa, pArray_pa_desc) {
+                var T = T0_K;
+                var temps = [];
+                var p_prev = p0_pa;
+                temps.push(T);
+                for (var i = 1; i < pArray_pa_desc.length; i++) {
+                    var p = pArray_pa_desc[i];
+                    var dp = p - p_prev;
+                    var k1 = dTdp_moist(p_prev, T);
+                    var k2 = dTdp_moist(p_prev + dp/2.0, T + k1*dp/2.0);
+                    var k3 = dTdp_moist(p_prev + dp/2.0, T + k2*dp/2.0);
+                    var k4 = dTdp_moist(p_prev + dp, T + k3*dp);
+                    T = T + (dp/6.0)*(k1 + 2*k2 + 2*k3 + k4);
+                    temps.push(T);
+                    p_prev = p;
+                }
+                return temps;
+            }
+
+            function computeMoistAdiabatArray(startTempC, pp_hPa) {
+                var pBase_hPa = basep >= 1000 ? 1000 : basep;
+                var p0_pa = pBase_hPa * 100.0;
+                var pDesc = [];
+                for (var p = pBase_hPa; p >= topp; p -= 1) pDesc.push(p*100.0);
+                var T0_K = startTempC + 273.15;
+                var tempsKDesc = integrateMoistAdiabatRK4(T0_K, p0_pa, pDesc);
+                var tempMap = {};
+                for (var i = 0; i < pDesc.length; i++) {
+                    var p_hPa_key = Math.round(pDesc[i]/100);
+                    tempMap[p_hPa_key] = tempsKDesc[i];
+                }
+                var tempsC = [];
+                for (var i = 0; i < pp_hPa.length; i++) {
+                    var pkey = Math.round(pp_hPa[i]);
+                    if (tempMap[pkey] !== undefined) tempsC.push(tempMap[pkey] - 273.15);
+                    else {
+                        if (pkey >= pBase_hPa) tempsC.push(startTempC);
+                        else {
+                            var guess = null;
+                            for (var d = 0; d <= 5; d++) {
+                                if (tempMap[pkey+d] !== undefined) { guess = tempMap[pkey+d] - 273.15; break; }
+                                if (tempMap[pkey-d] !== undefined) { guess = tempMap[pkey-d] - 273.15; break; }
+                            }
+                            tempsC.push(guess !== null ? guess : startTempC);
+                        }
+                    }
+                }
+                return tempsC;
+            }
+
+            // Calcular LCL (Lifting Condensation Level)
+            function calculateLCL(T_surface_C, Td_surface_C, P_surface_hPa) {
+                var T_K = T_surface_C + 273.15;
+                var Td_K = Td_surface_C + 273.15;
+                
+                // Fórmula aproximada de Bolton (1980)
+                var TL_K = 1.0 / (1.0/(Td_K - 56.0) + Math.log(T_K/Td_K)/800.0) + 56.0;
+                var P_LCL_hPa = P_surface_hPa * Math.pow(TL_K/T_K, cp/Rd);
+                
+                return {
+                    pressure: P_LCL_hPa,
+                    temperature: TL_K - 273.15
+                };
+            }
+
+            // Calcular temperatura da parcela seguindo adiabática seca até LCL
+            function parcelTempDryAdiabat(T0_C, P0_hPa, P_hPa) {
+                var T0_K = T0_C + 273.15;
+                var T_K = T0_K * Math.pow(P_hPa/P0_hPa, Rd/cp);
+                return T_K - 273.15;
+            }
+
+            // Calcular trajetória completa da parcela de ar
+            function calculateParcelPath(soundingData) {
+                if (!soundingData || soundingData.length === 0) return null;
+                
+                // Usar superfície (primeiro nível)
+                var sfc = soundingData[0];
+                var T_sfc = sfc.temp;
+                var Td_sfc = sfc.dwpt;
+                var P_sfc = sfc.press;
+                var q_sfc = qs_from_p_T(P_sfc * 100, Td_sfc + 273.15);
+                
+                // Calcular LCL
+                var lcl = calculateLCL(T_sfc, Td_sfc, P_sfc);
+                
+                var parcelPath = [];
+                var lfc = null;
+                var el = null;
+                var capeValue = 0;
+                var cinValue = 0;
+                
+                // Criar array de pressões para a trajetória
+                var pressureLevels = [];
+                for (var i = 0; i < soundingData.length; i++) {
+                    if (soundingData[i].press <= P_sfc && soundingData[i].press >= topp) {
+                        pressureLevels.push(soundingData[i].press);
+                    }
+                }
+                
+                // Calcular temperatura da parcela em cada nível
+                for (var i = 0; i < pressureLevels.length; i++) {
+                    var P = pressureLevels[i];
+                    var T_parcel;
+                    
+                    if (P >= lcl.pressure) {
+                        // Abaixo do LCL: adiabática seca
+                        T_parcel = parcelTempDryAdiabat(T_sfc, P_sfc, P);
+                    } else {
+                        // Acima do LCL: adiabática úmida
+                        if (i === 0 || pressureLevels[i-1] >= lcl.pressure) {
+                            // Primeiro ponto acima do LCL: integrar da LCL até P
+                            var pDesc = [];
+                            var startP = lcl.pressure;
+                            var endP = P;
+                            for (var p = startP; p >= endP; p -= 1) {
+                                pDesc.push(p * 100);
+                            }
+                            var temps = integrateMoistAdiabatRK4(lcl.temperature + 273.15, lcl.pressure * 100, pDesc);
+                            T_parcel = temps[temps.length - 1] - 273.15;
+                        } else {
+                            // Continuar na adiabática úmida
+                            var prevP = pressureLevels[i-1];
+                            var prevT = parcelPath[parcelPath.length-1].temp;
+                            var pDesc = [];
+                            for (var p = prevP; p >= P; p -= 1) pDesc.push(p * 100);
+                            var temps = integrateMoistAdiabatRK4(prevT + 273.15, prevP * 100, pDesc);
+                            T_parcel = temps[temps.length-1] - 273.15;
+                        }
+                    }
+                    
+                    parcelPath.push({
+                        press: P,
+                        temp: T_parcel
+                    });
+                }
+                
+                // Calcular CAPE e CIN usando temperaturas virtuais
+                for (var i = 0; i < parcelPath.length - 1; i++) {
+                    // Ponto atual (i)
+                    var P1 = parcelPath[i].press;
+                    var p1_pa = P1 * 100;
+                    var T_parcel1 = parcelPath[i].temp;
+                    var T_parcel1_K = T_parcel1 + 273.15;
+                    var T_env1 = soundingData[i].temp;
+                    var T_env1_K = T_env1 + 273.15;
+                    var Td_env1 = soundingData[i].dwpt;
+                    var q_env1 = qs_from_p_T(p1_pa, Td_env1 + 273.15);
+                    var Tv_env1_K = T_env1_K * (1 + 0.608 * q_env1);
+                    var q_parcel1;
+                    if (P1 >= lcl.pressure) {
+                        q_parcel1 = q_sfc;
+                    } else {
+                        q_parcel1 = qs_from_p_T(p1_pa, T_parcel1_K);
+                    }
+                    var Tv_parcel1_K = T_parcel1_K * (1 + 0.608 * q_parcel1);
+
+                    // Ponto seguinte (i+1)
+                    var P2 = parcelPath[i + 1].press;
+                    var p2_pa = P2 * 100;
+                    var T_parcel2 = parcelPath[i + 1].temp;
+                    var T_parcel2_K = T_parcel2 + 273.15;
+                    var T_env2 = soundingData[i + 1].temp;
+                    var T_env2_K = T_env2 + 273.15;
+                    var Td_env2 = soundingData[i + 1].dwpt;
+                    var q_env2 = qs_from_p_T(p2_pa, Td_env2 + 273.15);
+                    var Tv_env2_K = T_env2_K * (1 + 0.608 * q_env2);
+                    var q_parcel2;
+                    if (P2 >= lcl.pressure) {
+                        q_parcel2 = q_sfc;
+                    } else {
+                        q_parcel2 = qs_from_p_T(p2_pa, T_parcel2_K);
+                    }
+                    var Tv_parcel2_K = T_parcel2_K * (1 + 0.608 * q_parcel2);
+
+                    // Delta Tv médio (trapezoidal)
+                    var deltaTv_avg = 0.5 * ((Tv_parcel1_K - Tv_env1_K) + (Tv_parcel2_K - Tv_env2_K));
+
+                    // Energia
+                    var dlnp = Math.log(P2 / P1);
+                    var energy = -Rd * deltaTv_avg * dlnp;
+
+                    // Usar Tv para condição
+                    if (Tv_parcel1_K > Tv_env1_K) {
+                        capeValue += energy;
+                        if (!lfc && P1 < lcl.pressure) lfc = P1;
+                        if (P1 < lcl.pressure) el = P1;
+                    } else {
+                        if (!lfc || P1 > lfc) {
+                            cinValue += energy;
+                        }
+                    }
+                }
+                
+                return {
+                    path: parcelPath,
+                    lcl: lcl,
+                    lfc: lfc,
+                    el: el,
+                    cape: Math.max(0, capeValue),
+                    cin: Math.min(0, cinValue)
+                };
+            }
+
+            function saturationVaporPressure(Tc) {
+                return 6.112 * Math.exp((17.67 * Tc) / (Tc + 243.5));
+            }
+
+            var drawBackground = function() {
+                skewtbg.append("clipPath")
+                    .attr("id", "clipper")
+                    .append("rect")
+                    .attr("x", 0)
+                    .attr("y", 0)
+                    .attr("width", w)
+                    .attr("height", h);
+
+                skewtbg.selectAll(".isotherm-line")
+                    .data(d3.range(-100, 45, 10))
+                    .enter().append("line")
+                    .attr("x1", function(d) { return x(d) - 0.5 + (y(basep) - y(topp)) / tan; })
+                    .attr("x2", function(d) { return x(d) - 0.5; })
+                    .attr("y1", 0)
+                    .attr("y2", h)
+                    .attr("class", function(d) { return d === 0 ? "temp-zero-line" : "isotherm-line"; })
+                    .attr("clip-path", "url(#clipper)");
+
+                skewtbg.selectAll(".pressure-line")
+                    .data(plines)
+                    .enter().append("line")
+                    .attr("x1", 0)
+                    .attr("x2", w)
+                    .attr("y1", function(d) { return y(d); })
+                    .attr("y2", function(d) { return y(d); })
+                    .attr("class", "pressure-line");
+
+                var pp = d3.range(topp, basep + 0.1, 1);
+                var dryad = d3.range(-30, 240, 20);
+                var all = [];
+                for (var i = 0; i < dryad.length; i++) {
+                    var z = [];
+                    for (var j = 0; j < pp.length; j++) { z.push(dryad[i]); }
+                    all.push(z);
+                }
+
+                var dryline = d3.svg.line()
+                    .interpolate("linear")
+                    .x(function(d, i) { return x((273.15 + d) / Math.pow((1000 / pp[i]), 0.286) - 273.15) + (y(basep) - y(pp[i])) / tan; })
+                    .y(function(d, i) { return y(pp[i]); });
+
+                skewtbg.selectAll(".dry-adiabat-line")
+                    .data(all)
+                    .enter().append("path")
+                    .attr("class", "dry-adiabat-line")
+                    .attr("clip-path", "url(#clipper)")
+                    .attr("d", dryline);
+
+                var moistTempsStart = d3.range(-30, 45, 5);
+                var moistData = [];
+                for (var m = 0; m < moistTempsStart.length; m++) {
+                    var tstart = moistTempsStart[m];
+                    var curveTemps = computeMoistAdiabatArray(tstart, pp);
+                    moistData.push(curveTemps);
+                }
+
+                var moistLine = d3.svg.line()
+                    .interpolate("linear")
+                    .x(function(d, i) { return x(d) + (y(basep) - y(pp[i])) / tan; })
+                    .y(function(d, i) { return y(pp[i]); });
+
+                skewtbg.selectAll(".moist-adiabat-line")
+                    .data(moistData)
+                    .enter().append("path")
+                    .attr("class", "moist-adiabat-line")
+                    .attr("clip-path", "url(#clipper)")
+                    .attr("d", moistLine);
+
+                function tempFromMixingRatio(ws_gkg, p_hPa) {
+                    var ws = ws_gkg / 1000;
+                    var e = ws * p_hPa / (0.622 + ws);
+                    var T = 243.5 * Math.log(e / 6.112) / (17.67 - Math.log(e / 6.112));
+                    return T;
+                }
+
+                var mixingRatios_gkg = [1, 2, 4, 8, 12, 20, 30];
+                var mixingRatioData = [];
+
+                for (var i = 0; i < mixingRatios_gkg.length; i++) {
+                    var ws = mixingRatios_gkg[i];
+                    var z = [];
+                    for (var j = 0; j < pp.length; j++) {
+                        var p = pp[j];
+                        var temp = tempFromMixingRatio(ws, p);
+                        z.push(temp);
+                    }
+                    mixingRatioData.push(z);
+                }
+
+                var mixingRatioLine = d3.svg.line()
+                    .interpolate("linear")
+                    .x(function(d, i) { return x(d) + (y(basep) - y(pp[i])) / tan; })
+                    .y(function(d, i) { return y(pp[i]); });
+
+                skewtbg.selectAll(".mixing-ratio-line")
+                    .data(mixingRatioData)
+                    .enter().append("path")
+                    .attr("class", "mixing-ratio-line")
+                    .attr("clip-path", "url(#clipper)")
+                    .attr("d", mixingRatioLine);
+
+                skewtbg.append("line")
+                    .attr("x1", w - 0.5)
+                    .attr("x2", w - 0.5)
+                    .attr("y1", 0)
+                    .attr("y2", h)
+                    .attr("class", "gridline");
+
+                skewtbg.append("g").attr("class", "x axis").attr("transform", "translate(0," + (h - 0.5) + ")").call(xAxis);
+                skewtbg.append("g").attr("class", "y axis").attr("transform", "translate(-0.5,0)").call(yAxis);
+                skewtbg.append("g").attr("class", "y axis ticks").attr("transform", "translate(-0.5,0)").call(yAxis2);
+            };
+            
+            var makeBarbTemplates = function(){
+                var speeds = d3.range(5,105,5);
+                var barbdef = container.append('defs');
+                speeds.forEach(function(d) {
+                    var thisbarb = barbdef.append('g').attr('id', 'barb'+d);
+                    var flags = Math.floor(d/50);
+                    var pennants = Math.floor((d - flags*50)/10);
+                    var halfpennants = Math.floor((d - flags*50 - pennants*10)/5);
+                    var px = barbsize;
+                    thisbarb.append("line").attr("x1", 0).attr("x2", 0).attr("y1", 0).attr("y2", barbsize);
+                    for (var i=0; i<flags; i++) {
+                        thisbarb.append("polyline")
+                            .attr("points", "0,"+px+" -10,"+(px)+" 0,"+(px-4))
+                            .attr("class", "flag");
+                        px -= 7;
+                    }
+                    for (i=0; i<pennants; i++) {
+                        thisbarb.append("line")
+                            .attr("x1", 0)
+                            .attr("x2", -10)
+                            .attr("y1", px)
+                            .attr("y2", px+4)
+                        px -= 3;
+                    }
+                    for (i=0; i<halfpennants; i++) {
+                        thisbarb.append("line")
+                            .attr("x1", 0)
+                            .attr("x2", -5)
+                            .attr("y1", px)
+                            .attr("y2", px+2)
+                        px -= 3;
+                    }
+                });		
+            }
+            
+            var drawToolTips = function(skewtlines) {
+                var lines = skewtlines.slice().reverse(); // Copiar e inverter para busca correta
+                var tmpcfocus = skewtgroup.append("g").attr("class", "focus tmpc").style("display", "none");
+                tmpcfocus.append("circle").attr("r", 4);
+                tmpcfocus.append("text").attr("x", 9).attr("dy", ".35em");
+                
+                var dwpcfocus = skewtgroup.append("g").attr("class", "focus dwpc").style("display", "none");
+                dwpcfocus.append("circle").attr("r", 4);
+                dwpcfocus.append("text").attr("x", -9).attr("text-anchor", "end").attr("dy", ".35em");
+
+                var hghtfocus = skewtgroup.append("g").attr("class", "focus").style("display", "none");
+                hghtfocus.append("text").attr("x", 0).attr("text-anchor", "start").attr("dy", ".35em");
+
+                var wspdfocus = skewtgroup.append("g").attr("class", "focus windspeed").style("display", "none");
+                wspdfocus.append("text").attr("x", 0).attr("text-anchor", "start").attr("dy", ".35em");	  
+
+                // Remover overlays antigos para evitar múltiplos listeners
+                container.selectAll(".overlay").remove();
+
+                container.append("rect")
+                    .attr("class", "overlay")
+                    .attr("width", w)
+                    .attr("height", h)
+                    .on("mouseover", function() { 
+                        tmpcfocus.style("display", null); 
+                        dwpcfocus.style("display", null); 
+                        hghtfocus.style("display", null); 
+                        wspdfocus.style("display", null);
+                    })
+                    .on("mouseout", function() { 
+                        tmpcfocus.style("display", "none"); 
+                        dwpcfocus.style("display", "none"); 
+                        hghtfocus.style("display", "none"); 
+                        wspdfocus.style("display", "none");
+                    })
+                    .on("mousemove", function () {		  
+                        var y0 = y.invert(d3.mouse(this)[1]); 
+                        var i = bisectTemp(lines, y0, 1, lines.length - 1);
+                        var d0 = lines[i - 1];
+                        var d1 = lines[i];
+                        var d = y0 - d0.press > d1.press - y0 ? d1 : d0;
+                        tmpcfocus.attr("transform", "translate(" + (x(d.temp) + (y(basep) - y(d.press)) / tan) + "," + y(d.press) + ")");
+                        dwpcfocus.attr("transform", "translate(" + (x(d.dwpt) + (y(basep) - y(d.press)) / tan) + "," + y(d.press) + ")");
+                        hghtfocus.attr("transform", "translate(0," + y(d.press) + ")");
+                        tmpcfocus.select("text").text(Math.round(d.temp) + "°C");
+                        dwpcfocus.select("text").text(Math.round(d.dwpt) + "°C");
+                        hghtfocus.select("text").text("-- " + Math.round(d.hght) + " m"); 
+                        wspdfocus.attr("transform", "translate(" + (w - 65) + "," + y(d.press) + ")");
+                        wspdfocus.select("text").text(Math.round(convert(d.wspd, unit) * 10) / 10 + " " + unit);
+                    });
+            };
+
+            var drawCAPECIN = function(soundingData, parcelResult) {
+                if (!parcelResult || !parcelResult.path) return;
+
+                // Remover áreas anteriores
+                skewtgroup.selectAll(".cape-area").remove();
+                skewtgroup.selectAll(".cin-area").remove();
+
+                var parcelPath = parcelResult.path;
+                var lfc = parcelResult.lfc;
+                var el = parcelResult.el;
+                var lcl = parcelResult.lcl;
+
+                // Função para interpolar temperatura ambiente
+                function getTempAtPressure(p) {
+                    for (var j = 0; j < soundingData.length - 1; j++) {
+                        if (soundingData[j].press >= p && soundingData[j+1].press <= p) {
+                            var ratio = (p - soundingData[j+1].press) / (soundingData[j].press - soundingData[j+1].press);
+                            return soundingData[j+1].temp + ratio * (soundingData[j].temp - soundingData[j+1].temp);
+                        }
+                    }
+                    return null;
+                }
+
+                // Criar polígonos para CAPE (área vermelha)
+                if (lfc && el) {
+                    var capePoints = [];
+                    
+                    for (var i = 0; i < parcelPath.length; i++) {
+                        var p = parcelPath[i].press;
+                        if (p <= lfc && p >= el) {
+                            var T_parcel = parcelPath[i].temp;
+                            var T_env = getTempAtPressure(p);
+                            
+                            if (T_env !== null && T_parcel > T_env) {
+                                capePoints.push({
+                                    press: p,
+                                    temp_parcel: T_parcel,
+                                    temp_env: T_env
+                                });
+                            }
+                        }
+                    }
+
+                    if (capePoints.length > 0) {
+                        var capeArea = d3.svg.area()
+                            .interpolate("linear")
+                            .x0(function(d) { return x(d.temp_env) + (y(basep) - y(d.press)) / tan; })
+                            .x1(function(d) { return x(d.temp_parcel) + (y(basep) - y(d.press)) / tan; })
+                            .y(function(d) { return y(d.press); });
+
+                        skewtgroup.append("path")
+                            .datum(capePoints)
+                            .attr("class", "cape-area")
+                            .attr("clip-path", "url(#clipper)")
+                            .attr("d", capeArea);
+                    }
+                }
+
+                // Criar polígonos para CIN (área azul)
+                var cinPoints = [];
+                
+                for (var i = 0; i < parcelPath.length; i++) {
+                    var p = parcelPath[i].press;
+                    if ((!lfc || p >= lfc) && p <= soundingData[0].press) {
+                        var T_parcel = parcelPath[i].temp;
+                        var T_env = getTempAtPressure(p);
+                        
+                        if (T_env !== null && T_parcel < T_env) {
+                            cinPoints.push({
+                                press: p,
+                                temp_parcel: T_parcel,
+                                temp_env: T_env
+                            });
+                        }
+                    }
+                }
+
+                if (cinPoints.length > 0) {
+                    var cinArea = d3.svg.area()
+                        .interpolate("linear")
+                        .x0(function(d) { return x(d.temp_parcel) + (y(basep) - y(d.press)) / tan; })
+                        .x1(function(d) { return x(d.temp_env) + (y(basep) - y(d.press)) / tan; })
+                        .y(function(d) { return y(d.press); });
+
+                    skewtgroup.append("path")
+                        .datum(cinPoints)
+                        .attr("class", "cin-area")
+                        .attr("clip-path", "url(#clipper)")
+                        .attr("d", cinArea);
+                }
+
+                // Atualizar valores na interface
+                document.getElementById('sbcape-value').textContent = parcelResult.cape.toFixed(1);
+                document.getElementById('sbcin-value').textContent = parcelResult.cin.toFixed(1);
+                document.getElementById('lcl-value').textContent = parcelResult.lcl.pressure.toFixed(1);
+                document.getElementById('lfc-value').textContent = parcelResult.lfc ? parcelResult.lfc.toFixed(1) : 'N/A';
+                document.getElementById('el-value').textContent = parcelResult.el ? parcelResult.el.toFixed(1) : 'N/A';
+                document.getElementById('thermo-results').style.display = 'block';
+            }
+            
+            var plot = function(s) {
+                data = s;
+                skewtgroup.selectAll("path").remove();
+                barbgroup.selectAll("use").remove();
+                skewtgroup.selectAll(".focus").remove(); // Remover tooltips antigos
+                container.selectAll(".overlay").remove(); // Remover overlay antigo
+
+                if (data.length == 0) return;
+
+                var skewtline = data.filter(function(d) { return (d.temp > -1000 && d.dwpt > -1000 && d.press >= topp); });
+                var skewtlines = [];
+                skewtlines.push(skewtline);
+
+                // Calcular trajetória da parcela e CAPE/CIN
+                var parcelResult = calculateParcelPath(skewtline);
+                
+                // Desenhar áreas de CAPE e CIN primeiro (para ficarem atrás)
+                if (parcelResult) {
+                    drawCAPECIN(skewtline, parcelResult);
+                }
+
+                // Desenhar trajetória da parcela
+                if (parcelResult && parcelResult.path) {
+                    var parcelLine = d3.svg.line()
+                        .interpolate("linear")
+                        .x(function(d) { return x(d.temp) + (y(basep) - y(d.press)) / tan; })
+                        .y(function(d) { return y(d.press); });
+
+                    skewtgroup.append("path")
+                        .datum(parcelResult.path)
+                        .attr("class", "parcel-path")
+                        .attr("clip-path", "url(#clipper)")
+                        .attr("d", parcelLine);
+                }
+
+                var templine = d3.svg.line()
+                    .interpolate("linear")
+                    .x(function(d, i) { return x(d.temp) + (y(basep) - y(d.press)) / tan; })
+                    .y(function(d, i) { return y(d.press); });
+                var tempLines = skewtgroup.selectAll("templines")
+                    .data(skewtlines).enter().append("path")
+                    .attr("class", function(d, i) { return (i < 10) ? "temp skline" : "temp mean"; })
+                    .attr("clip-path", "url(#clipper)")
+                    .attr("d", templine);
+
+                var tempdewline = d3.svg.line()
+                    .interpolate("linear")
+                    .x(function(d, i) { return x(d.dwpt) + (y(basep) - y(d.press)) / tan; })
+                    .y(function(d, i) { return y(d.press); });
+                var tempDewlines = skewtgroup.selectAll("tempdewlines")
+                    .data(skewtlines).enter().append("path")
+                    .attr("class", function(d, i) { return (i < 10) ? "dwpt skline" : "dwpt mean"; })
+                    .attr("clip-path", "url(#clipper)")
+                    .attr("d", tempdewline);
+
+                var barbs = skewtline.filter(function(d) { return (d.wdir >= 0 && d.wspd >= 0 && d.press >= topp); });
+                var allbarbs = barbgroup.selectAll("barbs")
+                    .data(barbs).enter().append("use")
+                    .attr("xlink:href", function(d) { return "#barb" + Math.round(convert(d.wspd, "kt") / 5) * 5; })
+                    .attr("transform", function(d, i) { return "translate(" + w + "," + y(d.press) + ") rotate(" + (d.wdir + 180) + ")"; });
+
+                drawToolTips(skewtlines[0]);
+            };
+
+            var clear = function(){
+                skewtgroup.selectAll("path").remove(); 
+                barbgroup.selectAll("use").remove(); 
+                container.append("rect")
+                    .attr("class", "overlay")
+                    .attr("width", w)
+                    .attr("height", h)
+                    .on("mouseover", function(){ return false;})
+                    .on("mouseout", function() { return false;})
+                    .on("mousemove",function() { return false;});
+            }
+            
+            this.drawBackground = drawBackground;
+            this.plot = plot;
+            this.clear = clear;
+            
+            setVariables();
+            resize();
+        };
+
+        function parseCSVData(csvText) {
+            const lines = csvText.trim().split('\n');
+            const headers = lines[0].split(',');
+            const data = [];
+            
+            const pressIndex = headers.findIndex(h => h.trim() === 'PRES');
+            const heightIndex = headers.findIndex(h => h.trim() === 'HGHT');
+            const tempIndex = headers.findIndex(h => h.trim() === 'TEMP');
+            const dewptIndex = headers.findIndex(h => h.trim() === 'DWPT');
+            const wdirIndex = headers.findIndex(h => h.trim() === 'DRCT');
+            const wspdIndex = headers.findIndex(h => h.trim() === 'SKNT');
+            
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',');
+                
+                if (values.length < headers.length) continue;
+                
+                const press = parseFloat(values[pressIndex]);
+                const height = parseFloat(values[heightIndex]);
+                const temp = parseFloat(values[tempIndex]);
+                const dewpt = parseFloat(values[dewptIndex]);
+                const wdir = parseFloat(values[wdirIndex]);
+                const wspd = parseFloat(values[wspdIndex]);
+                
+                if (!isNaN(press) && !isNaN(temp) && !isNaN(dewpt)) {
+                    data.push({
+                        press: press,
+                        hght: height || 0,
+                        temp: temp,
+                        dwpt: dewpt,
+                        wdir: wdir || 0,
+                        wspd: wspd || 0
+                    });
+                }
+            }
+            
+            return data;
+        }
+        
+        function loadSoundingData() {
+            d3.text("sondagem.csv", function(error, csvData) {
+                if (error) {
+                    console.error('Erro ao carregar o arquivo CSV:', error);
+                    document.getElementById('status').innerHTML = '<div class="error">Erro ao carregar o arquivo sondagem.csv: ' + error.message + '</div>';
+                    return;
+                }
+                
+                try {
+                    const soundingData = parseCSVData(csvData);
+                    
+                    if (soundingData.length === 0) {
+                        throw new Error('Nenhum dado válido encontrado no arquivo CSV');
+                    }
+                    
+                    document.getElementById('data-levels').textContent = soundingData.length + ' níveis';
+                    document.getElementById('status').innerHTML = '<div class="success">Dados carregados com sucesso! Gerando diagrama...</div>';
+                    
+                    const skewt = new SkewT('#skewt');
+                    skewt.plot(soundingData);
+                    
+                    setupToggleButtons();
+
+                    setTimeout(() => {
+                        document.getElementById('status').innerHTML = '<div class="success">Diagrama Skew-T Log-P com sbCAPE e sbCIN gerado com sucesso!</div>';
+                    }, 1000);
+                    
+                } catch (error) {
+                    console.error('Erro ao processar dados:', error);
+                    document.getElementById('status').innerHTML = '<div class="error">Erro ao carregar dados: ' + error.message + '</div>';
+                }
+            });
+        }
+
+        function setupToggleButtons() {
+            function toggleVisibility(selector, button) {
+                const lines = d3.selectAll(selector);
+                const isVisible = lines.style("display") !== "none";
+                lines.style("display", isVisible ? "none" : null);
+                button.classList.toggle("active", !isVisible);
+            }
+
+            const isothermBtn = document.getElementById('toggle-isotherms');
+            isothermBtn.addEventListener('click', () => toggleVisibility('.isotherm-line, .temp-zero-line', isothermBtn));
+
+            const dryAdiabatBtn = document.getElementById('toggle-dry-adiabats');
+            dryAdiabatBtn.addEventListener('click', () => toggleVisibility('.dry-adiabat-line', dryAdiabatBtn));
+
+            const moistAdiabatBtn = document.getElementById('toggle-moist-adiabats');
+            moistAdiabatBtn.addEventListener('click', () => toggleVisibility('.moist-adiabat-line', moistAdiabatBtn));
+
+            const mixingRatioBtn = document.getElementById('toggle-mixing-ratio');
+            mixingRatioBtn.addEventListener('click', () => toggleVisibility('.mixing-ratio-line', mixingRatioBtn));
+
+            const isobarBtn = document.getElementById('toggle-isobars');
+            isobarBtn.addEventListener('click', () => toggleVisibility('.pressure-line', isobarBtn));
+
+            const parcelBtn = document.getElementById('toggle-parcel');
+            parcelBtn.addEventListener('click', () => toggleVisibility('.parcel-path, .cape-area, .cin-area', parcelBtn));
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(loadSoundingData, 500);
+        });
+    </script>
+</body>
+</html>
